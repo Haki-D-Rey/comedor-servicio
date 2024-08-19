@@ -1,0 +1,19 @@
+{
+  "require": {
+    "php": "^8.3",
+    "slim/slim": "^4.14.0",
+    "slim/psr7": "^1.7.0",
+    "selective/basepath": "^2.2.0",
+    "phpmailer/phpmailer": "^6.9.1",
+    "guzzlehttp/psr7": "^2.7.0",
+    "firebase/php-jwt": "^6.10.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src"
+    }
+  },
+  "config": {
+    "php": "8.3"
+  }
+}
