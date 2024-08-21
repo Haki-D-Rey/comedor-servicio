@@ -30,6 +30,14 @@ $app->add(function ($request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 });
 
+//Enviroment
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..') ;
+$dotenv->load();
+
+// Ahora puedes acceder a las variables de entorno
+echo getenv('APP_ENV'); // mi_base_de_datos
+
+
 // Cargar rutas
 $loadRoutes = require __DIR__ . '/../src/Helpers/loadRoutes.php';
 $loadRoutes($app);

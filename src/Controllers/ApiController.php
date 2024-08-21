@@ -3,11 +3,8 @@
 namespace App\Controllers;
 
 use App\Models\DB;
-use PDO;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use PDOException;
-use Slim\Psr7\Stream;
+use Slim\Psr7\Response;
+use Slim\Psr7\Request;
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -31,11 +28,32 @@ class ApiController
         ],
     ];
 
-    public function index()
+    public function index(Request $request, Response $response): Response
     {
-        $this->getConnection();
-        phpinfo();
+        ob_start();
+    
+        include __DIR__ . '/../../public/views/client/inicio.php';
+    
+        // Obtiene el contenido del búfer y limpia el búfer
+        $viewContent = ob_get_clean();
+    
+        // Escribe el contenido en la respuesta
+        $response->getBody()->write($viewContent);
+    
+        // Establece el tipo de contenido como HTML
+        return $response->withHeader('Content-Type', 'text/html');
     }
+
+    public function info(Request $request, Response $response): Response
+    {
+        ob_start();
+        phpinfo();
+        $phpinfo = ob_get_clean();
+
+        $response->getBody()->write($phpinfo); // Escribe el contenido en la respuesta
+        return $response->withHeader('Content-Type', 'text/html'); // Establece el tipo de contenido como HTML
+    }
+    
 
     public function getConnection()
     {
