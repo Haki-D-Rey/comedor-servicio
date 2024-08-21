@@ -15,26 +15,19 @@ class ApiController
 {
     protected PHPMailer $mailServer;
     protected $databases = [
-        'SISERVI' => [
-            'driver' => 'pgsql',
-            'host' => '10.0.30.147',
-            'user' => 'postgres',
-            'pass' => '&ecurity23',
-            'dbname' => 'siservi_catering_local'
-        ],
-        'DIETA' => [
-            'driver' => 'sqlsrv',
-            'host' => 'Dieta',
-            'user' => 'sa',
-            'pass' => 'PA$$W0RD',
-            'dbname' => 'Dieta'
-        ],
-        'EVENTOS' => [
+        'mysql' => [
             'driver' => 'mysql',
             'host' => 'c98055.sgvps.net',
             'user' => 'udeq5kxktab81',
             'pass' => 'clmjsfgcrt5m',
             'dbname' => 'db2gdg4nfxpgyk'
+        ],
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'host' => 'c98055.sgvps.net',
+            'user' => 'umao144lpzdd3',
+            'pass' => 'clmjsfgcrt5m',
+            'dbname' => 'db6fq3nnewvjrs'
         ],
     ];
 
