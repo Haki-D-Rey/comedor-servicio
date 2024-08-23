@@ -47,8 +47,6 @@
                   this.UI.minute = this.clockEl.querySelector(".hand--minute");
                   this.UI.hour = this.clockEl.querySelector(".hand--hour");
                   requestAnimationFrame(this.updateClock);
-
-                  console.log("activado");
               }
           }
 
