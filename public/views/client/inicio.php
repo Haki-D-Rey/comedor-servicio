@@ -2,11 +2,18 @@
 ob_start(); // Inicia el almacenamiento en búfer de salida
 ?>
 <div class="d-flex flex-column w-100 p-4">
-    <div class="p-2 align-content-center">
+    <div class="p-4 align-content-center d-flex flex-column align-items-center">
 
-        <h2 class="text-center mb-4">Horarios de Servicio</h2>
+        <h2 class="custom-heading text-center mb-1">Horarios de Servicio</h2>
+        <hr class="hr-heading">
     </div>
-    <div class="d-flex flex-row g-5">
+    <div>
+    <?php 
+    include __DIR__ . '/../components/reloj.php'; // Incluye el layout
+    
+    ?>
+    </div>
+    <div class="d-flex flex-row column-gap-5 justify-content-end">
         <div class="d-flex flex-row w-25">
 
             <?php
@@ -16,7 +23,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
             $mealServices = [
                 'Fuera de Servicio' => [],
                 'Desayuno' => ['start' => '05:00', 'end' => '07:00'],
-                'Almuerzo' => ['start' => '12:00', 'end' => '14:00'],
+                'Almuerzo' => ['start' => '11:00', 'end' => '14:00'],
                 'Cena' => ['start' => '16:30', 'end' => '20:00'],
                 'Refracción' => ['start' => '22:00', 'end' => '23:30'],
             ];
@@ -50,13 +57,13 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
                 }
             }
             ?>
-            <div id="carouselExampleDark" class="carousel carousel-dark slide" style="width: 450px; height: 200px">
+            <div id="carouselExampleDark" class="carousel carousel-dark slide" style="width: 450px; height: 200px;">
                 <div class="carousel-indicators">
                     <?php foreach ($mealServices as $index => $service): ?>
                         <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="<?= array_search($index, array_keys($mealServices)) ?>" class="<?= $index == $activeIndex ? 'active' : '' ?>" aria-label="Slide <?= array_search($index, array_keys($mealServices)) + 1 ?>" <?= $index == $activeIndex ? 'aria-current="true"' : '' ?>></button>
                     <?php endforeach; ?>
                 </div>
-                <div class="carousel-inner h-100 w-100">
+                <div class="carousel-inner h-100 w-100" style="border: 2px solid green; border-radius: 10px;">
                     <?php foreach ($mealServices as $index => $times): ?>
                         <?php
                         $start = empty($times['start']) ? null : $times['start'];
@@ -107,7 +114,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
         </div>
         <div class="w-50">
             <div class="content-search">
-                <label for="ingresa-codigo">Pasa la Tarjeta por el Lector</label>
+                <label for="ingresa-codigo">Lector de Tarjetas</label>
                 <input class="input-content" type="text">
             </div>
 
