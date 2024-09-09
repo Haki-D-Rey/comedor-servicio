@@ -1,5 +1,5 @@
 <?php
-
+/*
 namespace App\Controllers;
 
 use Firebase\JWT\JWT;
@@ -152,4 +152,4 @@ class AuthController
             return null;
         }
     }
-}
+}*/

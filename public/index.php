@@ -4,13 +4,16 @@ use Slim\Factory\AppFactory;
 use DI\ContainerBuilder;
 use Selective\BasePath\BasePathMiddleware;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php'; // Asegúrate de que esta línea esté presente
+
 $settings = require __DIR__ . '/settings.php';
 
+// Configura el contenedor de dependencias
 $containerBuilder = new ContainerBuilder();
 $containerBuilder->addDefinitions(__DIR__ . '/../src/Helpers/dependencias.php');
 $container = $containerBuilder->build();
 
+// Configura el contenedor en la aplicación Slim
 AppFactory::setContainer($container);
 
 if (empty($settings)) {
@@ -30,16 +33,8 @@ $app->add(function ($request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 });
 
-//Enviroment
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..') ;
-$dotenv->load();
-
-// Ahora puedes acceder a las variables de entorno
-echo getenv('APP_ENV'); // mi_base_de_datos
-
-
 // Cargar rutas
 $loadRoutes = require __DIR__ . '/../src/Helpers/loadRoutes.php';
 $loadRoutes($app);
-$app->run();
 
+$app->run();

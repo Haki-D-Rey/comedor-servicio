@@ -13,24 +13,24 @@ class ApiController
     protected PHPMailer $mailServer;
     protected $databases = [
         'mysql' => [
-            'driver' => 'mysql',
+            'driver' => 'pdo_mysql',
             'host' => 'c98055.sgvps.net',
-            'user' => 'udeq5kxktab81',
-            'pass' => 'clmjsfgcrt5m',
+            'user' => 'uj6fjylfypd74',
+            'password' => 'lzrfvyapldaw',
             'dbname' => 'db2gdg4nfxpgyk'
         ],
         'pgsql' => [
-            'driver' => 'pgsql',
+            'driver' => 'pdo_pgsql',
             'host' => 'c98055.sgvps.net',
             'user' => 'umao144lpzdd3',
-            'pass' => 'clmjsfgcrt5m',
+            'password' => 'clmjsfgcrt5m',
             'dbname' => 'db6fq3nnewvjrs'
         ],
         'dinning_services' => [
-            'driver' => 'pgsql',
-            'host' => '127.0.0.1',
+            'driver' => 'pdo_pgsql',
+            'host' => 'localhost',
             'user' => 'postgres',
-            'pass' => 'n&ecurity2024*',
+            'password' => 'n&ecurity2024*',
             'dbname' => 'dining_service'
         ],
     ];
@@ -39,6 +39,7 @@ class ApiController
     {
         ob_start();
     
+        // include __DIR__ . '/views/client/inicio.php';
         include __DIR__ . '/../../public/views/client/inicio.php';
     
         $viewContent = ob_get_clean();
@@ -51,6 +52,7 @@ class ApiController
     {
         ob_start();
     
+        // include __DIR__ . '/views/client/inscripcion_control.php';
         include __DIR__ . '/../../public/views/client/formulario/inscripcion_control.php';
     
         $viewContent = ob_get_clean();
