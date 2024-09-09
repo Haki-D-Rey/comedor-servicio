@@ -9,6 +9,7 @@ use Slim\Routing\RouteCollectorProxy;
 return function (App $app) {
 
     $app ->get('/', ApiController:: class . ':index');
+    $app ->get('/formulario', ApiController:: class . ':formulario');
     $app ->get('/info', ApiController:: class . ':info');
     $app -> group('/api', function(RouteCollectorProxy $group){
         $group->get('/all', ApiController::class . ':getAll')->setName('api.all');

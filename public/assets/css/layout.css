@@ -341,7 +341,8 @@ video {
   display: block;
   background-color: rgba(0, 100, 0, 0.767);
   height: 4px;
-  width: 250px;
+  /* width: 250px; */
+  width: 50%;
   margin-top: 0.5rem;
   border: 0;
   opacity: 100;

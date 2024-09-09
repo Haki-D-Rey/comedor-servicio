@@ -1,8 +1,8 @@
 <?php
 ob_start(); // Inicia el almacenamiento en búfer de salida
 ?>
-<div class="d-flex flex-column w-100 p-4">
-    <div class="p-4 align-content-center d-flex flex-column align-items-center">
+<div class="d-flex flex-column align-items-center w-100 p-4">
+    <div class="p-4 align-content-center d-flex flex-column align-items-center w-50">
 
         <h2 class="custom-heading text-center mb-1">Horarios de Servicio</h2>
         <hr class="hr-heading">
@@ -13,7 +13,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
     
     ?>
     </div>
-    <div class="d-flex flex-row column-gap-5 justify-content-end">
+    <div class="d-flex flex-row column-gap-5 justify-content-end w-100">
         <div class="d-flex flex-row w-25">
 
             <?php
@@ -123,7 +123,6 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
 
     <?php
     $content = ob_get_clean(); // Obtiene el contenido del búfer y limpia el búfer
-
     include __DIR__ . '/../layout/layout.php'; // Incluye el layout
     ?>
 </div>
