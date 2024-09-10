@@ -2,7 +2,9 @@
 
 namespace App\DTO;
 
-class UsuarioDTO
+use JsonSerializable;
+
+class UsuarioDTO implements JsonSerializable
 {
     private $id;
     private $nombreUsuario;
@@ -37,7 +39,6 @@ class UsuarioDTO
     }
 
     // Getters
-
     public function getId(): int
     {
         return $this->id;
@@ -81,5 +82,21 @@ class UsuarioDTO
     public function getEstado(): bool
     {
         return $this->estado;
+    }
+
+    // Implementación de JsonSerializable
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'nombreUsuario' => $this->nombreUsuario,
+            'contrasenia' => $this->contrasenia,
+            'nombres' => $this->nombres,
+            'apellidos' => $this->apellidos,
+            'correo' => $this->correo,
+            'fechaCreacion' => $this->fechaCreacion->format(\DateTime::ISO8601),
+            'fechaModificacion' => $this->fechaModificacion ? $this->fechaModificacion->format(\DateTime::ISO8601) : null,
+            'estado' => $this->estado,
+        ];
     }
 }

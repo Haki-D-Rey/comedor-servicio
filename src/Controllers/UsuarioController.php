@@ -2,99 +2,104 @@
 
 namespace App\Controllers;
 
-use App\Models\UsuarioModel;
 use App\DTO\UsuarioDTO;
-use Psr\Http\Message\RequestInterface as Request;
+use App\Services\UsuarioServices;
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 class UsuarioController
 {
-    public $usuarioModel;
+    private $usuarioService;
 
-    public function __construct(UsuarioModel $usuarioModel)
+    public function __construct(UsuarioServices $usuarioService)
     {
-        $this->usuarioModel = $usuarioModel;
+        $this->usuarioService = $usuarioService;
     }
 
-    public function getTestUser(Request $request, Response $response): Response
+    public function getAllUsuarios(Request $request, Response $response): Response
     {
-        // $userId = (int) $args['id'];
-        // $usuarioDTO = $this->usuarioModel->getUser($userId);
-
-        // if (!$usuarioDTO) {
-        //     return $response->withStatus(404)->getBody()->write('Usuario no encontrado');
-        // }
-        $const= "hola";
-
-        $response->getBody()->write(json_encode('no existe'));
+        $usuarios = $this->usuarioService->getAllUsers();
+        $response->getBody()->write(json_encode($usuarios));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    public function getUser(Request $request, Response $response, $args): Response
+    public function getUsuarioById(Request $request, Response $response, array $args): Response
     {
-        $userId = (int) $args['id'];
-        $usuarioDTO = $this->usuarioModel->getUser($userId);
-
-        if (!$usuarioDTO) {
-            return $response->withStatus(404)->getBody()->write('Usuario no encontrado');
+        $id = (int) $args['id'];
+        $usuario = $this->usuarioService->getUserById($id);
+        
+        if ($usuario === null) {
+            $response->getBody()->write(json_encode(['message' => 'Usuario no encontrado']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
 
-        $response->getBody()->write(json_encode($usuarioDTO));
+        $response->getBody()->write(json_encode($usuario));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    public function createUser(Request $request, Response $response): Response
+    public function createUsuario(Request $request, Response $response): Response
     {
         $data = json_decode($request->getBody()->getContents(), true);
+
         $usuarioDTO = new UsuarioDTO(
-            0,
+            $data['id'] ?? null,
             $data['nombreUsuario'],
             $data['contrasenia'],
             $data['nombres'],
             $data['apellidos'],
             $data['correo'],
-            new \DateTime(),
-            null,
+            new \DateTime($data['fechaCreacion']),
+            isset($data['fechaModificacion']) ? new \DateTime($data['fechaModificacion']) : null,
             $data['estado']
         );
 
-        $this->usuarioModel->createUser($usuarioDTO);
-        $response->withStatus(201)->getBody()->write(json_encode('Usuario creado'));
-        return $response->withHeader('Content-Type', 'application/json');
+        $created = $this->usuarioService->createUser($usuarioDTO);
+        if ($created) {
+            $response->getBody()->write(json_encode(['message' => 'Usuario creado']));
+            return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
+        }
+
+        $response->getBody()->write(json_encode(['message' => 'Error al crear usuario']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
-    public function updateUser(Request $request, Response $response, $args): Response
+    public function updateUsuario(Request $request, Response $response, array $args): Response
     {
-        $userId = (int) $args['id'];
+        $id = (int) $args['id'];
         $data = json_decode($request->getBody()->getContents(), true);
+
         $usuarioDTO = new UsuarioDTO(
-            $userId,
+            $id,
             $data['nombreUsuario'],
             $data['contrasenia'],
             $data['nombres'],
             $data['apellidos'],
             $data['correo'],
-            new \DateTime(),
-            null,
+            isset($data['fechaCreacion']) ? new \DateTime($data['fechaCreacion']) : null,
+            isset($data['fechaModificacion']) ? new \DateTime($data['fechaModificacion']) : null,
             $data['estado']
         );
 
-        if (!$this->usuarioModel->updateUser($userId, $usuarioDTO)) {
-            return $response->withStatus(404)->getBody()->write('Usuario no encontrado');
+        $updated = $this->usuarioService->updateUser($id, $usuarioDTO);
+        if ($updated) {
+            $response->getBody()->write(json_encode(['message' => 'Usuario actualizado']));
+            return $response->withHeader('Content-Type', 'application/json');
         }
 
-        $response->getBody()->write(json_encode('Usuario actualizado'));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode(['message' => 'Error al actualizar usuario']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
-    public function deleteUser(Request $request, Response $response, $args): Response
+    public function deleteUsuario(Request $request, Response $response, array $args): Response
     {
-        $userId = (int) $args['id'];
-        if (!$this->usuarioModel->deleteUser($userId)) {
-            return $response->withStatus(404)->getBody()->write('Usuario no encontrado');
+        $id = (int) $args['id'];
+        $deleted = $this->usuarioService->deleteUser($id);
+        if ($deleted) {
+            $response->getBody()->write(json_encode(['message' => 'Usuario eliminado']));
+            return $response->withHeader('Content-Type', 'application/json');
         }
 
-        $response->getBody()->write(json_encode('Usuario eliminado'));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode(['message' => 'Error al eliminar usuario']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 }

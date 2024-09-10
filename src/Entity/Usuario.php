@@ -4,59 +4,39 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="usuarios", schema="seguridad")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'seguridad.usuarios')]
 class Usuario
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'id', type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=64, unique=true)
-     */
-    private $nombreUsuario;
+    #[ORM\Column(name: 'nombre_usuario', type: 'string', length: 64, unique: true)]
+    private string $nombreUsuario;
 
-    /**
-     * @ORM\Column(type="string", length=512)
-     */
-    private $contrasenia;
+    #[ORM\Column(name: 'contrasenia', type: 'string', length: 512)]
+    private string $contrasenia;
 
-    /**
-     * @ORM\Column(type="string", length=64)
-     */
-    private $nombres;
+    #[ORM\Column(name: 'nombres', type: 'string', length: 64)]
+    private string $nombres;
 
-    /**
-     * @ORM\Column(type="string", length=64)
-     */
-    private $apellidos;
+    #[ORM\Column(name: 'apellidos', type: 'string', length: 64)]
+    private string $apellidos;
 
-    /**
-     * @ORM\Column(type="string", length=64, unique=true)
-     */
-    private $correo;
+    #[ORM\Column(name: 'correo', type: 'string', length: 64, unique: true)]
+    private string $correo;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $fechaCreacion;
+    #[ORM\Column(name: 'fecha_creacion', type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
+    private \DateTime $fechaCreacion;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $fechaModificacion;
+    #[ORM\Column(name: 'fecha_modificacion', type: 'datetime', nullable: true)]
+    private ?\DateTime $fechaModificacion = null;
 
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $estado;
-
+    #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
+    private bool $estado;
+    
     // Getters and Setters
 
     public function getId(): ?int

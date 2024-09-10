@@ -1,26 +1,23 @@
 <?php
 
-namespace App\Models;
+namespace App\Repository;
 
-use App\Entity\Usuario;
 use App\DTO\UsuarioDTO;
+use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
 
-class UsuarioModel
+class UsuarioRepository extends GenericRepository implements UsuarioRepositoryInterface
 {
-    private $entityManager;
-
     public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->entityManager = $entityManager;
+        parent::__construct($entityManager, Usuario::class);
     }
 
-    public function getAllUsers(): ?array
+    public function getAllUsuarios(): array
     {
-        $query = $this->entityManager->createQuery('SELECT u FROM App\Entity\Usuario u');
-        $usuarios = $query->getResult();
-        
-        $usuarioDTOs = array_map(function (Usuario $usuario) {
+        $usuarios = $this->getAllEntities();
+
+        return array_map(function (Usuario $usuario) {
             return new UsuarioDTO(
                 $usuario->getId(),
                 $usuario->getNombreUsuario(),
@@ -33,13 +30,12 @@ class UsuarioModel
                 $usuario->getEstado()
             );
         }, $usuarios);
-        
-        return $usuarioDTOs;
     }
 
-    public function getUserById(int $id): ?UsuarioDTO
+    public function getUsuarioById(int $id): ?UsuarioDTO
     {
-        $usuario = $this->entityManager->find(Usuario::class, $id);
+        $usuario = $this->getEntityById($id);
+
         if (!$usuario) {
             return null;
         }
@@ -77,7 +73,7 @@ class UsuarioModel
 
     public function updateUser(int $id, UsuarioDTO $usuarioDTO): bool
     {
-        $usuario = $this->entityManager->find(Usuario::class, $id);
+        $usuario = $this->getEntityById($id);
         if (!$usuario) {
             return false;
         }
@@ -97,7 +93,7 @@ class UsuarioModel
 
     public function deleteUser(int $id): bool
     {
-        $usuario = $this->entityManager->find(Usuario::class, $id);
+        $usuario = $this->getEntityById($id);
         if (!$usuario) {
             return false;
         }

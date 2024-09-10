@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 return [
     'db' => [
         'mysql' => [
@@ -24,22 +23,17 @@ return [
             'dbname' => 'dining_service'
         ],
     ],
-
+    
     // Otros ajustes globales
-    'displayErrorDetails' => true, // Cambia esto a false en producción
-    'logErrorDetails' => true, // Cambia esto a false en producción
+    'displayErrorDetails' => true,
+    'logErrorDetails' => true,
 
-    // Configuración de JWT (si la usas)
     'jwt' => [
         'secret' => 'haki12345',
         'issuer' => 'your-domain.com',
         'audience' => 'your-domain.com',
-        'expiration' => 3600, // Duración del token en segundos (1 hora)
+        'expiration' => 3600,
     ],
-
-    // Configuración adicional (por ejemplo, logging, caching, etc.)
-    // 'logger' => [
-    //     'name' => 'app',
-    //     'path' => __DIR__ . '/../logs/app.log',
-    // ],
 ];
+
+?>

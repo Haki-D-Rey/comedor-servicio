@@ -1,25 +1,14 @@
 <?php
 
 use Slim\Factory\AppFactory;
-use DI\ContainerBuilder;
 use Selective\BasePath\BasePathMiddleware;
 
 require_once __DIR__ . '/../vendor/autoload.php'; // Asegúrate de que esta línea esté presente
 
-$settings = require __DIR__ . '/settings.php';
-
 // Configura el contenedor de dependencias
-$containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions(__DIR__ . '/../src/Helpers/dependencias.php');
-$container = $containerBuilder->build();
-
-// Configura el contenedor en la aplicación Slim
+define('CONFIG_PATH', __DIR__ . '/../configs');
+$container = require_once CONFIG_PATH . '/container.php';
 AppFactory::setContainer($container);
-
-if (empty($settings)) {
-    throw new Exception('La configuración no se cargó correctamente.');
-}
-$container->set('settings', $settings);
 
 $app = AppFactory::create();
 $app->addRoutingMiddleware();
