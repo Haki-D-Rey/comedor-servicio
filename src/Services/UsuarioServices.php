@@ -38,4 +38,13 @@ class UsuarioServices
     {
         return $this->usuarioRepository->deleteUser($id);
     }
+
+    public function verifyUserPassword(string $usuarioId, string $password): bool
+    {
+        $usuario = $this->usuarioRepository->getUsuarioById($usuarioId);
+        if (!$usuario) {
+            return false;
+        }
+        return $this->usuarioRepository->verifyPassword($password, $usuario->getContrasenia());
+    }
 }

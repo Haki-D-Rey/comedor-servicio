@@ -35,4 +35,11 @@ interface UsuarioRepositoryInterface
      * @return bool
      */
     public function deleteUser(int $id): bool;
+
+     /**
+     * @param string $password
+     * @param string $hash
+     * @return bool
+     */
+    public function verifyPassword(string $password, string $hash): bool;
 }

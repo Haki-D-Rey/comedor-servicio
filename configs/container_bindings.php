@@ -12,14 +12,21 @@ use App\Services\DatabaseManager;
 use App\Config;
 use App\Repository\UsuarioRepository;
 use App\Services\UsuarioServices;
+use Config\LoggerFactory;
 use Doctrine\DBAL\DriverManager;
+use Psr\Log\LoggerInterface;
 
-// Incluir el archivo settings.php
 $settings = require __DIR__ . '/../configs/settings.php';
 
 return [
     'settings' => function () use ($settings) {
         return $settings;
+    },
+
+    Config::class => create(Config::class)->constructor($_ENV),
+
+    LoggerInterface::class => function () {
+        return LoggerFactory::createLogger();
     },
 
     DatabaseManager::class => function (ContainerInterface $container) {
@@ -50,13 +57,10 @@ return [
     // Alias para EntityManagerInterface
     EntityManagerInterface::class => DI\get(EntityManager::class),
 
-    // UsuarioModel::class => function (ContainerInterface $container) {
-    //     return new UsuarioModel($container->get(EntityManagerInterface::class));
-    // },
-
     UsuarioRepository::class => function (ContainerInterface $container) {
-        return new UsuarioRepository($container->get(EntityManagerInterface::class));
+        return new UsuarioRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
     },
+
 
     UsuarioServices::class => function (ContainerInterface $container) {
         return new UsuarioServices($container->get(UsuarioRepository::class));
@@ -65,6 +69,4 @@ return [
     UsuarioController::class => function (ContainerInterface $container) {
         return new UsuarioController($container->get(UsuarioServices::class));
     },
-
-    Config::class => create(Config::class)->constructor($_ENV),
 ];

@@ -5,12 +5,17 @@ namespace App\Repository;
 use App\DTO\UsuarioDTO;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\DBAL\Exception as DBALException;
+use Psr\Log\LoggerInterface as LogLoggerInterface;
 
 class UsuarioRepository extends GenericRepository implements UsuarioRepositoryInterface
 {
-    public function __construct(EntityManagerInterface $entityManager)
+    private $logger;
+    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface)
     {
         parent::__construct($entityManager, Usuario::class);
+        $this->logger = $loggerInterface;
     }
 
     public function getAllUsuarios(): array
@@ -55,20 +60,31 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
 
     public function createUser(UsuarioDTO $usuarioDTO): bool
     {
-        $usuario = new Usuario();
-        $usuario->setNombreUsuario($usuarioDTO->getNombreUsuario());
-        $usuario->setContrasenia($usuarioDTO->getContrasenia());
-        $usuario->setNombres($usuarioDTO->getNombres());
-        $usuario->setApellidos($usuarioDTO->getApellidos());
-        $usuario->setCorreo($usuarioDTO->getCorreo());
-        $usuario->setFechaCreacion($usuarioDTO->getFechaCreacion());
-        $usuario->setFechaModificacion($usuarioDTO->getFechaModificacion());
-        $usuario->setEstado($usuarioDTO->getEstado());
+        try {
+            $usuario = new Usuario();
+            $usuario->setNombreUsuario($usuarioDTO->getNombreUsuario());
+            $usuario->setContrasenia($this->hashPassword($usuarioDTO->getContrasenia()));
+            $usuario->setNombres($usuarioDTO->getNombres());
+            $usuario->setApellidos($usuarioDTO->getApellidos());
+            $usuario->setCorreo($usuarioDTO->getCorreo());
+            $usuario->setFechaCreacion($usuarioDTO->getFechaCreacion());
+            $usuario->setFechaModificacion($usuarioDTO->getFechaModificacion());
+            $usuario->setEstado($usuarioDTO->getEstado());
 
-        $this->entityManager->persist($usuario);
-        $this->entityManager->flush();
+            $this->entityManager->persist($usuario);
+            $this->entityManager->flush();
 
-        return true;
+            return true;
+        }catch (ORMException $e) {
+            $this->logger->error('Error al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
+            return false;
+        } catch (DBALException $e) {
+            $this->logger->error('Error en la base de datos al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
+            return false;
+        } catch (\Throwable $e) {
+            $this->logger->error('Error inesperado al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
+            return false;
+        }
     }
 
     public function updateUser(int $id, UsuarioDTO $usuarioDTO): bool
@@ -102,5 +118,15 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
         $this->entityManager->flush();
 
         return true;
+    }
+
+    private function hashPassword(string $password): string
+    {
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+
+    public function verifyPassword(string $password, string $hash): bool
+    {
+        return password_verify($password, $hash);
     }
 }

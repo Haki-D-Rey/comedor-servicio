@@ -17,7 +17,7 @@ class UsuarioDTO implements JsonSerializable
     private $estado;
 
     public function __construct(
-        int $id,
+        ?int $id,
         string $nombreUsuario,
         string $contrasenia,
         string $nombres,
