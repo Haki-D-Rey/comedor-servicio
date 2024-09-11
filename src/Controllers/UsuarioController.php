@@ -89,7 +89,7 @@ class UsuarioController
                 $data['correo'],
                 $data['fecha_creacion'] ?? new \DateTime(),
                 $data['fecha_modificacion'] ?? new \DateTime(),
-                $data['isAdmin'] ?? 0,
+                $data['isadmin'] ?? 0,
                 $data['estado'] ?? 1
             );
 

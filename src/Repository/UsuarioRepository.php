@@ -72,7 +72,7 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
     public function createUser(UsuarioDTO $usuarioDTO): void
     {
         try {
-            
+
             $existingUsuarioByNombre = $this->entityManager->getRepository(Usuario::class)
                 ->findOneBy(['nombreUsuario' => $usuarioDTO->getNombreUsuario()]);
 
@@ -80,7 +80,7 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                 throw new \RuntimeException('El nombre de usuario ya está en uso.');
             }
 
-            
+
             $existingUsuarioByCorreo = $this->entityManager->getRepository(Usuario::class)
                 ->findOneBy(['correo' => $usuarioDTO->getCorreo()]);
 
@@ -121,14 +121,14 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
             $existingUsuarioByNombre = $this->entityManager->getRepository(Usuario::class)
                 ->findOneBy(['nombreUsuario' => $usuarioDTO->getNombreUsuario()]);
 
-            if ($existingUsuarioByNombre && $usuario->getNombreusuario() != $existingUsuarioByNombre -> getNombreusuario()) {
+            if ($existingUsuarioByNombre && $usuario->getNombreusuario() != $existingUsuarioByNombre->getNombreusuario()) {
                 throw new \RuntimeException('El nombre de usuario ya está en uso.');
             }
 
             $existingUsuarioByCorreo = $this->entityManager->getRepository(Usuario::class)
                 ->findOneBy(['correo' => $usuarioDTO->getCorreo()]);
 
-            if ($existingUsuarioByCorreo && $usuario->getCorreo() != $existingUsuarioByCorreo-> getCorreo()) {
+            if ($existingUsuarioByCorreo && $usuario->getCorreo() != $existingUsuarioByCorreo->getCorreo()) {
                 throw new \RuntimeException('El correo ya está en uso.');
             }
 
@@ -144,13 +144,7 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
     public function deleteUser(int $id): void
     {
         try {
-            $usuario = $this->getEntityById($id);
-            if (!$usuario) {
-                throw new \RuntimeException('Usuario no encontrado.');
-            }
-
-            $this->entityManager->remove($usuario);
-            $this->entityManager->flush();
+            $this-> markAsDeleted($id, 0);  
         } catch (ORMException | DBALException $e) {
             $this->logger->error('Error al eliminar usuario: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException($e->getMessage());
