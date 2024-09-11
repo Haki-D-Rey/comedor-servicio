@@ -34,6 +34,9 @@ class Usuario
     #[ORM\Column(name: 'fecha_modificacion', type: 'datetime', nullable: true)]
     private ?\DateTime $fechaModificacion = null;
 
+    #[ORM\Column(name: 'isadmin', type: 'boolean', options: ['default' => false])]
+    private bool $isAdmin;
+
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
     
@@ -99,25 +102,36 @@ class Usuario
         return $this;
     }
 
-    public function getFechaCreacion(): ?\DateTimeInterface
+    public function getFecha_creacion(): ?\DateTimeInterface
     {
         return $this->fechaCreacion;
     }
 
-    public function setFechaCreacion(\DateTimeInterface $fechaCreacion): self
+    public function setFecha_creacion(\DateTimeInterface $fechaCreacion): self
     {
         $this->fechaCreacion = $fechaCreacion;
         return $this;
     }
 
-    public function getFechaModificacion(): ?\DateTimeInterface
+    public function getFecha_modificacion(): ?\DateTimeInterface
     {
         return $this->fechaModificacion;
     }
 
-    public function setFechaModificacion(?\DateTimeInterface $fechaModificacion): self
+    public function setFecha_modificacion(?\DateTimeInterface $fechaModificacion): self
     {
         $this->fechaModificacion = $fechaModificacion;
+        return $this;
+    }
+
+    public function getIsAdmin(): ?bool
+    {
+        return $this->isAdmin;
+    }
+
+    public function setIsAdmin(bool $isAdmin): self
+    {
+        $this->isAdmin = $isAdmin;
         return $this;
     }
 

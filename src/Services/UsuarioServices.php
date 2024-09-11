@@ -16,35 +16,46 @@ class UsuarioServices
 
     public function getAllUsers(): array
     {
-        return $this->usuarioRepository->getAllUsuarios();
+        try {
+            return $this->usuarioRepository->getAllUsuarios();
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al obtener usuarios: ' . $e->getMessage());
+        }
     }
 
     public function getUserById(int $id): ?UsuarioDTO
     {
-        return $this->usuarioRepository->getUsuarioById($id);
-    }
-
-    public function createUser(UsuarioDTO $usuarioDTO): bool
-    {
-        return $this->usuarioRepository->createUser($usuarioDTO);
-    }
-
-    public function updateUser(int $id, UsuarioDTO $usuarioDTO): bool
-    {
-        return $this->usuarioRepository->updateUser($id, $usuarioDTO);
-    }
-
-    public function deleteUser(int $id): bool
-    {
-        return $this->usuarioRepository->deleteUser($id);
-    }
-
-    public function verifyUserPassword(string $usuarioId, string $password): bool
-    {
-        $usuario = $this->usuarioRepository->getUsuarioById($usuarioId);
-        if (!$usuario) {
-            return false;
+        try {
+            return $this->usuarioRepository->getUsuarioById($id);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al obtener el usuario: ' . $e->getMessage());
         }
-        return $this->usuarioRepository->verifyPassword($password, $usuario->getContrasenia());
+    }
+
+    public function createUser(UsuarioDTO $usuarioDTO): void
+    {
+        try {
+            $this->usuarioRepository->createUser($usuarioDTO);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al crear el usuario: ' . $e->getMessage());
+        }
+    }
+
+    public function updateUser(int $id, UsuarioDTO $usuarioDTO): void
+    {
+        try {
+            $this->usuarioRepository->updateUser($id, $usuarioDTO);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al actualizar el usuario: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteUser(int $id): void
+    {
+        try {
+            $this->usuarioRepository->deleteUser($id);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al eliminar el usuario: ' . $e->getMessage());
+        }
     }
 }

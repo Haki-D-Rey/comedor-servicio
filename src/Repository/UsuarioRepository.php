@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface as LogLoggerInterface;
 class UsuarioRepository extends GenericRepository implements UsuarioRepositoryInterface
 {
     private $logger;
+
     public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface)
     {
         parent::__construct($entityManager, Usuario::class);
@@ -20,9 +21,36 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
 
     public function getAllUsuarios(): array
     {
-        $usuarios = $this->getAllEntities();
+        try {
+            $usuarios = $this->getAllEntities();
+            return array_map(function (Usuario $usuario) {
+                return new UsuarioDTO(
+                    $usuario->getId(),
+                    $usuario->getNombreUsuario(),
+                    $usuario->getContrasenia(),
+                    $usuario->getNombres(),
+                    $usuario->getApellidos(),
+                    $usuario->getCorreo(),
+                    $usuario->getFecha_creacion(),
+                    $usuario->getFecha_modificacion(),
+                    $usuario->getIsAdmin(),
+                    $usuario->getEstado()
+                );
+            }, $usuarios);
+        } catch (\Exception $e) {
+            $this->logger->error('Error al obtener usuarios: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException($e->getMessage());
+        }
+    }
 
-        return array_map(function (Usuario $usuario) {
+    public function getUsuarioById(int $id): ?UsuarioDTO
+    {
+        try {
+            $usuario = $this->getEntityById($id);
+            if (!$usuario) {
+                return null;
+            }
+
             return new UsuarioDTO(
                 $usuario->getId(),
                 $usuario->getNombreUsuario(),
@@ -30,94 +58,103 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                 $usuario->getNombres(),
                 $usuario->getApellidos(),
                 $usuario->getCorreo(),
-                $usuario->getFechaCreacion(),
-                $usuario->getFechaModificacion(),
+                $usuario->getFecha_creacion(),
+                $usuario->getFecha_modificacion(),
+                $usuario->getIsAdmin(),
                 $usuario->getEstado()
             );
-        }, $usuarios);
-    }
-
-    public function getUsuarioById(int $id): ?UsuarioDTO
-    {
-        $usuario = $this->getEntityById($id);
-
-        if (!$usuario) {
-            return null;
+        } catch (\Exception $e) {
+            $this->logger->error('Error al obtener usuario por ID: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException($e->getMessage());
         }
-
-        return new UsuarioDTO(
-            $usuario->getId(),
-            $usuario->getNombreUsuario(),
-            $usuario->getContrasenia(),
-            $usuario->getNombres(),
-            $usuario->getApellidos(),
-            $usuario->getCorreo(),
-            $usuario->getFechaCreacion(),
-            $usuario->getFechaModificacion(),
-            $usuario->getEstado()
-        );
     }
 
-    public function createUser(UsuarioDTO $usuarioDTO): bool
+    public function createUser(UsuarioDTO $usuarioDTO): void
     {
         try {
+            
+            $existingUsuarioByNombre = $this->entityManager->getRepository(Usuario::class)
+                ->findOneBy(['nombreUsuario' => $usuarioDTO->getNombreUsuario()]);
+
+            if ($existingUsuarioByNombre) {
+                throw new \RuntimeException('El nombre de usuario ya está en uso.');
+            }
+
+            
+            $existingUsuarioByCorreo = $this->entityManager->getRepository(Usuario::class)
+                ->findOneBy(['correo' => $usuarioDTO->getCorreo()]);
+
+            if ($existingUsuarioByCorreo) {
+                throw new \RuntimeException('El correo ya está en uso.');
+            }
+
             $usuario = new Usuario();
             $usuario->setNombreUsuario($usuarioDTO->getNombreUsuario());
             $usuario->setContrasenia($this->hashPassword($usuarioDTO->getContrasenia()));
             $usuario->setNombres($usuarioDTO->getNombres());
             $usuario->setApellidos($usuarioDTO->getApellidos());
             $usuario->setCorreo($usuarioDTO->getCorreo());
-            $usuario->setFechaCreacion($usuarioDTO->getFechaCreacion());
-            $usuario->setFechaModificacion($usuarioDTO->getFechaModificacion());
+            $usuario->setFecha_creacion($usuarioDTO->getFecha_creacion());
+            $usuario->setFecha_modificacion($usuarioDTO->getFecha_modificacion());
+            $usuario->setIsAdmin($usuarioDTO->getIsAdmin());
             $usuario->setEstado($usuarioDTO->getEstado());
 
             $this->entityManager->persist($usuario);
             $this->entityManager->flush();
-
-            return true;
-        }catch (ORMException $e) {
+        } catch (ORMException | DBALException $e) {
             $this->logger->error('Error al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
-            return false;
-        } catch (DBALException $e) {
-            $this->logger->error('Error en la base de datos al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
-            return false;
+            throw new \RuntimeException('Error al crear usuario.');
         } catch (\Throwable $e) {
             $this->logger->error('Error inesperado al crear usuario: ' . $e->getMessage(), ['exception' => $e]);
-            return false;
+            throw new \RuntimeException($e->getMessage());
         }
     }
 
-    public function updateUser(int $id, UsuarioDTO $usuarioDTO): bool
+    public function updateUser(int $id, UsuarioDTO $usuarioDTO): void
     {
-        $usuario = $this->getEntityById($id);
-        if (!$usuario) {
-            return false;
+        try {
+            $usuario = $this->getEntityById($id);
+            if (!$usuario) {
+                throw new \RuntimeException('Usuario no encontrado.');
+            }
+
+            $existingUsuarioByNombre = $this->entityManager->getRepository(Usuario::class)
+                ->findOneBy(['nombreUsuario' => $usuarioDTO->getNombreUsuario()]);
+
+            if ($existingUsuarioByNombre && $usuario->getNombreusuario() != $existingUsuarioByNombre -> getNombreusuario()) {
+                throw new \RuntimeException('El nombre de usuario ya está en uso.');
+            }
+
+            $existingUsuarioByCorreo = $this->entityManager->getRepository(Usuario::class)
+                ->findOneBy(['correo' => $usuarioDTO->getCorreo()]);
+
+            if ($existingUsuarioByCorreo && $usuario->getCorreo() != $existingUsuarioByCorreo-> getCorreo()) {
+                throw new \RuntimeException('El correo ya está en uso.');
+            }
+
+            $excludePropertyName = ['fecha_creacion'];
+            $this->updateEntityFromDTO($usuario, $usuarioDTO, $excludePropertyName);
+            $this->entityManager->flush();
+        } catch (ORMException | DBALException $e) {
+            $this->logger->error('Error al actualizar usuario: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException($e->getMessage());
         }
-
-        $usuario->setNombreUsuario($usuarioDTO->getNombreUsuario());
-        $usuario->setContrasenia($usuarioDTO->getContrasenia());
-        $usuario->setNombres($usuarioDTO->getNombres());
-        $usuario->setApellidos($usuarioDTO->getApellidos());
-        $usuario->setCorreo($usuarioDTO->getCorreo());
-        $usuario->setFechaModificacion($usuarioDTO->getFechaModificacion());
-        $usuario->setEstado($usuarioDTO->getEstado());
-
-        $this->entityManager->flush();
-
-        return true;
     }
 
-    public function deleteUser(int $id): bool
+    public function deleteUser(int $id): void
     {
-        $usuario = $this->getEntityById($id);
-        if (!$usuario) {
-            return false;
+        try {
+            $usuario = $this->getEntityById($id);
+            if (!$usuario) {
+                throw new \RuntimeException('Usuario no encontrado.');
+            }
+
+            $this->entityManager->remove($usuario);
+            $this->entityManager->flush();
+        } catch (ORMException | DBALException $e) {
+            $this->logger->error('Error al eliminar usuario: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException($e->getMessage());
         }
-
-        $this->entityManager->remove($usuario);
-        $this->entityManager->flush();
-
-        return true;
     }
 
     private function hashPassword(string $password): string

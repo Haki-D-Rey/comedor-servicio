@@ -12,8 +12,9 @@ class UsuarioDTO implements JsonSerializable
     private $nombres;
     private $apellidos;
     private $correo;
-    private $fechaCreacion;
-    private $fechaModificacion;
+    private $fecha_creacion;
+    private $fecha_modificacion;
+    private $isadmin;
     private $estado;
 
     public function __construct(
@@ -23,8 +24,9 @@ class UsuarioDTO implements JsonSerializable
         string $nombres,
         string $apellidos,
         string $correo,
-        \DateTime $fechaCreacion,
-        ?\DateTime $fechaModificacion,
+        \DateTime $fecha_creacion,
+        ?\DateTime $fecha_modificacion,
+        bool $isadmin,
         bool $estado
     ) {
         $this->id = $id;
@@ -33,8 +35,9 @@ class UsuarioDTO implements JsonSerializable
         $this->nombres = $nombres;
         $this->apellidos = $apellidos;
         $this->correo = $correo;
-        $this->fechaCreacion = $fechaCreacion;
-        $this->fechaModificacion = $fechaModificacion;
+        $this->fecha_creacion = $fecha_creacion;
+        $this->fecha_modificacion = $fecha_modificacion;
+        $this->isadmin = $isadmin;
         $this->estado = $estado;
     }
 
@@ -69,14 +72,19 @@ class UsuarioDTO implements JsonSerializable
         return $this->correo;
     }
 
-    public function getFechaCreacion(): \DateTime
+    public function getFecha_creacion(): \DateTime
     {
-        return $this->fechaCreacion;
+        return $this->fecha_creacion;
     }
 
-    public function getFechaModificacion(): ?\DateTime
+    public function getFecha_modificacion(): ?\DateTime
     {
-        return $this->fechaModificacion;
+        return $this->fecha_modificacion;
+    }
+
+    public function getIsAdmin(): bool
+    {
+        return $this->isadmin;
     }
 
     public function getEstado(): bool
@@ -94,8 +102,9 @@ class UsuarioDTO implements JsonSerializable
             'nombres' => $this->nombres,
             'apellidos' => $this->apellidos,
             'correo' => $this->correo,
-            'fechaCreacion' => $this->fechaCreacion->format(\DateTime::ISO8601),
-            'fechaModificacion' => $this->fechaModificacion ? $this->fechaModificacion->format(\DateTime::ISO8601) : null,
+            'fecha_creacion' => $this->fecha_creacion->format(\DateTime::ISO8601),
+            'fecha_modificacion' => $this->fecha_modificacion ? $this->fecha_modificacion->format(\DateTime::ISO8601) : null,
+            'isadmin' => $this->isadmin,
             'estado' => $this->estado,
         ];
     }

@@ -21,20 +21,20 @@ interface UsuarioRepositoryInterface
      * @param UsuarioDTO $usuarioDTO
      * @return bool
      */
-    public function createUser(UsuarioDTO $usuarioDTO): bool;
+    public function createUser(UsuarioDTO $usuarioDTO): void;
 
     /**
      * @param int $id
      * @param UsuarioDTO $usuarioDTO
      * @return bool
      */
-    public function updateUser(int $id, UsuarioDTO $usuarioDTO): bool;
+    public function updateUser(int $id, UsuarioDTO $usuarioDTO): void;
 
     /**
      * @param int $id
      * @return bool
      */
-    public function deleteUser(int $id): bool;
+    public function deleteUser(int $id): void;
 
      /**
      * @param string $password

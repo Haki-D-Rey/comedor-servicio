@@ -18,88 +18,101 @@ class UsuarioController
 
     public function getAllUsuarios(Request $request, Response $response): Response
     {
-        $usuarios = $this->usuarioService->getAllUsers();
-        $response->getBody()->write(json_encode($usuarios));
-        return $response->withHeader('Content-Type', 'application/json');
+        try {
+            $usuarios = $this->usuarioService->getAllUsers();
+            $response->getBody()->write(json_encode($usuarios));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
     }
 
     public function getUsuarioById(Request $request, Response $response, array $args): Response
     {
-        $id = (int) $args['id'];
-        $usuario = $this->usuarioService->getUserById($id);
-        
-        if ($usuario === null) {
-            $response->getBody()->write(json_encode(['message' => 'Usuario no encontrado']));
-            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-        }
+        try {
+            $id = (int) $args['id'];
+            $usuario = $this->usuarioService->getUserById($id);
 
-        $response->getBody()->write(json_encode($usuario));
-        return $response->withHeader('Content-Type', 'application/json');
+            if ($usuario === null) {
+                $response->getBody()->write(json_encode(['estado' => false, 'message' => 'Usuario no encontrado']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+            }
+
+            $response->getBody()->write(json_encode($usuario));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
     }
 
     public function createUsuario(Request $request, Response $response): Response
     {
         $data = json_decode($request->getBody()->getContents(), true);
 
-        $usuarioDTO = new UsuarioDTO(
-            $data['id'] ?? null,
-            $data['nombreUsuario'],
-            $data['contrasenia'],
-            $data['nombres'],
-            $data['apellidos'],
-            $data['correo'],
-            new \DateTime($data['fechaCreacion']),
-            isset($data['fechaModificacion']) ? new \DateTime($data['fechaModificacion']) : null,
-            $data['estado']
-        );
+        try {
+            $usuarioDTO = new UsuarioDTO(
+                null,
+                $data['nombreUsuario'],
+                $data['contrasenia'],
+                $data['nombres'],
+                $data['apellidos'],
+                $data['correo'],
+                new \DateTime(),
+                null,
+                $data['isAdmin'] ?? 0,
+                1
+            );
 
-        $created = $this->usuarioService->createUser($usuarioDTO);
-        if ($created) {
-            $response->getBody()->write(json_encode(['message' => 'Usuario creado']));
-            return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
+            $this->usuarioService->createUser($usuarioDTO);
+            $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Usuario creado exitosamente']));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
-
-        $response->getBody()->write(json_encode(['message' => 'Error al crear usuario']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
     public function updateUsuario(Request $request, Response $response, array $args): Response
     {
-        $id = (int) $args['id'];
         $data = json_decode($request->getBody()->getContents(), true);
+        $id = (int) $args['id'];
 
-        $usuarioDTO = new UsuarioDTO(
-            $id,
-            $data['nombreUsuario'],
-            $data['contrasenia'],
-            $data['nombres'],
-            $data['apellidos'],
-            $data['correo'],
-            isset($data['fechaCreacion']) ? new \DateTime($data['fechaCreacion']) : null,
-            isset($data['fechaModificacion']) ? new \DateTime($data['fechaModificacion']) : null,
-            $data['estado']
-        );
+        try {
+            $usuarioDTO = new UsuarioDTO(
+                $id,
+                $data['nombreUsuario'],
+                $data['contrasenia'],
+                $data['nombres'],
+                $data['apellidos'],
+                $data['correo'],
+                $data['fecha_creacion'] ?? new \DateTime(),
+                $data['fecha_modificacion'] ?? new \DateTime(),
+                $data['isAdmin'] ?? 0,
+                $data['estado'] ?? 1
+            );
 
-        $updated = $this->usuarioService->updateUser($id, $usuarioDTO);
-        if ($updated) {
-            $response->getBody()->write(json_encode(['message' => 'Usuario actualizado']));
-            return $response->withHeader('Content-Type', 'application/json');
+            $this->usuarioService->updateUser($id, $usuarioDTO);
+            $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Usuario actualizado exitosamente']));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
-
-        $response->getBody()->write(json_encode(['message' => 'Error al actualizar usuario']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
     public function deleteUsuario(Request $request, Response $response, array $args): Response
     {
         $id = (int) $args['id'];
-        $deleted = $this->usuarioService->deleteUser($id);
-        if ($deleted) {
-            $response->getBody()->write(json_encode(['message' => 'Usuario eliminado']));
-            return $response->withHeader('Content-Type', 'application/json');
-        }
 
-        $response->getBody()->write(json_encode(['message' => 'Error al eliminar usuario']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        try {
+            $this->usuarioService->deleteUser($id);
+            $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Usuario eliminado exitosamente']));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
     }
 }

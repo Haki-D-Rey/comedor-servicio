@@ -60,8 +60,7 @@ return [
     UsuarioRepository::class => function (ContainerInterface $container) {
         return new UsuarioRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
     },
-
-
+    
     UsuarioServices::class => function (ContainerInterface $container) {
         return new UsuarioServices($container->get(UsuarioRepository::class));
     },
