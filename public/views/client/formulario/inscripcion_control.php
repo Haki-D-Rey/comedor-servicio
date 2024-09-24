@@ -33,7 +33,7 @@ ob_start(); ?>
         </div>
         <div class="col-12">
             <input type="hidden" id="serviceCounts" name="serviceCounts">
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary w-25">Enviar</button>
         </div>
     </form>
 

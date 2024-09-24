@@ -74,11 +74,11 @@ class ApiController
 
     public function getConnection()
     {
-        $multiDB = new DB($this->databases);
+        // $multiDB = new DB($this->databases);
 
         try {
 
-            var_dump($multiDB->connections);
+            // var_dump($multiDB->connections);
         } catch (\Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }

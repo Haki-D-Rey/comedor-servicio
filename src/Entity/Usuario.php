@@ -29,10 +29,10 @@ class Usuario
     private string $correo;
 
     #[ORM\Column(name: 'fecha_creacion', type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
-    private \DateTime $fechaCreacion;
+    private \DateTime $fecha_creacion;
 
     #[ORM\Column(name: 'fecha_modificacion', type: 'datetime', nullable: true)]
-    private ?\DateTime $fechaModificacion = null;
+    private ?\DateTime $fecha_modificacion = null;
 
     #[ORM\Column(name: 'isadmin', type: 'boolean', options: ['default' => false])]
     private bool $isAdmin;
@@ -104,23 +104,23 @@ class Usuario
 
     public function getFecha_creacion(): ?\DateTimeInterface
     {
-        return $this->fechaCreacion;
+        return $this->fecha_creacion;
     }
 
-    public function setFecha_creacion(\DateTimeInterface $fechaCreacion): self
+    public function setFecha_creacion(\DateTimeInterface $fecha_creacion): self
     {
-        $this->fechaCreacion = $fechaCreacion;
+        $this->fecha_creacion = $fecha_creacion;
         return $this;
     }
 
     public function getFecha_modificacion(): ?\DateTimeInterface
     {
-        return $this->fechaModificacion;
+        return $this->fecha_modificacion;
     }
 
-    public function setFecha_modificacion(?\DateTimeInterface $fechaModificacion): self
+    public function setFecha_modificacion(?\DateTimeInterface $fecha_modificacion): self
     {
-        $this->fechaModificacion = $fechaModificacion;
+        $this->fecha_modificacion = $fecha_modificacion;
         return $this;
     }
 

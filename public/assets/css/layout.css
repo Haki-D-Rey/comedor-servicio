@@ -5,7 +5,7 @@
   --dark: rgba(255, 255, 255, 0.336);
   --purple: #056119;
   --pink: #142c7a;
-  --white:#808011;
+  --white: #808011;
 }
 
 body {
@@ -374,14 +374,16 @@ video {
   fill: var(--dark);
   stroke: var(--pink);
   stroke-width: 5;
-  stroke-dasharray:.1 .9; stroke-dashoffset: .05;
+  stroke-dasharray: .1 .9;
+  stroke-dashoffset: .05;
 }
 
 .ring--hours {
   fill: transparent;
   stroke: var(--purple);
   stroke-width: 10;
-  stroke-dasharray:.05 .95; stroke-dashoffset: .025;
+  stroke-dasharray: .05 .95;
+  stroke-dashoffset: .025;
 }
 
 .ring--center {
@@ -416,4 +418,122 @@ video {
   fill: var(--pink);
   font-size: .8rem;
   text-transform: uppercase;
+}
+
+.login-container {
+  background-color: rgba(255, 255, 255, 0.212);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+  max-width: 450px;
+  width: 100%;
+}
+
+.input-group-text {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.form-control {
+  border-left: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: 2px solid #007bff;
+  border-radius: 0;
+}
+
+.form-control:focus {
+  box-shadow: none;
+  border-bottom-color: #0056b3;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  width: 100%;
+  margin-top: 20px;
+  font-weight: bold;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.form-footer a {
+  color: var(--purple);
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Media query for screens smaller than 1267px */
+@media (max-width: 1267px) {
+  .login-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .input-group-text {
+    padding: 10px;
+  }
+
+  .btn-primary {
+    padding: 8px 16px;
+    font-size: 16px;
+  }
+
+  .form-footer {
+    font-size: 14px;
+  }
+}
+
+/* Media query for screens smaller than 768px */
+@media (max-width: 768px) {
+  /* body {
+      padding: 20px;
+  } */
+
+  .login-container {
+    padding: 20px;
+  }
+
+  .custom-heading {
+    font-size: 14px;
+  }
+
+
+  .hr-heading {
+    content: '';
+    display: block;
+    background-color: rgba(0, 100, 0, 0.767);
+    height: 4px;
+    width: 80px !important;
+    width: 50%;
+    margin-top: 0.5rem;
+    border: 0;
+    opacity: 100;
+  }
+
+  .input-group-text {
+    font-size: 8px;
+  }
+
+  .btn-primary {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .form-footer {
+    font-size: 12px;
+  }
 }

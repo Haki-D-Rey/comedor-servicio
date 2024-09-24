@@ -7,14 +7,35 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMSetup;
 use Psr\Container\ContainerInterface;
-use App\Controllers\UsuarioController;
 use App\Services\DatabaseManager;
 use App\Config;
-use App\Repository\UsuarioRepository;
-use App\Services\UsuarioServices;
 use Config\LoggerFactory;
 use Doctrine\DBAL\DriverManager;
 use Psr\Log\LoggerInterface;
+
+//Controller
+use App\Controllers\AuthController;
+use App\Controllers\UsuarioController;
+use App\Controllers\SistemasController;
+use App\Controllers\TipoServiciosController;
+use App\Controllers\ServiciosProductosController;
+use App\Controllers\ServiciosProductosDetallesController;
+
+//Repository
+use App\Repository\AuthRepository;
+use App\Repository\UsuarioRepository;
+use App\Repository\SistemasRepository;
+use App\Repository\TipoServiciosRepository;
+use App\Repository\ServiciosProductosRepository;
+use App\Repository\ServiciosProductosDetallesRepository;
+
+//Services
+use App\Services\AuthServices;
+use App\Services\UsuarioServices;
+use App\Services\SistemasServices;
+use App\Services\TipoServiciosServices;
+use App\Services\ServiciosProductosServices;
+use App\Services\ServiciosProductosDetallesServices;
 
 $settings = require __DIR__ . '/../configs/settings.php';
 
@@ -39,7 +60,7 @@ return [
 
         $config = ORMSetup::createAttributeMetadataConfiguration(
             [__DIR__ . '/../src/Entity'], // Directorio donde están tus entidades
-            true, // Habilitar modo de desarrollo (para caché, etc.)
+            false, // Habilitar modo de desarrollo (para caché, etc.)
         );
 
         $connectionParams = [
@@ -60,7 +81,7 @@ return [
     UsuarioRepository::class => function (ContainerInterface $container) {
         return new UsuarioRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
     },
-    
+
     UsuarioServices::class => function (ContainerInterface $container) {
         return new UsuarioServices($container->get(UsuarioRepository::class));
     },
@@ -68,4 +89,65 @@ return [
     UsuarioController::class => function (ContainerInterface $container) {
         return new UsuarioController($container->get(UsuarioServices::class));
     },
+
+    AuthRepository::class => function (ContainerInterface $container) {
+        return new AuthRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container);
+    },
+
+    AuthServices::class => function (ContainerInterface $container) {
+        return new AuthServices($container->get(AuthRepository::class));
+    },
+
+    AuthController::class => function (ContainerInterface $container) {
+        return new AuthController($container->get(AuthServices::class), $container);
+    },
+
+    SistemasRepository::class => function (ContainerInterface $container) {
+        return new SistemasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    SistemasServices::class => function (ContainerInterface $container) {
+        return new SistemasServices($container->get(SistemasRepository::class));
+    },
+
+    SistemasController::class => function (ContainerInterface $container) {
+        return new SistemasController($container->get(SistemasServices::class));
+    },
+
+    TipoServiciosRepository::class => function (ContainerInterface $container) {
+        return new TipoServiciosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    TipoServiciosServices::class => function (ContainerInterface $container) {
+        return new TipoServiciosServices($container->get(TipoServiciosRepository::class));
+    },
+
+    TipoServiciosController::class => function (ContainerInterface $container) {
+        return new TipoServiciosController($container->get(TipoServiciosServices::class));
+    },
+
+    ServiciosProductosRepository::class => function (ContainerInterface $container) {
+        return new ServiciosProductosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ServiciosProductosServices::class => function (ContainerInterface $container) {
+        return new ServiciosProductosServices($container->get(ServiciosProductosRepository::class));
+    },
+
+    ServiciosProductosController::class => function (ContainerInterface $container) {
+        return new ServiciosProductosController($container->get(ServiciosProductosServices::class));
+    },
+
+    ServiciosProductosDetallesRepository::class => function (ContainerInterface $container) {
+        return new ServiciosProductosDetallesRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ServiciosProductosDetallesServices::class => function (ContainerInterface $container) {
+        return new ServiciosProductosDetallesServices($container->get(ServiciosProductosDetallesRepository::class));
+    },
+
+    ServiciosProductosDetallesController::class => function (ContainerInterface $container) {
+        return new ServiciosProductosDetallesController($container->get(ServiciosProductosDetallesServices::class));
+    },
+
 ];
