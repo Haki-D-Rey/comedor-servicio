@@ -2,10 +2,10 @@
 
 namespace App\Repository;
 
-use App\DTO\ServiciosProductosDetallesDTO;
-use App\Entity\ServiciosProductosDetalles;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
+use App\DTO\ServiciosProductosDetallesDTO;
+use App\Entity\ServiciosProductosDetalles;
 use Doctrine\DBAL\Exception as DBALException;
 use Psr\Log\LoggerInterface as LogLoggerInterface;
 
@@ -24,11 +24,11 @@ class ServiciosProductosDetallesRepository extends GenericRepository implements 
         try {
             $serviciosProductosDetalles = $this->getAllEntities();
             return array_map(function (ServiciosProductosDetalles $serviciosProductosDetalles) {
-                return new ServiciosProductosDetalles(
+                return new ServiciosProductosDetallesDTO(
                     $serviciosProductosDetalles->getId(),
-                    1,
-                    1,
-                    1,
+                    $serviciosProductosDetalles->getIdSistemas(),
+                    $serviciosProductosDetalles->getIdTipoServicios(),
+                    $serviciosProductosDetalles->getIdServiciosProductos(),
                     $serviciosProductosDetalles->getNombre(),
                     $serviciosProductosDetalles->getDescripcion(),
                     $serviciosProductosDetalles->getcodigo_interno(),

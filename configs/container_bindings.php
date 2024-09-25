@@ -60,7 +60,7 @@ return [
 
         $config = ORMSetup::createAttributeMetadataConfiguration(
             [__DIR__ . '/../src/Entity'], // Directorio donde están tus entidades
-            false, // Habilitar modo de desarrollo (para caché, etc.)
+            true, // Habilitar modo de desarrollo (para caché, etc.)
         );
 
         $connectionParams = [

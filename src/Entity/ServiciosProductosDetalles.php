@@ -44,7 +44,7 @@ class ServiciosProductosDetalles
      * Many ServiciosProductosDetalles have One TipoServicio.
      * @var TipoServicios
      */
-    #[ORM\ManyToMany(targetEntity: TipoServicios::class, inversedBy: 'serviciosProductosDetalles')]
+    #[ORM\ManyToOne(targetEntity: TipoServicios::class, inversedBy: 'serviciosProductosDetalles')]
     #[ORM\JoinColumn(name: 'id_tipo_servicios', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private TipoServicios $tipoServicios;
 
@@ -52,7 +52,7 @@ class ServiciosProductosDetalles
      * Many ServiciosProductosDetalles have One ServicioProducto.
      * @var ServiciosProductos
      */
-    #[ORM\ManyToMany(targetEntity: ServiciosProductos::class, inversedBy: 'serviciosProductosDetalles')]
+    #[ORM\ManyToOne(targetEntity: ServiciosProductos::class, inversedBy: 'serviciosProductosDetalles')]
     #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ServiciosProductos $serviciosProductos;
 
