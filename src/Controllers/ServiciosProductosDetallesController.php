@@ -54,9 +54,9 @@ class ServiciosProductosDetallesController
         try {
             $tipoServiciosDTO = new ServiciosProductosDetallesDTO(
                 null,
-                1,
-                1,
-                1,  
+                $data['idSistema'],
+                $data['idTipoServicios'],
+                $data['idServiciosProductos'], 
                 $data['nombre'],
                 $data['descripcion'],
                 $data['codigo_interno'],
@@ -82,9 +82,9 @@ class ServiciosProductosDetallesController
         try {
             $tipoServiciosDTO = new ServiciosProductosDetallesDTO(
                 $id,
-                1,
-                1,
-                1,                
+                $data['idSistema'],
+                $data['idTipoServicios'],
+                $data['idServiciosProductos'],                
                 $data['nombre'],
                 $data['descripcion'],
                 $data['codigo_interno'],

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\DTO\ServiciosProductosDTO;
-use App\Repository\ServiciosProductosRepositoryInterface;
+use App\Repository\Catalogo\Interface\ServiciosProductosRepositoryInterface;
 
 class ServiciosProductosServices
 {

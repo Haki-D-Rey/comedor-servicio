@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Catalogo\Repository;
 
 use App\DTO\SistemasDTO;
 use App\Entity\Sistemas;
+use App\Repository\Catalogo\Interface\SistemasRepositoryInterface;
+use App\Repository\GenericRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\DBAL\Exception as DBALException;

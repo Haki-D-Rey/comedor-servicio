@@ -10,7 +10,7 @@ class DetalleZonasServicioHorarioDTO implements JsonSerializable
     private ?int $id;
     private int $idServiciosProductosDetalles;
     private int $idHorario;
-    private int $idZona;
+    private int $idZonaUsuario;
     private string $nombre;
     private string $descripcion;
     private string $codigo_interno;
@@ -22,7 +22,7 @@ class DetalleZonasServicioHorarioDTO implements JsonSerializable
         ?int $id,
         int $idServiciosProductosDetalles,
         int $idHorario,
-        int $idZona,
+        int $idZonaUsuario,
         string $nombre,
         string $descripcion,
         string $codigo_interno,
@@ -33,7 +33,7 @@ class DetalleZonasServicioHorarioDTO implements JsonSerializable
         $this->id = $id;
         $this->idServiciosProductosDetalles = $idServiciosProductosDetalles;
         $this->idHorario = $idHorario;
-        $this->idZona = $idZona;
+        $this->idZonaUsuario = $idZonaUsuario;
         $this->nombre = $nombre;
         $this->descripcion = $descripcion;
         $this->codigo_interno = $codigo_interno;
@@ -46,6 +46,21 @@ class DetalleZonasServicioHorarioDTO implements JsonSerializable
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getIdServiciosProductoDetalles(): ?int
+    {
+        return $this->idServiciosProductosDetalles;
+    }
+
+    public function getIdHorario(): ?int
+    {
+        return $this->idHorario;
+    }
+
+    public function getIdZonaUsuario(): ?int
+    {
+        return $this->idZonaUsuario;
     }
 
     public function getNombre(): string
@@ -84,7 +99,7 @@ class DetalleZonasServicioHorarioDTO implements JsonSerializable
             'id' => $this->id,
             'idServiciosProductosDetalles' => $this->idServiciosProductosDetalles,
             'idHorario' => $this-> idHorario,
-            'idZona' => $this-> idZona,
+            'idZonaUsuario' => $this-> idZonaUsuario,
             'nombre' => $this->nombre,
             'descripcion' => $this->descripcion,
             'codigo_interno' => $this->codigo_interno,

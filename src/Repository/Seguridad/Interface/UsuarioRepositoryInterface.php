@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Seguridad\Interface;
 
 use App\DTO\UsuarioDTO;
 

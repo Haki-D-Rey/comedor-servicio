@@ -8,7 +8,7 @@ return function (App $app) {
 
     $app->group('/servicios-productos', function (RouteCollectorProxy $group) {
         // Rutas estáticas
-        $group->get('/all', ServiciosProductosController::class . ':getAllServiciosProductos');
+        $group->get('/all', ServiciosProductosController::class . ':getAllServiciosProductos')->setname('servicio_producto.list_all');
 
         // Rutas dinámicas
         $group->get('/{id}', ServiciosProductosController::class . ':getServiciosProductoById');

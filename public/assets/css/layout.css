@@ -163,11 +163,11 @@ video {
   }
 
   main {
-    max-height: 75vh;
+    min-height: 75vh;
   }
 
   footer {
-    max-height: 10vh;
+    min-height: 10vh;
   }
 
   .container-footer-div-social img {
@@ -511,6 +511,35 @@ video {
     font-size: 14px;
   }
 
+  .content {
+    padding: 0;
+  }
+
+  div[for="component-filter"],
+  select option,
+  input[type="date"] {
+    font-size: 12px;
+    /* Ajusta el tamaño de la fuente */
+  }
+
+  div[for="serviceFilterContent"],
+  input,
+  label {
+    font-size: 12px;
+  }
+
+  .titleServiceFilter {
+    font-size: 14px;
+  }
+
+  .trash-icon {
+    font-size: 20px;
+  }
+
+  svg[data-icon="trash"]{
+    width: 8px;
+    height: 10px;
+  }
 
   .hr-heading {
     content: '';

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -39,7 +40,14 @@ class Usuario
 
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
-    
+
+    /**
+     * One TipoServicio has Many ServiciosProductosDetalles.
+     * @var Collection<int, ZonaUsuarios>
+     */
+    #[ORM\OneToMany(targetEntity: ZonaUsuarios::class, mappedBy: 'zonaUsuarios')]
+    private Collection $zonaUsuarios;
+
     // Getters and Setters
 
     public function getId(): ?int

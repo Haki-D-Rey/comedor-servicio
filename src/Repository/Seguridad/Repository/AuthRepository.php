@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Seguridad\Repository;
 
 use App\Entity\Usuario;
+use App\Repository\Seguridad\Interface\AuthRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Firebase\JWT\JWT;
 use Psr\Container\ContainerInterface;
@@ -50,6 +51,7 @@ class AuthRepository implements AuthRepositoryInterface
                 'nbf' => time(),
                 'exp' => $expirationTime,
                 'sub' => $user->getId(),
+                'user' => $user->getNombreUsuario()
             ];
 
             // Generar el token JWT
@@ -61,6 +63,7 @@ class AuthRepository implements AuthRepositoryInterface
 
             // Retornar la estructura requerida
             return [
+                'id' => $user->getId(),
                 'usuario' => $user->getNombreUsuario(),
                 'token' => $token,
                 'expiracion' => $expirationTime

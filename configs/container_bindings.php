@@ -15,27 +15,43 @@ use Psr\Log\LoggerInterface;
 
 //Controller
 use App\Controllers\AuthController;
+use App\Controllers\ConfiguracionServiciosEstadisticosController;
+use App\Controllers\ControlEstadisticosServiciosController;
+use App\Controllers\DetalleZonaServicioHorarioController;
 use App\Controllers\UsuarioController;
 use App\Controllers\SistemasController;
 use App\Controllers\TipoServiciosController;
 use App\Controllers\ServiciosProductosController;
 use App\Controllers\ServiciosProductosDetallesController;
-
+use App\Controllers\ZonaController;
+use App\Controllers\ZonaUsuariosController;
 //Repository
-use App\Repository\AuthRepository;
-use App\Repository\UsuarioRepository;
-use App\Repository\SistemasRepository;
-use App\Repository\TipoServiciosRepository;
-use App\Repository\ServiciosProductosRepository;
-use App\Repository\ServiciosProductosDetallesRepository;
-
+use App\Repository\Catalogo\Repository\DetalleZonaServicioHorarioRepository;
+use App\Repository\Catalogo\Repository\SistemasRepository;
+use App\Repository\Catalogo\Repository\TipoServiciosRepository;
+use App\Repository\Catalogo\Repository\ServiciosProductosRepository;
+use App\Repository\Catalogo\Repository\ServiciosProductosDetallesRepository;
+use App\Repository\Catalogo\Repository\ZonaRepository;
+use App\Repository\Publico\Interface\ConfiguracionServiciosEstadisticosRepositoryInterface;
+use App\Repository\Publico\Repository\ConfiguracionServiciosEstadisticosRepository;
+use App\Repository\Publico\Repository\ControlEstadisticosServiciosRepository;
+use App\Repository\Seguridad\Repository\ZonaUsuarioRepository;
+use App\Repository\Seguridad\Repository\AuthRepository;
+use App\Repository\Seguridad\Repository\UsuarioRepository;
 //Services
 use App\Services\AuthServices;
+use App\Services\ConfiguracionServiciosEstadisticosServices;
+use App\Services\ControlEstadisticosServiciosServices;
+use App\Services\DetalleZonaServicioHorarioServices;
 use App\Services\UsuarioServices;
 use App\Services\SistemasServices;
 use App\Services\TipoServiciosServices;
 use App\Services\ServiciosProductosServices;
 use App\Services\ServiciosProductosDetallesServices;
+use App\Services\ZonaServices;
+use App\Services\ZonaUsuariosServices;
+use Doctrine\DBAL\Types\Type;
+use Symfony\Component\Yaml\Yaml;
 
 $settings = require __DIR__ . '/../configs/settings.php';
 
@@ -56,6 +72,17 @@ return [
     },
 
     EntityManager::class => function (ContainerInterface $container) {
+
+        $configFile = __DIR__ . '/package/doctrine.yml';
+        $configArray = Yaml::parseFile($configFile);
+
+        if (!Type::hasType('uuid')) {
+            Type::addType('uuid', $configArray['doctrine']['types']['uuid']);
+        }
+
+        if (!Type::hasType('jsonb')) {
+            Type::addType('jsonb', $configArray['doctrine']['types']['jsonb']);
+        }
         $connectionConfig = $container->get('settings')['db']['dinning_services'];
 
         $config = ORMSetup::createAttributeMetadataConfiguration(
@@ -148,6 +175,68 @@ return [
 
     ServiciosProductosDetallesController::class => function (ContainerInterface $container) {
         return new ServiciosProductosDetallesController($container->get(ServiciosProductosDetallesServices::class));
+    },
+
+    DetalleZonaServicioHorarioRepository::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    DetalleZonaServicioHorarioServices::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioServices($container->get(DetalleZonaServicioHorarioRepository::class));
+    },
+
+    DetalleZonaServicioHorarioController::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioController($container->get(DetalleZonaServicioHorarioServices::class));
+    },
+
+    ZonaRepository::class => function (ContainerInterface $container) {
+        return new ZonaRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ZonaServices::class => function (ContainerInterface $container) {
+        return new ZonaServices($container->get(ZonaRepository::class));
+    },
+
+    ZonaController::class => function (ContainerInterface $container) {
+        return new ZonaController($container->get(ZonaServices::class));
+    },
+
+    ZonaUsuarioRepository::class => function (ContainerInterface $container) {
+        return new ZonaUsuarioRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ZonaUsuariosServices::class => function (ContainerInterface $container) {
+        return new ZonaUsuariosServices($container->get(ZonaUsuarioRepository::class));
+    },
+
+    ZonaUsuariosController::class => function (ContainerInterface $container) {
+        return new ZonaUsuariosController($container->get(ZonaUsuariosServices::class));
+    },
+
+    //public schema
+
+    ConfiguracionServiciosEstadisticosRepository::class => function (ContainerInterface $container) {
+        return new ConfiguracionServiciosEstadisticosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ConfiguracionServiciosEstadisticosServices::class => function (ContainerInterface $container) {
+        return new ConfiguracionServiciosEstadisticosServices($container->get(ConfiguracionServiciosEstadisticosRepository::class));
+    },
+
+    ConfiguracionServiciosEstadisticosController::class => function (ContainerInterface $container) {
+        return new ConfiguracionServiciosEstadisticosController($container->get(ConfiguracionServiciosEstadisticosServices::class));
+    },
+
+    ControlEstadisticosServiciosRepository::class => function (ContainerInterface $container) {
+        return new ControlEstadisticosServiciosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ConfiguracionServiciosEstadisticosServices::class));
+    },
+
+    ControlEstadisticosServiciosServices::class => function (ContainerInterface $container) {
+        return new ControlEstadisticosServiciosServices($container->get(ControlEstadisticosServiciosRepository::class));
+    },
+
+    ControlEstadisticosServiciosController::class => function (ContainerInterface $container) {
+        return new ControlEstadisticosServiciosController($container->get(ControlEstadisticosServiciosServices::class));
     },
 
 ];

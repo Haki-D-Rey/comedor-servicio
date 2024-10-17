@@ -3,8 +3,7 @@
 namespace App\Services;
 
 use App\DTO\ServiciosProductosDetallesDTO;
-use App\Repository\ServiciosProductosDetallesRepositoryInterface;
-
+use App\Repository\Catalogo\Interface\ServiciosProductosDetallesRepositoryInterface;
 class ServiciosProductosDetallesServices
 {
     private $serviciosProductosDetallesRepository;

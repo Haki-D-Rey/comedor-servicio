@@ -87,4 +87,5 @@ abstract class GenericRepository extends EntityRepository
                 throw new \RuntimeException('El método de actualización del estado no existe en la entidad.');
             }
     }
+
 }

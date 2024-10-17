@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Entity\Publico\ControlEstadisticosServicios;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -19,8 +21,8 @@ class DetalleZonaServicioHorario
     #[ORM\Column(name: 'id_horario', type: 'integer', nullable: false)]
     private int $idHorario;
 
-    #[ORM\Column(name: 'id_zona', type: 'integer', nullable: false)]
-    private int $idZona;
+    #[ORM\Column(name: 'id_zona_usuario', type: 'integer', nullable: false)]
+    private int $idZonaUsuario;
 
     #[ORM\Column(name: 'nombre', type: 'string', length: 128)]
     private string $nombre;
@@ -41,12 +43,12 @@ class DetalleZonaServicioHorario
     private bool $estado;
 
     /**
-     * Many ServiciosProductosDetalles have One Sistema.
-     * @var Zona
+     * Many DetalleZonaServicioHorario have One Sistema.
+     * @var ZonaUsuarios
      */
-    #[ORM\ManyToOne(targetEntity: Zona::class, inversedBy: 'detalleZonaServicioHorario')]
-    #[ORM\JoinColumn(name: 'id_zona', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    private Zona $zona;
+    #[ORM\ManyToOne(targetEntity: ZonaUsuarios::class, inversedBy: 'detalleZonaServicioHorario')]
+    #[ORM\JoinColumn(name: 'id_zona_usuario', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private ZonaUsuarios $zonaUsuario;
 
     /**
      * Many ServiciosProductosDetalles have One Sistema.
@@ -61,10 +63,16 @@ class DetalleZonaServicioHorario
      * @var ServiciosProductosDetalles
      */
     #[ORM\ManyToOne(targetEntity: ServiciosProductosDetalles::class, inversedBy: 'detalleZonaServicioHorario')]
-    #[ORM\JoinColumn(name: 'id_horario', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'id_servicios_productos_detalles', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ServiciosProductosDetalles $serviciosProductosDetalles;
 
 
+    /**
+     * One ServicioProducto has Many ControlEstadisticosServicios.
+     * @var Collection<int, ControlEstadisticosServicios>
+     */
+    #[ORM\OneToMany(targetEntity: ControlEstadisticosServicios::class, mappedBy: 'controlEstadisticosServicios')]
+    private Collection $ControlEstadisticosServicios;
 
     public function getId(): ?int
     {
@@ -93,14 +101,14 @@ class DetalleZonaServicioHorario
         return $this;
     }
 
-    public function getIdZona(): int
+    public function getIdZonaUsuario(): int
     {
-        return $this->idZona;
+        return $this->idZonaUsuario;
     }
 
-    public function setIdZona(int $idZona): self
+    public function setIdZonaUsuario(int $idZonaUsuario): self
     {
-        $this->idZona = $idZona;
+        $this->idZonaUsuario = $idZonaUsuario;
         return $this;
     }
 
@@ -126,28 +134,35 @@ class DetalleZonaServicioHorario
         return $this;
     }
 
-    public function getcodigo_interno(): string
+    public function getCodigoInterno(): string
     {
         return $this->codigo_interno;
     }
 
-    public function setcodigo_interno(string $codigo_interno): self
+    public function setCodigoInterno(string $codigo_interno): self
     {
         $this->codigo_interno = $codigo_interno;
         return $this;
     }
 
-    public function getfecha_creacion(): \DateTime
+    public function getFechaCreacion(): \DateTime
     {
         return $this->fecha_creacion;
     }
 
-    public function getfecha_modificacion(): ?\DateTime
+
+    public function setFechaCreacion(?\DateTime $fecha_creacion): self
+    {
+        $this->fecha_creacion = $fecha_creacion;
+        return $this;
+    }
+
+    public function getFechaModificacion(): ?\DateTime
     {
         return $this->fecha_modificacion;
     }
 
-    public function setfecha_modificacion(?\DateTime $fecha_modificacion): self
+    public function setFechaModificacion(?\DateTime $fecha_modificacion): self
     {
         $this->fecha_modificacion = $fecha_modificacion;
         return $this;
@@ -186,14 +201,14 @@ class DetalleZonaServicioHorario
         return $this;
     }
 
-    public function getZona(): ?Zona
+    public function getZonaUsuario(): ?ZonaUsuarios
     {
-        return $this->zona;
+        return $this->zonaUsuario;
     }
 
-    public function setZona(?Zona $zona): self
+    public function setZonaUsuario(?ZonaUsuarios $zonaUsuario): self
     {
-        $this->zona = $zona;
+        $this->zonaUsuario = $zonaUsuario;
         return $this;
     }
 }

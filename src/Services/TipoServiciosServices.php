@@ -3,8 +3,7 @@
 namespace App\Services;
 
 use App\DTO\TipoServiciosDTO;
-use App\Repository\TipoServiciosRepositoryInterface;
-
+use App\Repository\Catalogo\Interface\TipoServiciosRepositoryInterface;
 class TipoServiciosServices
 {
     private $tipoServiciosRepository;

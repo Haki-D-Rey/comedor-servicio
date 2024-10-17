@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\DTO\UsuarioDTO;
-use App\Repository\UsuarioRepositoryInterface;
+use App\Repository\Seguridad\Interface\UsuarioRepositoryInterface;
 
 class UsuarioServices
 {

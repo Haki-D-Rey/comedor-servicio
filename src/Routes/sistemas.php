@@ -8,7 +8,7 @@ return function (App $app) {
 
     $app->group('/sistemas', function (RouteCollectorProxy $group) {
         // Rutas estáticas
-        $group->get('/all', SistemasController::class . ':getAllSistemas');
+        $group->get('/all', SistemasController::class . ':getAllSistemas')->setname('sistemas.list_all');
 
         // Rutas dinámicas
         $group->get('/{id}', SistemasController::class . ':getSistemaById');

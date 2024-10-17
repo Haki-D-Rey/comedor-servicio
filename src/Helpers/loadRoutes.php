@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Helpers;
 
 use DirectoryIterator;
@@ -13,5 +14,10 @@ return function (App $app) {
             $route = require $file->getPathname();
             $route($app);
         }
+    }
+
+    $routes = $app->getRouteCollector()->getRoutes();
+    foreach ($routes as $route) {
+        error_log($route->getPattern()); // Para verificar las rutas cargadas
     }
 };

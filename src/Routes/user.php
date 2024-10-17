@@ -7,15 +7,6 @@ use Slim\Routing\RouteCollectorProxy;
 
 return function (App $app) {
 
-    // $app->get('/test/{param}', function ($request, $response, $args) {
-    //     // Escribe en el cuerpo de la respuesta
-    //     $response->getBody()->write(json_encode([
-    //         'param' => $args['param']
-    //     ]));
-
-    //     // Devuelve la respuesta completa
-    //     return $response;
-    // });
     $app->post('/token', AuthController::class . ':verifyToken');
 
     $app->group('/user', function (RouteCollectorProxy $group) {

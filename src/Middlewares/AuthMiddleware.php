@@ -24,7 +24,7 @@ class AuthMiddleware
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
-        $authHeader = $request->getHeader('Authorization')[0] ?? '';
+        $authHeader = str_replace("jwt_token=","",$request->getHeader('cookie'))[0] ?? $request->getHeader('authorization')[0];
 
         if (!$authHeader) {
             throw new HttpUnauthorizedException($request, 'El token de autorización es requerido');

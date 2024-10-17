@@ -40,10 +40,18 @@ class Zona
     #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'zona')]
     private Collection $serviciosProductosDetalles;
 
-    public function __construct() {
+    /**
+     * One TipoServicio has Many ServiciosProductosDetalles.
+     * @var Collection<int, ZonaUsuarios>
+     */
+    #[ORM\OneToMany(targetEntity: ZonaUsuarios::class, mappedBy: 'zonaUsuarios')]
+    private Collection $zonaUsuarios;
+
+    public function __construct()
+    {
         $this->serviciosProductosDetalles = new ArrayCollection();
     }
-    
+
     // Getters and Setters
 
     public function getId(): ?int
