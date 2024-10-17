@@ -11,6 +11,9 @@ return function (App $app) {
         $group->get('/all', DetalleZonaServicioHorarioController::class . ':getAllDetalleZonasServicioHorario')
             ->setName('detalle-zona-servicio-horario.list_all');
 
+        $group->get('/getByZonaUsuarioDetalleServicio/{id}', DetalleZonaServicioHorarioController::class . ':getAllDetalleZonaServicioHorarioByZonaUsuario')
+            ->setName('detalle-zona-servicio-horario.get_zona_usuario_detalles');
+
         $group->get('/getByIdZonaUsuarioDetalleServicio/{id}', DetalleZonaServicioHorarioController::class . ':getAllDetalleZonaServicioHorarioByIdZonaUsuario')
             ->setName('detalle-zona-servicio-horario.get_id_zona_usuario_detalles');
 

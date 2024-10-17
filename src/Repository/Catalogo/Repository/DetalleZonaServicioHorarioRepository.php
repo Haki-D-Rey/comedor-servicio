@@ -48,6 +48,77 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
         }
     }
 
+    public function getAllDetalleZonaServicioHorarioByZonaUsuario($idUsuario): array
+    {
+        // Buscar todas las zonas asociadas al usuario
+        $zonasUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)
+            ->findBy(['usuario' => $idUsuario, 'estado' => true]); // Asegúrate de que 'usuario' sea el campo correcto en la entidad ZonaUsuarios.
+
+        if (empty($zonasUsuario)) {
+            return [];
+        }
+
+        // Extraer los IDs de las zonas
+        $zonaIds = array_map(function (ZonaUsuarios $zona) {
+            return $zona->getId();
+        }, $zonasUsuario);
+
+        // Buscar todos los detalles de zona y servicio horario asociados a las zonas encontradas
+        $detalleZonaServicioHorarios = $this->findBy(['zonaUsuario' => $zonaIds]);
+
+        if (empty($detalleZonaServicioHorarios)) {
+            return [];
+        }
+
+        // Transformar a DTO
+        $detalleZonaServicioHorarioDTO = array_map(function (DetalleZonaServicioHorario $detalleZonaServicioHorario) {
+            return [
+                'id_detalle_zona_servicio_horario' => $detalleZonaServicioHorario->getId(),
+                'id_servicio_detalle_producto' => $detalleZonaServicioHorario->getIdServiciosProductosDetalles(),
+                'idZonaUsuario' => $detalleZonaServicioHorario->getIdZonaUsuario(),
+            ];
+        }, $detalleZonaServicioHorarios);
+
+        // Obtener todos los ID de servicio detalle producto
+        $idServiciosDetalles = array_map(function ($detalleZonaServicioHorarioDTO) {
+            return $detalleZonaServicioHorarioDTO['id_servicio_detalle_producto'];
+        }, $detalleZonaServicioHorarioDTO);
+
+        // Buscar todos los servicios producto detalles correspondientes
+        $servicioProductoDetalles = $this->entityManager->getRepository(ServiciosProductosDetalles::class)
+            ->findBy(['id' => $idServiciosDetalles]);
+
+        if (empty($servicioProductoDetalles)) {
+            return [];
+        }
+
+        // Preparar el resultado final
+        $resultadoFinal = [];
+
+        foreach ($detalleZonaServicioHorarioDTO as $detalle) {
+            foreach ($servicioProductoDetalles as $servicioProductoDetalle) {
+                if ($detalle['id_servicio_detalle_producto'] == $servicioProductoDetalle->getId()) {
+                    $resultadoFinal[] = [
+                        'id_detalle_zona_servicio_horario' => $detalle['id_detalle_zona_servicio_horario'],
+                        'id_servicio_detalle_producto' => $detalle['id_servicio_detalle_producto'],
+                        'idZonaUsuario' => $detalle['idZonaUsuario'],
+                        'idSistemas' => $servicioProductoDetalle->getIdSistemas(),
+                        'idTipoServicios' => $servicioProductoDetalle->getIdTipoServicios(),
+                        'idServiciosProductos' => $servicioProductoDetalle->getIdServiciosProductos(),
+                        'nombre' => $servicioProductoDetalle->getNombre(),
+                        'descripcion' => $servicioProductoDetalle->getDescripcion(),
+                        'codigo_interno' => $servicioProductoDetalle->getCodigo_interno(),
+                        'fecha_creacion' => $servicioProductoDetalle->getFecha_creacion(),
+                        'fecha_modificacion' => $servicioProductoDetalle->getFecha_modificacion(),
+                        'estado' => $servicioProductoDetalle->getEstado(),
+                    ];
+                }
+            }
+        }
+
+        return $resultadoFinal;
+    }
+
     public function getAllDetalleZonaServicioHorarioByIdZonaUsuario($id): array
     {
         $zonasUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)->findBy(['codigo_interno' => $id, 'estado' => true]);

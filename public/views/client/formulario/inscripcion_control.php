@@ -66,6 +66,7 @@ ob_start();
         window.endpointListaServicioProductos = "<?php echo $routeParser->urlFor('servicio_producto.list_all'); ?>";
         window.endpointListaZonasUsuario = "<?php echo $routeParser->urlFor('zona_usuarios.list_relational_all', ['id' => $user_id]) ?>";
         window.endpointEnviarFormulario =  "<?php echo $routeParser->urlFor('control-estadisticos-servicios.create_form'); ?>";
+        window.endpointListaZonaUsuariosServiciosValidar =  "<?php echo $routeParser->urlFor('detalle-zona-servicio-horario.get_zona_usuario_detalles', ["id"  => $user_id]); ?>";   
     </script>
     <script type="module" src="/assets/js/inscripcion_control.js"></script>
 </div>

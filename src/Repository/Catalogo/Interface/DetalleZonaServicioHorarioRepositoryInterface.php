@@ -15,6 +15,12 @@ interface DetalleZonaServicioHorarioRepositoryInterface
      * @param int $id
      * @return array|null
      */
+    public function getAllDetalleZonaServicioHorarioByZonaUsuario($id): array;
+
+    /**
+     * @param int $id
+     * @return array|null
+     */
     public function getAllDetalleZonaServicioHorarioByIdZonaUsuario($id): array;
 
     /**

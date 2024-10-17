@@ -95,6 +95,7 @@ return [
             'user' => $connectionConfig['user'],
             'password' => $connectionConfig['password'],
             'host' => $connectionConfig['host'],
+            'port' => $connectionConfig['port'],
             'driver' => $connectionConfig['driver']
         ];
 

@@ -28,6 +28,19 @@ class DetalleZonaServicioHorarioController
         }
     }
 
+    public function getAllDetalleZonaServicioHorarioByZonaUsuario(Request $request, Response $response, array $args): Response
+    {
+        $id = (string) $args['id'];
+        try {
+            $sistemas = $this->detalleZonaServicioHorarioServices->getAllDetalleZonaServicioHorarioByZonaUsuario($id);
+            $response->getBody()->write(json_encode($sistemas));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
     public function getAllDetalleZonaServicioHorarioByIdZonaUsuario(Request $request, Response $response, array $args): Response
     {
         $id = (string) $args['id'];

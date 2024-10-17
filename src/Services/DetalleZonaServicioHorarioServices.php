@@ -23,6 +23,16 @@ class DetalleZonaServicioHorarioServices
         }
     }
 
+    public function getAllDetalleZonaServicioHorarioByZonaUsuario($id): array
+    {
+        try {
+            return $this->detalleZonaServicioHorarioRepository->getAllDetalleZonaServicioHorarioByZonaUsuario($id);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al obtener el Catalogo Detalle del Servicio del Producto: ' . $e->getMessage());
+        }
+    }
+
+
     public function getAllDetalleZonaServicioHorarioByIdZonaUsuario($id): array
     {
         try {

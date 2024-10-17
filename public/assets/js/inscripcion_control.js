@@ -2,9 +2,13 @@
 import ApiService from "./apiservice.js";
 
 // Variables globales
+var ListaServiciosValidar = [];
 var ListaServicios = [];
+var listaSistemas = [];
+var listaTipoServicios = [];
 var existingCodes = [];
 var codesToAdd = new Set();
+var selectedOption = "";
 var baseURL = "";
 var selectZonaUsuario = document.getElementById("select_zona_usuario");
 var selectClickZonaUsuario = document.getElementById("inputSelect");
@@ -71,6 +75,22 @@ async function getZonasUsuariosById() {
  * Función para obtener las zonas de usuarios por ID desde la API.
  * @returns {Promise<Object>} Lista de zonas de usuarios.
  */
+async function getZonasUsuariosServiciosValidar() {
+  const endpointListaZonaUsuariosServiciosValidar =
+    window.endpointListaZonaUsuariosServiciosValidar;
+
+  try {
+    return await apiService.get(endpointListaZonaUsuariosServiciosValidar);
+  } catch (error) {
+    console.error("Error al obtener zonas de usuarios:", error);
+    return null;
+  }
+}
+
+/**
+ * Función para obtener las zonas de usuarios por ID desde la API.
+ * @returns {Promise<Object>} Lista de zonas de usuarios.
+ */
 async function getValidateInsertControlStadistics(date) {
   const endpointListaZonaUsuarios = `/control-estadisticos-servicios/filter-date-search/${date}`;
 
@@ -104,6 +124,10 @@ async function cargarZonasEnSelect() {
   if (!zonasUsuarios) return;
 
   const detallesZonas = zonasUsuarios.DetallesZonas || [];
+
+  ListaServiciosValidar = await getZonasUsuariosServiciosValidar();
+  [listaSistemas, listaTipoServicios] = await cargarSistemasYServicios();
+
   renderZonasEnSelect(detallesZonas);
 }
 
@@ -117,13 +141,25 @@ function renderZonasEnSelect(detallesZonas) {
     '<option value="" selected disabled>Seleccione una zona</option>';
 
   // Iteramos sobre las zonas y las añadimos al select
+  const resultado = [];
   detallesZonas.forEach((detalleZona) => {
     const option = document.createElement("option");
     option.value = detalleZona.codigoInternoZonaUsuario;
     option.textContent = detalleZona.zonas.nombre;
     selectZonaUsuario.appendChild(option);
+
+    resultado.push(
+      ...procesarServicios(
+        ListaServiciosValidar,
+        listaSistemas,
+        listaTipoServicios,
+        detalleZona.idZonaUsuario,
+        detalleZona.codigoInternoZonaUsuario
+      )
+    );
   });
-  return;
+
+  return (ListaServiciosValidar = resultado);
 }
 
 /**
@@ -138,20 +174,32 @@ function changeZonasEnSelect() {
 
     // Cargar servicios y productos correspondientes a la zona seleccionada
     try {
-      const listaServiciosProductosDetalles =
-        await cargarDetallesServiciosPorZona(idZonaUsuario);
-      const [listaSistemas, listaTipoServicios] =
-        await cargarSistemasYServicios();
-
-      // Procesar y renderizar los servicios en base a la zona seleccionada
-      const resultadoListaServicios = procesarServicios(
-        listaServiciosProductosDetalles,
-        listaSistemas,
-        listaTipoServicios
+      // Procesar los servicios para la zona seleccionada
+      const resultadoListaServicios = ListaServiciosValidar.filter(
+        (lista) => lista.code_zone === idZonaUsuario
       );
 
-      ListaServicios = resultadoListaServicios;
-      addSelectItemClickListZona(resultadoListaServicios);
+      // Verificar si ya existen servicios de esta zona para evitar duplicados
+      resultadoListaServicios.forEach((nuevoServicio) => {
+        const servicioDuplicado = ListaServicios.some(
+          (servicioExistente) =>
+            servicioExistente.codigo_sistema === nuevoServicio.codigo_sistema &&
+            servicioExistente.codigo_tiposervicio ===
+              nuevoServicio.codigo_tiposervicio &&
+            servicioExistente.code_zone === idZonaUsuario
+        );
+
+        // Si no es duplicado, lo agregamos
+        if (!servicioDuplicado) {
+          ListaServicios.push({
+            ...nuevoServicio,
+            code_zone: idZonaUsuario, // Asegurarse de asociar con la zona correcta
+          });
+        }
+      });
+
+      // Actualizar el DOM con los nuevos servicios sin duplicados
+      addSelectItemClickListZona(ListaServicios, idZonaUsuario);
     } catch (error) {
       console.error("Error al procesar las solicitudes:", error);
     }
@@ -190,7 +238,9 @@ async function cargarSistemasYServicios() {
 function procesarServicios(
   listaServiciosProductosDetalles,
   listaSistemas,
-  listaTipoServicios
+  listaTipoServicios,
+  idZona,
+  codigoInternoZonaUsuario
 ) {
   const result = [];
 
@@ -206,7 +256,8 @@ function procesarServicios(
       const matchingServices = listaServiciosProductosDetalles.filter(
         (service) =>
           service.idSistemas === idSistema &&
-          service.idTipoServicios === idTipoServicio
+          service.idTipoServicios === idTipoServicio &&
+          service.idZonaUsuario === idZona
       );
 
       if (matchingServices.length > 0) {
@@ -215,6 +266,7 @@ function procesarServicios(
           codigo_sistema: sistema.codigo_interno,
           tipo_servicio: tipoServicio.nombre,
           codigo_tiposervicio: tipoServicio.codigo_interno,
+          code_zone: codigoInternoZonaUsuario,
           servicios: transformarServicios(matchingServices),
         });
       }
@@ -227,32 +279,29 @@ function procesarServicios(
     );
 
     if (serviciosSinSistema.length > 0) {
-      result.push({
-        sistema: "SISERVI",
-        codigo_sistema: "Sin Definir",
-        tipo_servicio: tipoServicio.nombre,
-        codigo_tiposervicio: tipoServicio.codigo_interno,
-        servicios: transformarServicios(serviciosSinSistema),
-      });
+      return;
     }
   });
 
   return result;
 }
 
-function addSelectItemClickListZona(lista) {
+function addSelectItemClickListZona(lista, code_zone) {
   const uniqueCodes = new Set();
-  lista.forEach((detalle) => {
-    if (!uniqueCodes.has(detalle.codigo_sistema)) {
-      uniqueCodes.add(detalle.codigo_sistema);
 
-      const option = document.createElement("option");
-      option.value = detalle.codigo_sistema;
-      option.textContent = detalle.sistema;
-      selectClickZonaUsuario.appendChild(option);
-      selectClickZonaUsuario.disabled = false;
-    }
-  });
+  lista
+    .filter((detalle) => detalle.code_zone === code_zone) // Filtrar solo los servicios de la zona seleccionada
+    .forEach((detalle) => {
+      if (!uniqueCodes.has(detalle.codigo_sistema)) {
+        uniqueCodes.add(detalle.codigo_sistema);
+
+        const option = document.createElement("option");
+        option.value = detalle.codigo_sistema;
+        option.textContent = detalle.sistema;
+        selectClickZonaUsuario.appendChild(option);
+        selectClickZonaUsuario.disabled = false;
+      }
+    });
 }
 
 /**
@@ -274,23 +323,21 @@ document
   .addEventListener("change", async function () {
     validateCreateServices(this);
   });
-
 function validateCreateServices(event) {
   const selectedOptions = Array.from(event.selectedOptions).map(
     (option) => option.value
   );
-  var selectedOption =
-    selectZonaUsuario?.options[selectZonaUsuario.selectedIndex];
+
+  selectedOption = selectZonaUsuario?.options[selectZonaUsuario.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     console.error("No se ha seleccionado una zona o el valor es inválido.");
     return;
   }
-  console.log(selectedOption);
+
   const container = document.getElementById("itemsContainer");
+  const codesToAdd = new Set();
 
-  let codesToAdd = new Set();
-
-  // Filtrar los servicios seleccionados y agregar códigos
+  // Filtrar y agregar servicios seleccionados
   selectedOptions.forEach((optionName) => {
     ListaServicios.filter(
       (servicio) => servicio.codigo_sistema === optionName
@@ -299,197 +346,191 @@ function validateCreateServices(event) {
         codigo_sistema: sistemas.codigo_sistema,
         codigo_tiposervicio: sistemas.codigo_tiposervicio,
         code_zone: selectedOption.value,
+        servicios: sistemas.servicios,
+        sistema: sistemas.sistema,
+        tipo_servicio: sistemas.tipo_servicio,
       });
     });
   });
 
-  // Filtrar los códigos duplicados
-  const duplicateCodes = Array.from(codesToAdd).filter((newCode) =>
-    existingCodes.some(
-      (existingCode) =>
-        existingCode.codigo_sistema === newCode.codigo_sistema &&
-        existingCode.codigo_tiposervicio === newCode.codigo_tiposervicio &&
-        existingCode.code_zone === newCode.code_zone
-    )
+  // Filtrar códigos duplicados
+  const uniqueCodesToAdd = Array.from(codesToAdd).filter(
+    (newCode) =>
+      !existingCodes.some(
+        (existingCode) =>
+          existingCode.codigo_sistema === newCode.codigo_sistema &&
+          existingCode.codigo_tiposervicio === newCode.codigo_tiposervicio &&
+          existingCode.code_zone === newCode.code_zone
+      )
   );
 
-  // Eliminar códigos duplicados de la lista
-  duplicateCodes.forEach((duplicate) => {
-    codesToAdd.delete(duplicate);
-  });
-
-  const allCodesExist = Array.from(codesToAdd).every((newCode) =>
-    existingCodes.some(
-      (existingCode) =>
-        existingCode.codigo_sistema === newCode.codigo_sistema &&
-        existingCode.codigo_tiposervicio === newCode.codigo_tiposervicio &&
-        existingCode.code_zone === newCode.code_zone
-    )
-  );
-
-  console.log(allCodesExist);
-
-  if (!allCodesExist && codesToAdd.size > 0) {
-    selectedOptions.forEach((optionName) => {
-      ListaServicios.filter(
-        (servicio) => servicio.codigo_sistema === optionName
-      ).forEach((sistemas) => {
+  if (uniqueCodesToAdd.length > 0) {
+    uniqueCodesToAdd.forEach(
+      ({
+        tipo_servicio,
+        sistema,
+        codigo_sistema,
+        codigo_tiposervicio,
+        code_zone,
+        servicios,
+      }) => {
         let zonaContainer = container.querySelector(
-          `.zona-container[data-zona="${selectedOption.value}"]`
+          `.zona-container[data-zona="${code_zone}"]`
         );
 
-        // Si no existe, crearlo
+        // Crear contenedor de zona si no existe
         if (!zonaContainer) {
-          zonaContainer = document.createElement("div");
-          zonaContainer.classList.add("zona-container", "mt-4", "w-100");
-          zonaContainer.dataset.zona = selectedOption.value;
-
-          const zonaTitle = document.createElement("h4");
-          let selectedText = "";
-          if (selectZonaUsuario.selectedIndex !== 0) {
-            selectedText = selectedOption.textContent;
-            console.log(selectedText);
-          }
-          zonaTitle.innerText = `Zona - ${selectedText}`;
-          zonaContainer.appendChild(zonaTitle);
+          zonaContainer = createZonaContainer(
+            selectedOption.textContent,
+            code_zone
+          );
           container.appendChild(zonaContainer);
         }
 
-        // Creación del div del servicio
-        const parentDiv = document.createElement("div");
-        parentDiv.classList.add("mb-3", "w-100");
-
-        const wrapperDiv = document.createElement("div");
-        wrapperDiv.classList.add(
-          "border",
-          "border-2",
-          "border-success",
-          "border-opacity-75",
-          "rounded-3",
-          "p-3",
-          "mb-2"
+        // Agregar servicios a la zona
+        addServicesToZona(
+          zonaContainer,
+          servicios,
+          codigo_sistema,
+          codigo_tiposervicio,
+          code_zone,
+          tipo_servicio,
+          sistema
         );
-
-        const headerDivContent = document.createElement("div");
-        headerDivContent.classList.add(
-          "d-flex",
-          "flex-row",
-          "align-items-center",
-          "justify-content-between"
-        );
-
-        const titleContent = document.createElement("h4");
-        titleContent.classList.add("flex-grow-1", "m-2", "titleServiceFilter");
-        titleContent.innerHTML = `${sistemas.sistema} ${
-          sistemas.codigo_sistema === "SIS-0001"
-            ? ""
-            : `- ${sistemas.tipo_servicio}`
-        }`;
-
-        const trashIcon = document.createElement("span");
-        trashIcon.classList.add("trash-icon", "btn", "active");
-        trashIcon.innerHTML = '<i class="fas fa-trash"></i>';
-
-        headerDivContent.appendChild(titleContent);
-        headerDivContent.appendChild(trashIcon);
-        wrapperDiv.appendChild(headerDivContent);
-
-        const rowDiv = document.createElement("div");
-        rowDiv.classList.add("row", "mt-3");
-
-        // Agregar los servicios si no están en existingCodes
-
-        console.log(existingCodes);
-        console.log(selectedOption.value);
-        sistemas.servicios.forEach((option) => {
-          if (
-            !existingCodes.some(
-              (existing) =>
-                existing.code === option.code &&
-                existing.codigo_sistema === sistemas.codigo_sistema &&
-                existing.codigo_tiposervicio === sistemas.codigo_tiposervicio &&
-                existing.code_zone === selectedOption.value
-            )
-          ) {
-            const colDiv = document.createElement("div");
-            colDiv.classList.add("col-12", "col-sm-4", "col-md-6");
-            colDiv.innerHTML = `
-                <div class="form-floating mb-3">
-                  <input type="number" class="form-control" id="floatingInput" name="serviceCount[]" value="" placeholder="Ingrese la cantidad" required>
-                  <label for="floatingInput">${option.name}</label>
-                  <input type="hidden" class="form-control" value="${option.code}" name="serviceCode[]" data-tipo-servicio="${sistemas.codigo_tiposervicio}" data-tipo-sistema="${sistemas.codigo_sistema}" data-detalle-servicios="${option.id_detalle_zona_servicio_horario}" readonly>
-                  <div class="invalid-feedback">Debe ingresar la cantidad</div>
-                </div>
-              `;
-            rowDiv.appendChild(colDiv);
-            console.log(selectedOption.value);
-
-            if (selectedOption && selectedOption.value) {
-              existingCodes.push({
-                code: option.code,
-                codigo_sistema: sistemas.codigo_sistema,
-                codigo_tiposervicio: sistemas.codigo_tiposervicio,
-                code_zone: selectedOption.value,
-              });
-            } else {
-              console.error("Error: El valor de la zona no está definido.");
-            }
-          }
-        });
-
-        wrapperDiv.appendChild(rowDiv);
-        parentDiv.appendChild(wrapperDiv);
-        zonaContainer.appendChild(parentDiv);
-
-        // Evento para eliminar el elemento del DOM
-        trashIcon.addEventListener("click", function () {
-          parentDiv.remove();
-          const codesToRemove = Array.from(
-            parentDiv.querySelectorAll('input[name="serviceCode[]"]')
-          ).map((input) => ({
-            code: input.value,
-            codigo_sistema: input.dataset.tipoSistema,
-            codigo_tiposervicio: input.dataset.tipoServicio,
-            code_zone: selectedOption.value,
-          }));
-          console.log(existingCodes);
-          codesToRemove.forEach((codeToRemove) => {
-            existingCodes = existingCodes.filter(
-              (existingCode) =>
-                existingCode.code !== codeToRemove.code ||
-                existingCode.codigo_sistema !== codeToRemove.codigo_sistema ||
-                existingCode.codigo_tiposervicio !==
-                  codeToRemove.codigo_tiposervicio ||
-                existingCode.code_zone !== codeToRemove.code_zone
-            );
-          });
-          console.log(existingCodes);
-          console.log(codesToRemove);
-        });
-      });
-    });
-
-    // Actualizar los conteos de servicios
-    container.addEventListener("input", function (event) {
-      if (event.target.name === "serviceCount[]") {
-        updateServiceCounts();
       }
-    });
+    );
   }
 
-  // Verificar si los códigos seleccionados ya existen
-  selectedOptions.forEach((optionName) => {
-    ListaServicios.filter((servicio) => servicio.name === optionName).forEach(
-      (sistemas) => {
-        sistemas.servicios.forEach((option) => {
-          if (!existingCodes.includes(option.code)) {
-            const listItem = document.createElement("li");
-            listItem.classList.add("list-group-item");
-            listItem.innerText = option.name;
-            listGroup.appendChild(listItem);
-          }
-        });
-      }
+  // Actualizar conteos de servicios
+  container.addEventListener("input", updateServiceCounts);
+}
+
+/**
+ * Crea el contenedor de zona.
+ */
+function createZonaContainer(selectedText, code_zone) {
+  const zonaContainer = document.createElement("div");
+  zonaContainer.classList.add("zona-container", "mt-4", "w-100");
+  zonaContainer.dataset.zona = code_zone;
+
+  const zonaTitle = document.createElement("h4");
+  zonaTitle.innerText = `Zona - ${selectedText}`;
+  zonaContainer.appendChild(zonaTitle);
+
+  return zonaContainer;
+}
+
+/**
+ * Agrega los servicios al contenedor de zona.
+ */
+function addServicesToZona(
+  zonaContainer,
+  servicios,
+  codigo_sistema,
+  codigo_tiposervicio,
+  code_zone,
+  tipo_servicio,
+  sistema
+) {
+  const parentDiv = document.createElement("div");
+  parentDiv.classList.add("mb-3", "w-100");
+
+  const wrapperDiv = document.createElement("div");
+  wrapperDiv.classList.add(
+    "border",
+    "border-2",
+    "border-success",
+    "border-opacity-75",
+    "rounded-3",
+    "p-3",
+    "mb-2"
+  );
+
+  const headerDivContent = document.createElement("div");
+  headerDivContent.classList.add(
+    "d-flex",
+    "flex-row",
+    "align-items-center",
+    "justify-content-between"
+  );
+
+  const titleContent = document.createElement("h4");
+  titleContent.classList.add("flex-grow-1", "m-2", "titleServiceFilter");
+  titleContent.innerHTML = `${sistema} ${
+    codigo_sistema === "SIS-0001" ? "" : `- ${tipo_servicio}`
+  }`;
+
+  const trashIcon = document.createElement("span");
+  trashIcon.classList.add("trash-icon", "btn", "active");
+  trashIcon.innerHTML = '<i class="fas fa-trash"></i>';
+
+  headerDivContent.appendChild(titleContent);
+  headerDivContent.appendChild(trashIcon);
+  wrapperDiv.appendChild(headerDivContent);
+
+  const rowDiv = document.createElement("div");
+  rowDiv.classList.add("row", "mt-3");
+
+  servicios.forEach((option) => {
+    if (
+      !existingCodes.some(
+        (existing) =>
+          existing.code === option.code &&
+          existing.codigo_sistema === codigo_sistema &&
+          existing.codigo_tiposervicio === codigo_tiposervicio &&
+          existing.code_zone === code_zone
+      )
+    ) {
+      const colDiv = document.createElement("div");
+      colDiv.classList.add("col-12", "col-sm-4", "col-md-6");
+      colDiv.innerHTML = `
+          <div class="form-floating mb-3">
+            <input type="number" class="form-control" id="floatingInput" name="serviceCount[]" value="" placeholder="Ingrese la cantidad" required>
+            <label for="floatingInput">${option.name}</label>
+            <input type="hidden" class="form-control" value="${option.code}" name="serviceCode[]" data-tipo-servicio="${codigo_tiposervicio}" data-tipo-sistema="${codigo_sistema}" data-detalle-servicios="${option.id_detalle_zona_servicio_horario}" data-code-zone="${code_zone}" readonly>
+            <div class="invalid-feedback">Debe ingresar la cantidad</div>
+          </div>
+        `;
+      rowDiv.appendChild(colDiv);
+      existingCodes.push({
+        code: option.code,
+        codigo_sistema: codigo_sistema,
+        codigo_tiposervicio: codigo_tiposervicio,
+        code_zone: code_zone,
+      });
+      wrapperDiv.appendChild(rowDiv);
+      parentDiv.appendChild(wrapperDiv);
+    }
+  });
+  zonaContainer.appendChild(parentDiv);
+
+  // Evento para eliminar el elemento del DOM
+  trashIcon.addEventListener("click", () => {
+    parentDiv.remove();
+    removeCodesFromExisting(parentDiv, selectedOption.value);
+  });
+}
+
+/**
+ * Elimina los códigos de la lista existente.
+ */
+function removeCodesFromExisting(parentDiv, code_zone) {
+  const codesToRemove = Array.from(
+    parentDiv.querySelectorAll('input[name="serviceCode[]"]')
+  ).map((input) => ({
+    code: input.value,
+    codigo_sistema: input.dataset.tipoSistema,
+    codigo_tiposervicio: input.dataset.tipoServicio,
+    code_zone: code_zone,
+  }));
+
+  codesToRemove.forEach((codeToRemove) => {
+    existingCodes = existingCodes.filter(
+      (existingCode) =>
+        existingCode.code !== codeToRemove.code ||
+        existingCode.codigo_sistema !== codeToRemove.codigo_sistema ||
+        existingCode.codigo_tiposervicio !== codeToRemove.codigo_tiposervicio ||
+        existingCode.code_zone !== codeToRemove.code_zone
     );
   });
 }
@@ -507,6 +548,7 @@ function updateServiceCounts() {
       codigo_tipo_servicio: codeInput.dataset.tipoServicio,
       codigo_tipo_sistema: codeInput.dataset.tipoSistema,
       id_detalle_zona_servicio_horario: codeInput.dataset.detalleServicios,
+      code_zone: codeInput.dataset.codeZone,
     };
   });
   document.getElementById("serviceCounts").value =
@@ -552,23 +594,40 @@ function validateForm(existingCodes) {
   // Validar que cada servicio en ListaServicios tenga una entrada correspondiente en existingCodes
   const missingServices = [];
 
-  ListaServicios.forEach((servicio) => {
-    servicio.servicios.forEach((s) => {
-      const serviceExists = existingCodes.some(
-        (existing) =>
-          existing.code === s.code &&
-          existing.codigo_sistema === servicio.codigo_sistema &&
-          existing.codigo_tiposervicio === servicio.codigo_tiposervicio &&
-          existingCode.code_zone === servicio
-      );
+  // Crear un mapa para un acceso rápido a los servicios existentes
+  const existingCodesMap = new Map();
+  existingCodes.forEach((existing) => {
+    const key = `${existing.code_zone}-${existing.codigo_sistema}-${existing.codigo_tiposervicio}-${existing.code}`;
+    existingCodesMap.set(key, existing);
+  });
 
-      // Si el servicio no existe en existingCodes, lo agregamos a la lista de faltantes
-      if (!serviceExists) {
-        missingServices.push({
-          tipo_servicio: servicio.codigo_tiposervicio,
-          tipo_sistema: servicio.codigo_sistema,
-          servicio: s.name,
-        });
+  ListaServiciosValidar.forEach((servicioZona) => {
+    const { code_zone, servicios, codigo_sistema, codigo_tiposervicio } =
+      servicioZona;
+
+    // Validar si cada servicio de esta code_zone está en existingCodes
+    servicios.forEach((servicio) => {
+      const key = `${code_zone}-${codigo_sistema}-${codigo_tiposervicio}-${servicio.code}`;
+
+      if (!existingCodesMap.has(key)) {
+        // Comprobar si el servicio ya está en missingServices antes de agregarlo
+        const isServiceMissing = missingServices.some(
+          (missing) =>
+            missing.servicio === servicio.name &&
+            missing.tipo_servicio === codigo_tiposervicio &&
+            missing.tipo_sistema === codigo_sistema &&
+            missing.code_zone === code_zone
+        );
+
+        // Solo agregar si no está en missingServices
+        if (!isServiceMissing) {
+          missingServices.push({
+            tipo_servicio: codigo_tiposervicio,
+            tipo_sistema: codigo_sistema,
+            servicio: servicio.name,
+            code_zone: code_zone,
+          });
+        }
       }
     });
   });
@@ -576,12 +635,13 @@ function validateForm(existingCodes) {
   // Si hay servicios faltantes, marcar isValid como false
   if (missingServices.length > 0) {
     const missingDetails = missingServices
-      .map(
-        ({ tipo_servicio, tipo_sistema, servicio }) =>
-          `Tipo de Servicio: ${tipo_servicio}, Tipo de Sistema: ${tipo_sistema}, Servicio: ${servicio}`
-      )
+      .map(({ tipo_servicio, tipo_sistema, servicio, code_zone }) => {
+        let nombreTipoServicio = listaTipoServicios.find(lista => lista.tipo_servicio === "1");
+        console.log(listaTipoServicios);
+        console.log(listaSistemas);
+        `Tipo de Servicio: ${tipo_servicio}, Tipo de Sistema: ${tipo_sistema}, Servicio: ${servicio}, zona:  ${code_zone}`;
+      })
       .join("\n");
-
     alert(`Faltan los siguientes servicios:\n${missingDetails}`);
     isValid = false;
   }
@@ -654,15 +714,14 @@ document.getElementById("myForm").addEventListener("submit", function (event) {
       data[key].push(value);
     });
 
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        console.log(`Key: ${key}`);
-        data[key].forEach((value, index) => {
-          console.log(`  Value ${index + 1}: ${value}`);
-        });
-      }
-    }
-    console.log(data);
+    // for (const key in data) {
+    //   if (data.hasOwnProperty(key)) {
+    //     console.log(`Key: ${key}`);
+    //     data[key].forEach((value, index) => {
+    //       console.log(`  Value ${index + 1}: ${value}`);
+    //     });
+    //   }
+    // }
     const fecha_corte = data.inputDate[0];
     const parsedServiceCounts = JSON.parse(data.serviceCounts[0]);
     const bodyData = {
