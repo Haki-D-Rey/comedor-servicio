@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Middlewares;
 
 use Firebase\JWT\JWT;
@@ -8,19 +9,19 @@ use Psr\Container\ContainerInterface;
 use Slim\Psr7\Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Log\LoggerInterface;
-use Slim\Exception\HttpUnauthorizedException;
 use Slim\Psr7\Response;
 
-class AuthMiddleware
+class PreventLoginIfAuthenticatedMiddleware
 {
     private $container;
     private $logger;
 
-    public function __construct(ContainerInterface $container, LoggerInterface $logger)
+    public function __construct(ContainerInterface $container,  LoggerInterface $logger)
     {
         $this->container = $container;
         $this->logger = $logger;
     }
+
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
@@ -51,54 +52,31 @@ class AuthMiddleware
                 }
             }
         }
+        $response = new Response();
+        $key = $this->container->get('settings')['jwt']['secret'];
+        $decoded = $token ? JWT::decode($token, new Key($key, 'HS256')) : false;
 
         // Si no se encontró el token en ningún lugar
-        if (!$token) {
-            throw new HttpUnauthorizedException($request, 'El token de autorización es requerido');
+        if (!$decoded) {
+            return $handler->handle($request);
         }
 
-        $key = $this->container->get('settings')['jwt']['secret'];
-
-        if (count(explode('.', $token)) !== 3) {
-            return $this->badRequestResponse('Invalid token structure');
-        }
 
         try {
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            $request = $request->withAttribute('user_id', $decoded->sub);
+            // Obtener la URL almacenada en la cookie 'previous_url', o redirigir al dashboard si no hay una URL previa
+            $previousUrl = $_SESSION['previous_url'] ?? '/';
             // session_destroy();
-            return $handler->handle($request);
-        } catch (\Firebase\JWT\ExpiredException $e) {
-            $this->logger->warning('Token JWT expirado: ' . $e->getMessage());
-            return $this->unauthorizedResponse($request, 'Token JWT expirado');
-        } catch (\Firebase\JWT\SignatureInvalidException $e) {
-            $this->logger->warning('Firma del token JWT inválida: ' . $e->getMessage());
-            return $this->unauthorizedResponse($request, 'Firma del token JWT inválida');
-        } catch (HttpUnauthorizedException $e) {
-            return $this->unauthorizedResponse($request, $e->getMessage());
+            return $response->withHeader('Location', $previousUrl)->withStatus(302);
         } catch (\Throwable $e) {
             $this->logger->error('Error inesperado al validar el token JWT: ' . $e->getMessage());
             return $this->unauthorizedResponse($request, 'Error al procesar el token JWT');
         }
     }
 
-    /**
-     * Generar una respuesta no autorizada.
-     *
-     * @param Request $request
-     * @param string $message
-     * @return Response
-     */
     private function unauthorizedResponse(Request $request, string $message): Response
     {
-        $response = new \Slim\Psr7\Response();
-        $response->withHeader('Location', '/auth/login')->withStatus(302);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
-    }
-
-    private function badRequestResponse(string $message): Response
-    {
         $response = new Response();
-        return  $response->withHeader('Location', '/auth/login')->withStatus(302);
+        $response->getBody()->write(json_encode(['error' => $message]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
     }
 }

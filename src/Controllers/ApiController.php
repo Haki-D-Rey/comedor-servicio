@@ -37,10 +37,11 @@ class ApiController
     }
 
     public function formulario(Request $request, Response $response): Response
-    {
+    {   
+        session_start();
         $routeParser = $this->container->get(RouteParser::class);
         $data = [
-            "token" => $_COOKIE['jwt_token']
+            "token" => $_SESSION['jwt_token']
         ];
         $user_id = $this->authServices->verifyToken($data, $this->container)['user']->sub;
         ob_start();

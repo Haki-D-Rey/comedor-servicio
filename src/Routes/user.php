@@ -3,6 +3,7 @@
 use Slim\App;
 use App\Controllers\UsuarioController;
 use App\Controllers\AuthController;
+use App\Middlewares\PreventLoginIfAuthenticatedMiddleware;
 use Slim\Routing\RouteCollectorProxy;
 
 return function (App $app) {
@@ -21,8 +22,9 @@ return function (App $app) {
     });
 
     $app->group('/auth', function (RouteCollectorProxy $group) {
-        $group->get('/login', AuthController::class . ':loginview');
+        $group->get('/login', AuthController::class . ':loginview')->add(PreventLoginIfAuthenticatedMiddleware::class);;
         $group->post('/login', AuthController::class . ':login')->setName('auth-login');
+        $group->post('/logout', AuthController::class . ':logout')->setName('auth-logout');
         $group->post('/register', AuthController::class . ':registerview');
     });
 };

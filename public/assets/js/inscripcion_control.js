@@ -634,15 +634,71 @@ function validateForm(existingCodes) {
 
   // Si hay servicios faltantes, marcar isValid como false
   if (missingServices.length > 0) {
-    const missingDetails = missingServices
-      .map(({ tipo_servicio, tipo_sistema, servicio, code_zone }) => {
-        let nombreTipoServicio = listaTipoServicios.find(lista => lista.tipo_servicio === "1");
-        console.log(listaTipoServicios);
-        console.log(listaSistemas);
-        `Tipo de Servicio: ${tipo_servicio}, Tipo de Sistema: ${tipo_sistema}, Servicio: ${servicio}, zona:  ${code_zone}`;
-      })
-      .join("\n");
-    alert(`Faltan los siguientes servicios:\n${missingDetails}`);
+    let messageAlert = [];
+    missingServices.forEach(
+      ({ tipo_servicio, tipo_sistema, servicio, code_zone }) => {
+        let nombreSistema = listaSistemas.find(
+          (lista) => lista.codigo_interno === tipo_sistema
+        ).nombre;
+        let nombreTipoServicio =
+          tipo_sistema === "SIS-0001"
+            ? "Tipo Servicio General"
+            : listaTipoServicios.find(
+                (lista) => lista.codigo_interno === tipo_servicio
+              ).descripcion;
+        let nombreZona = zonasUsuarios.DetallesZonas.find(
+          (zona) => zona.codigoInternoZonaUsuario === code_zone
+        ).zonas.nombre;
+
+        // Push the row data for the table
+        messageAlert.push(
+          `<tr>
+           <td>${nombreTipoServicio}</td>
+           <td>${nombreSistema}</td>
+           <td>${servicio}</td>
+           <td>${nombreZona}</td>
+         </tr>`
+        );
+      }
+    );
+    const missingDetailsTable = `
+    <div class="table-responsive-container">
+      <table class="table table-bordered table-responsive">
+        <thead class="table-dark">
+          <tr>
+            <th>Tipo de Servicio</th>
+            <th>Tipo de Sistema</th>
+            <th>Servicio</th>
+            <th>Zona</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${messageAlert.join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+    // Alert with SweetAlert and insert the table
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success",
+        cancelButton: "btn btn-danger",
+        popup:
+          "border border-2 rounded-2 border-success border-opacity-75 col-12 col-sm-9 swal-custom-popup",
+      },
+      buttonsStyling: true,
+    });
+
+    swalWithBootstrapButtons.fire({
+      title: "Faltan los siguientes servicios",
+      html: missingDetailsTable, // Insert table here
+      icon: "warning",
+      showCancelButton: false,
+      confirmButtonText: "Revisar",
+      cancelButtonText: "",
+      reverseButtons: true,
+    });
     isValid = false;
   }
 
@@ -659,9 +715,9 @@ function validateForm(existingCodes) {
 
     // Si no hay un input válido para el código existente, marcar isValid como false
     if (!hasValidInput) {
-      alert(
-        `Por favor, ingrese una cantidad válida para el servicio correspondiente a ${code}.`
-      );
+      // alert(
+      //   `Por favor, ingrese una cantidad válida para el servicio correspondiente a ${code}.`
+      // );
       isValid = false;
     }
   });
@@ -674,7 +730,7 @@ function validateForm(existingCodes) {
   });
 
   if (!isValid) {
-    alert("Por favor, complete todos los campos requeridos correctamente.");
+    // alert("Por favor, complete todos los campos requeridos correctamente.");
   }
 
   return isValid;
@@ -739,7 +795,7 @@ function alertConfirmForm(bodyData) {
     customClass: {
       confirmButton: "btn btn-success",
       cancelButton: "btn btn-danger",
-      popup: "border border-2 rounded-2 border-success border-opacity-75",
+      popup: "border border-2 rounded-2 border-success border-opacity-75 col-12 col-sm-9",
     },
     buttonsStyling: true,
   });
@@ -805,25 +861,17 @@ function alertValidateDate(message) {
     customClass: {
       confirmButton: "btn btn-success",
       cancelButton: "btn btn-danger",
-      popup: "border border-2 rounded-2 border-success border-opacity-75",
+      popup: "border border-2 rounded-2 border-success border-opacity-75 col-12 col-sm-9",
     },
     buttonsStyling: true,
   });
-  swalWithBootstrapButtons
-    .fire({
-      title: "Validando Fechas existentes",
-      text: `Se ha revisado la informacion del control estadisticos de los servicios y se ha verificado que ya existe un registro de la fecha ${message}, por favor elegir otra fecha`,
-      icon: "warning",
-      showCancelButton: false,
-      showConfirmButton: true,
-      confirmButtonText: "Salir",
-      reverseButtons: true,
-    })
-    .then(async (result) => {
-      if (result.isConfirmed) {
-        if (resultado.estado) {
-          return;
-        }
-      }
-    });
+  swalWithBootstrapButtons.fire({
+    title: "Validando Fechas existentes",
+    text: `Se ha revisado la informacion del control estadisticos de los servicios y se ha verificado que ya existe un registro de la fecha ${message}, por favor elegir otra fecha`,
+    icon: "warning",
+    showCancelButton: false,
+    showConfirmButton: true,
+    confirmButtonText: "Salir",
+    reverseButtons: true,
+  });
 }

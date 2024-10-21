@@ -22,5 +22,14 @@
 </footer>
 </div>
 </body>
+<script>
+    window.tokenAccess = <?php
+                            session_start();
+                            echo json_encode($_SESSION['jwt_token'] ?? ""); // Usa json_encode para manejar comillas y espacios
+                            ?>;
+    console.log(window.tokenAccess);
+</script>
+
+<script type="module" src="/assets/js/header.js"></script>
 
 </html>

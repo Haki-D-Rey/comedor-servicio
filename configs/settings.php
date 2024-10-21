@@ -1,4 +1,4 @@
-<?php 
+<?php
 return [
     'db' => [
         'mysql' => [
@@ -17,15 +17,16 @@ return [
         ],
         'dinning_services' => [
             'driver' => 'pdo_pgsql',
-            'host' => 'localhost',
-            'port' => '5433',
+            // 'host' => 'localhost',
+            'host' => '10.0.29.7',
+            'port' => '5432',//'5433',
             'user' => 'postgres',
-            'password' => 'Maleisho*-+31102019',
-            // 'password' => 'n&ecurity2024*',
+            // 'password' => 'Maleisho*-+31102019',
+            'password' => 'n&ecurity2024*',
             'dbname' => 'dining_service'
         ],
     ],
-    
+
     // Otros ajustes globales
     'displayErrorDetails' => true,
     'logErrorDetails' => true,

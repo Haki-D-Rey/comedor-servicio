@@ -566,3 +566,42 @@ video {
     font-size: 12px;
   }
 }
+
+/* Contenedor responsivo con scroll horizontal y vertical */
+.table-responsive-container {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto; /* Para scroll horizontal */
+}
+
+/* Reducción de tamaño de texto para pantallas pequeñas */
+@media (max-width: 768px) {
+  .swal-custom-popup {
+    font-size: 12px; /* Disminuye el tamaño de la fuente */
+  }
+
+  .table-responsive-container {
+    max-height: 200px; /* Reduce la altura máxima en pantallas pequeñas */
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem; /* Reduce el padding para mayor compactación */
+  }
+}
+
+/* Para dispositivos muy pequeños, como móviles */
+@media (max-width: 576px) {
+  .swal-custom-popup {
+    font-size: 10px;
+  }
+
+  .table-responsive-container {
+    max-height: 150px;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.3rem;
+  }
+}
