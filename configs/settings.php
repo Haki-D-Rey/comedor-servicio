@@ -18,7 +18,7 @@ return [
         'dinning_services' => [
             'driver' => 'pdo_pgsql',
             // 'host' => 'localhost',
-            'host' => '10.0.29.7',
+            'host' => '10.0.30.185',
             'port' => '5432',//'5433',
             'user' => 'postgres',
             // 'password' => 'Maleisho*-+31102019',
