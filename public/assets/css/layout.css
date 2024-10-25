@@ -22,55 +22,128 @@ body {
   background-color: #f8f9fa;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  height: 100%;
 }
 
-.container-page {
+.layout {
   display: grid;
   grid-template-areas:
-    "header"
-    "main"
-    "footer";
-  grid-template-rows: auto 1fr auto;
+    "header header"
+    "sidebar main";
+  grid-template-rows: auto 1fr;
+  grid-template-columns: auto 1fr;
   min-height: 100vh;
+  /* Asegura que ocupe el 100% de la ventana */
 }
 
 header {
   grid-area: header;
-  background-color: #333;
+  background-color: #014a2c;
   color: #fff;
   padding: 20px;
-  text-align: center;
-  max-height: 10vh;
-  background-color: #014a2c;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  border: 1px solid blue;
+  overflow-y: auto;
+  max-height: 100vh;
+  padding: 10px;
+  min-height: 100%;
+  position: fixed;
+  width: 180px;
+  /* Ancho cuando está expandido */
+  transition: width 0.3s;
+  /* Transición suave para el cambio de ancho */
+}
+
+.sidebar.collapsed {
+  width: 50px;
+  /* Ancho cuando está colapsado */
+}
+
+.sidebar.nocollapsed {
+  display: none;
+  /* Ancho cuando está colapsado */
 }
 
 main {
   grid-area: main;
+  /* Mantiene esta línea para el grid */
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 75vh;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  /* Margen por defecto para el sidebar expandido */
+  transition: margin-left 0.3s;
+  /* Transición suave para el margen */
 }
 
-footer {
-  grid-area: footer;
-  background-color: #333;
-  color: #fff;
-  padding: 20px;
-  text-align: center;
-  min-height: 10vh;
+main.nocollapsed-child-no-sidebar {
+  margin-left: 0;
+}
+
+main.nocollapsed-child {
+  margin-left: 180px;
+  width: calc(100% - 180px);
+}
+
+main.collapsed {
+  margin-left: 50px;
+  width: calc(100% - 50px);
+  /* Margen cuando el sidebar está colapsado */
+}
+
+.content-conditional-footer {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  transition: margin-left 0.3s;
+  /* Transición suave para el margen */
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0 2rem;
+  background: #8fbc8f42;
+  flex-grow: 1;
+}
+
+.footer {
   background-color: #014a2c;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
   font-size: 16px;
   font-weight: 600;
+  margin-top: auto;
+  transition: margin-left 0.3s;
+  /* Transición suave para el margen */
 }
 
-.container-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  column-gap: 5rem;
+
+/*  es para modificar lops hijos directamente
+.content-conditional-footer.collapsed {
+  width: calc(100% - 50px);
+  margin-left: 50px;
 }
+
+.footer.collapsed {
+  width: calc(100% - 50px);
+  margin-left: 50px;
+} */
 
 .video-container {
   max-width: 560px;
@@ -221,18 +294,6 @@ video {
   flex-direction: row;
   gap: 2rem;
 }
-
-.content {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2rem;
-  padding: 0 2rem;
-  background: #8fbc8f42;
-}
-
 
 .content-schedule {
   display: flex;
@@ -536,7 +597,7 @@ video {
     font-size: 20px;
   }
 
-  svg[data-icon="trash"]{
+  svg[data-icon="trash"] {
     width: 8px;
     height: 10px;
   }
@@ -571,22 +632,26 @@ video {
 .table-responsive-container {
   max-height: 300px;
   overflow-y: auto;
-  overflow-x: auto; /* Para scroll horizontal */
+  overflow-x: auto;
+  /* Para scroll horizontal */
 }
 
 /* Reducción de tamaño de texto para pantallas pequeñas */
 @media (max-width: 768px) {
   .swal-custom-popup {
-    font-size: 12px; /* Disminuye el tamaño de la fuente */
+    font-size: 12px;
+    /* Disminuye el tamaño de la fuente */
   }
 
   .table-responsive-container {
-    max-height: 200px; /* Reduce la altura máxima en pantallas pequeñas */
+    max-height: 200px;
+    /* Reduce la altura máxima en pantallas pequeñas */
   }
 
   .table th,
   .table td {
-    padding: 0.5rem; /* Reduce el padding para mayor compactación */
+    padding: 0.5rem;
+    /* Reduce el padding para mayor compactación */
   }
 }
 

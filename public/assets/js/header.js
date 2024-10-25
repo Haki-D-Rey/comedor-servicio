@@ -2,12 +2,16 @@
 import ApiService from "./apiservice.js";
 
 var buttonLogout = document.getElementById("button-logout");
-// var buttonSiderbarClose = document.getElementById("button-sidebar");
+var buttonSiderbarClose = document.getElementById("button-sidebar");
 var baseURL = "";
 const apiService = new ApiService(baseURL);
 
 document.addEventListener("DOMContentLoaded", () => {
   init();
+  buttonLogout.disabled = true;
+  buttonLogout.style.visibility ="hidden";
+  buttonSiderbarClose.disabled = true;
+  buttonSiderbarClose.style.visibility = "hidden";
 });
 
 function init() {
@@ -43,8 +47,8 @@ async function validateButtonLogout() {
 
   buttonLogout.disabled = !isValid;
   buttonLogout.style.visibility = isValid ? "visible" : "hidden";
-//   buttonSiderbarClose.disabled = !isValid;
-//   buttonSiderbarClose.style.visibility = isValid ? "visible" : "hidden";
+  buttonSiderbarClose.disabled = !isValid;
+  buttonSiderbarClose.style.visibility = isValid ? "visible" : "hidden";
 }
 
 function clickActionLogout() {
