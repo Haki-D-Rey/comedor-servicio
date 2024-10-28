@@ -66,17 +66,22 @@ class AuthMiddleware
         try {
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             $request = $request->withAttribute('user_id', $decoded->sub);
+            $_SESSION['loggedin'] = True;
             // session_destroy();
             return $handler->handle($request);
         } catch (\Firebase\JWT\ExpiredException $e) {
+            $_SESSION['loggedin'] = False;
             $this->logger->warning('Token JWT expirado: ' . $e->getMessage());
             return $this->unauthorizedResponse($request, 'Token JWT expirado');
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
+            $_SESSION['loggedin'] = False;
             $this->logger->warning('Firma del token JWT inválida: ' . $e->getMessage());
             return $this->unauthorizedResponse($request, 'Firma del token JWT inválida');
         } catch (HttpUnauthorizedException $e) {
+            $_SESSION['loggedin'] = False;
             return $this->unauthorizedResponse($request, $e->getMessage());
         } catch (\Throwable $e) {
+            $_SESSION['loggedin'] = False;
             $this->logger->error('Error inesperado al validar el token JWT: ' . $e->getMessage());
             return $this->unauthorizedResponse($request, 'Error al procesar el token JWT');
         }

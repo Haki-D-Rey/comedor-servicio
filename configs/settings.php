@@ -19,10 +19,10 @@ return [
             'driver' => 'pdo_pgsql',
             'host' => 'localhost',
             //'host' => '10.0.30.185',
-            'port' => '5433',
+            'port' => '5432',
             'user' => 'postgres',
-            'password' => 'Maleisho*-+31102019',
-            // 'password' => 'n&ecurity2024*',
+            // 'password' => 'Maleisho*-+31102019',
+            'password' => 'n&ecurity2024*',
             'dbname' => 'dining_service'
         ],
     ],

@@ -8,6 +8,21 @@
   --white: #808011;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+ul {
+  list-style-type: none;
+  /* Quita los marcadores de la lista */
+  padding: 0;
+  /* Elimina el padding por defecto */
+  margin: 0;
+  /* Elimina el margen por defecto */
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -15,25 +30,52 @@ body {
   font-weight: 400;
   font-style: normal;
   font-size: 1rem;
-  font-weight: 700;
   line-height: 1.6;
   color: #333;
   text-align: left;
   background-color: #f8f9fa;
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  height: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .layout {
   display: grid;
-  grid-template-areas:
-    "header header"
-    "sidebar main";
   grid-template-rows: auto 1fr;
   grid-template-columns: auto 1fr;
-  min-height: 100vh;
-  /* Asegura que ocupe el 100% de la ventana */
+  /* Ancho por defecto */
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  height: 100vh;
+  background-color: #8fbc8f42;
+}
+
+.layout.no-sidebar {
+  grid-template-columns: auto 1fr;
+  /* Cambiado para colapsar a 50px */
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+}
+
+/* Estilos para .layout (cuando no hay .no-sidebar) */
+.layout > header {
+  margin-top: 5px;
+  margin-right: 5px;
+}
+
+.layout > main {
+  margin-bottom: 5px;
+  margin-right: 5px;
+}
+
+/* Estilos específicos para .layout.no-sidebar */
+.layout.no-sidebar > header, 
+.layout.no-sidebar > main, 
+.layout.no-sidebar > .sidebar, 
+.layout.no-sidebar > div.footer {
+  margin: 0;
+  border-radius: 0;
 }
 
 header {
@@ -47,60 +89,55 @@ header {
   position: sticky;
   top: 0;
   z-index: 1000;
+  border-radius: 5px 5px 0 0;
 }
 
 .sidebar {
   grid-area: sidebar;
-  border: 1px solid blue;
+  /* border: 2px solid rgba(20, 32, 198, 0.75); */
   overflow-y: auto;
-  max-height: 100vh;
-  padding: 10px;
-  min-height: 100%;
-  position: fixed;
-  width: 180px;
-  /* Ancho cuando está expandido */
-  transition: width 0.3s;
-  /* Transición suave para el cambio de ancho */
-}
-
-.sidebar.collapsed {
-  width: 50px;
-  /* Ancho cuando está colapsado */
-}
-
-.sidebar.nocollapsed {
-  display: none;
-  /* Ancho cuando está colapsado */
+  padding: 20px;
+  transition: width 0.5s ease, opacity 0.5s ease;
+  box-sizing: border-box;
+  width: 200px;
+  opacity: 1;
+  background: linear-gradient(150deg,#024026, #2b5555 );
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 5px;
+  color: white;
 }
 
 main {
   grid-area: main;
-  /* Mantiene esta línea para el grid */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 100%;
   overflow-y: auto;
-  box-sizing: border-box;
-  /* Margen por defecto para el sidebar expandido */
-  transition: margin-left 0.3s;
-  /* Transición suave para el margen */
+  border-radius: 0 0 5px 5px;
+  margin-bottom: 5px;
+  margin-right: 5px;
+  /* transition: margin-left 0.1s ease; */
 }
 
 main.nocollapsed-child-no-sidebar {
   margin-left: 0;
 }
 
-main.nocollapsed-child {
-  margin-left: 180px;
-  width: calc(100% - 180px);
+.full-width {
+  margin-left: 0;
+  /* Sin margen izquierdo cuando no hay sidebar */
+  width: 100%;
+  /* Ocupa todo el ancho */
 }
 
-main.collapsed {
-  margin-left: 50px;
-  width: calc(100% - 50px);
-  /* Margen cuando el sidebar está colapsado */
+/* main.collapsed {
+  margin-left: 0px;
 }
+
+main.nocollapsed {
+  margin-left: 200px;
+} */
 
 .content-conditional-footer {
   flex-grow: 1;
@@ -108,8 +145,6 @@ main.collapsed {
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  transition: margin-left 0.3s;
-  /* Transición suave para el margen */
 }
 
 .content {
@@ -117,7 +152,8 @@ main.collapsed {
   flex-direction: column;
   gap: 2rem;
   padding: 0 2rem;
-  background: #8fbc8f42;
+  /* background: #8fbc8f42; */
+  background: transparent;
   flex-grow: 1;
 }
 
@@ -128,9 +164,6 @@ main.collapsed {
   padding: 20px;
   font-size: 16px;
   font-weight: 600;
-  margin-top: auto;
-  transition: margin-left 0.3s;
-  /* Transición suave para el margen */
 }
 
 
@@ -277,17 +310,18 @@ video {
   width: 250px;
 }
 
-.active {
+/* .active {
   background-color: #d4edda;
   border-color: #c3e6cb;
   color: #155724;
+
 }
 
 .inactive {
   background-color: #f8d7da;
   border-color: #f5c6cb;
   color: #721c24;
-}
+} */
 
 .content-scheadule {
   display: flex;
@@ -313,20 +347,6 @@ video {
 .card:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.active {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.inactive {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
-  animation: fadeOut 1s ease-in-out;
 }
 
 @keyframes fadeIn {

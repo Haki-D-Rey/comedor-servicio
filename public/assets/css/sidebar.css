@@ -1,0 +1,214 @@
+.sidebar.collapsed {
+    width: 100px;
+    opacity: 1;
+}
+
+.sidebar.nocollapsed {
+    width: 220px;
+    opacity: 1;
+}
+
+.arrow {
+    margin-left: 2px;
+    margin-top: 10px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.container-submenu-list {
+    display: none;
+    background-color: #0d226070;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    left: 0;
+    top: 100%;
+    z-index: 1000;
+    transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+.sidebar-item:hover .container-submenu-list {
+    display: block;
+}
+
+.submenu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.sidebar-item:hover {
+    background-color: #f0f0f0;
+}
+
+.submenu .sidebar-item {
+    position: relative;
+}
+
+/* Estilo para el borde de los elementos principales y submenús */
+.sidebar-item {
+    position: relative;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Fondo transparente al hacer hover en submenús */
+.submenu .sidebar-item:hover {
+    background-color: transparent;
+}
+
+.submenu .sidebar-item::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    /* Coloca el borde justo debajo del elemento */
+    left: 50%;
+    /* Comienza desde el centro */
+    height: 3px;
+    width: 100%;
+    /* Ancho completo del elemento */
+    background: linear-gradient(90deg, #065174, #037034, #172781);
+    transform: translateX(-50%) scaleX(0);
+    /* Centra y oculta el borde inicialmente */
+    transition: transform 0.8s ease-in-out;
+}
+
+/* Expande el borde al hacer hover o cuando está activo */
+.submenu .sidebar-item:hover::after,
+.submenu .sidebar-item.active::after {
+    transform: translateX(-50%) scaleX(1);
+    /* Expande completamente el borde */
+}
+
+/* Borde animado lateral izquierdo para elementos de .submenu */
+.submenu>.sidebar-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, #172781, #037034, #172781);
+    transform: scaleY(0);
+    transform-origin: right;
+    transition: transform 0.8s ease-in-out;
+}
+
+/* Expande el borde al hacer hover o si está activo */
+.submenu>.sidebar-item:hover::before,
+.submenu>.sidebar-item.active::before {
+    transform: scaleY(1);
+}
+
+/* Borde animado lateral izquierdo para elementos de .menu */
+.menu>.sidebar-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, #172781, #037034, #172781);
+    transform: scaleY(0);
+    transform-origin: right;
+    transition: transform 0.8s ease-in-out;
+}
+
+/* Expande el borde al hacer hover o si está activo */
+.menu>.sidebar-item:hover::before,
+.menu>.sidebar-item.active::before {
+    transform: scaleY(1);
+}
+
+.sidebar-text {
+    margin-left: 10px;
+    transition: opacity 0.3s ease;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.sidebar.collapsed .sidebar-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: none;
+}
+
+#sidebar ul {
+    padding: 0;
+    margin: 0;
+}
+
+#toggleButton {
+    transition: transform 0.3s ease;
+}
+
+.animate-icon {
+    transform: translateX(5px);
+    /* Desplazamiento hacia la derecha */
+}
+
+
+/* Mantener el color blanco en las flechas del submenú */
+.sidebar .arrow {
+    color: #ffffff;
+    /* Color blanco para el ícono de flecha */
+}
+
+.sidebar:hover {
+    width: 220px;
+    opacity: 1;
+    color: white;
+ }
+
+ .sidebar.collapsed:hover .sidebar-text {
+    opacity: 1;
+    width: auto;
+    overflow: hidden;
+    display: inline;
+}
+
+ 
+ .sidebar::-webkit-scrollbar {
+    width: 8px;
+ }
+ 
+ .sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+ }
+ 
+ .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(20, 32, 198, 0.75);
+    border-radius: 10px;
+ }
+
+ .menu-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    
+ }
+
+ ul.menu {
+    width: 100%;
+ }
+
+ ul.menu>li {
+    width: 100%;
+    display: block;
+    margin: 2px 0;
+ }

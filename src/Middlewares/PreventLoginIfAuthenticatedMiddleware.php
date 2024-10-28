@@ -3,8 +3,10 @@
 
 namespace App\Middlewares;
 
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Firebase\JWT\SignatureInvalidException;
 use Psr\Container\ContainerInterface;
 use Slim\Psr7\Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
@@ -53,21 +55,36 @@ class PreventLoginIfAuthenticatedMiddleware
             }
         }
         $response = new Response();
-        $key = $this->container->get('settings')['jwt']['secret'];
-        $decoded = $token ? JWT::decode($token, new Key($key, 'HS256')) : false;
 
-        // Si no se encontró el token en ningún lugar
-        if (!$decoded) {
+        try {
+            $key = $this->container->get('settings')['jwt']['secret'];
+            $decoded = $token ? JWT::decode($token, new Key($key, 'HS256')) : false;
+
+            // Si no se encontró el token en ningún lugar
+            if (!$decoded) {
+                return $handler->handle($request);
+            }
+        } catch (ExpiredException $e) {
+            // El token ha expirado
+            session_destroy();
             return $handler->handle($request);
+            // return $response->withStatus(401);
+        } catch (SignatureInvalidException $e) {
+            // Firma inválida
+            session_destroy();
+            return $handler->handle($request);
+            // $response->getBody()->write("Firma del token inválida");
+            // return $response->withStatus(401);
         }
-
 
         try {
             // Obtener la URL almacenada en la cookie 'previous_url', o redirigir al dashboard si no hay una URL previa
             $previousUrl = $_SESSION['previous_url'] ?? '/';
+            $_SESSION['loggedin'] = True;
             // session_destroy();
             return $response->withHeader('Location', $previousUrl)->withStatus(302);
         } catch (\Throwable $e) {
+            $_SESSION['loggedin'] = False;
             $this->logger->error('Error inesperado al validar el token JWT: ' . $e->getMessage());
             return $this->unauthorizedResponse($request, 'Error al procesar el token JWT');
         }
@@ -77,6 +94,7 @@ class PreventLoginIfAuthenticatedMiddleware
     {
         $response = new Response();
         $response->getBody()->write(json_encode(['error' => $message]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        return $response->withHeader('Location', '/auth/login')->withStatus(302);
     }
 }
