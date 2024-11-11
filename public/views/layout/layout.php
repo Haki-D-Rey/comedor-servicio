@@ -13,6 +13,7 @@ $isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
     <link rel="stylesheet" href="./../../assets/css/layout.css">
     <link rel="stylesheet" href="./../../assets/css/header.css">
     <link rel="stylesheet" href="./../../assets/css/sidebar.css">
+    <link rel="stylesheet" href="./../../assets/css/dashboard.css">
     <!--Bootstrap-->
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/css/docs.css" rel="stylesheet">
@@ -31,59 +32,7 @@ $isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
         </header>
 
         <?php if ($isLoggedIn): ?>
-            <section class="sidebar nocollapsed" id="sidebar">
-                <div class="menu-list">
-                    <ul class="menu">
-                        <li class="sidebar-item">
-                            <i class="fas fa-home"></i>
-                            <span class="sidebar-text">Inicio</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <i class="fas fa-cube"></i>
-                            <span class="sidebar-text">Producto</span>
-                            <i class="fas fa-chevron-down arrow" onclick="toggleSubMenu(this)"></i>
-                            <div class="container-submenu-list">
-                                <ul class="submenu">
-                                    <li class="sidebar-item">
-                                        <i class="fas fa-cube"></i>
-                                        <span class="sidebar-text">Producto 1</span>
-                                    </li>
-                                    <li class="sidebar-item">
-                                        <i class="fas fa-cube"></i>
-                                        <span class="sidebar-text">Producto 2</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="sidebar-item">
-                            <i class="fas fa-th"></i>
-                            <span class="sidebar-text">Categoria</span>
-                            <i class="fas fa-chevron-down arrow" onclick="toggleSubMenu(this)"></i>
-                            <div class="container-submenu-list">
-                                <ul class="submenu">
-                                    <li class="sidebar-item">
-                                        <i class="fas fa-th"></i>
-                                        <span class="sidebar-text">Categoria 1</span>
-                                    </li>
-                                    <li class="sidebar-item">
-                                        <i class="fas fa-th"></i>
-                                        <span class="sidebar-text">Categoria 2</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="sidebar-item">
-                            <i class="fas fa-truck"></i>
-                            <span class="sidebar-text">Proveedor</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <i class="fas fa-users"></i>
-                            <span class="sidebar-text">Usuarios</span>
-                        </li>
-                        <!-- Agrega más elementos según sea necesario -->
-                    </ul>
-                </div>
-            </section>
+            <?php include 'sidebar.php'; ?>
         <?php endif; ?>
 
         <main class="<?php echo $isLoggedIn ? 'nocollapsed-child-no-sidebar' : 'full-width'; ?>"> <!-- Cambiado según estado de sesión -->
@@ -106,50 +55,8 @@ $isLoggedIn = isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
                             echo json_encode($_SESSION['jwt_token'] ?? ""); // Usa json_encode para manejar comillas y espacios
                             ?>;
     console.log(window.tokenAccess);
-
-    function toggleSubMenu(element) {
-        const submenu = element.nextElementSibling; // Obtiene el siguiente elemento (submenu)
-        if (submenu.style.display === "block") {
-            submenu.style.display = "none"; // Oculta el submenu
-        } else {
-            submenu.style.display = "block"; // Muestra el submenu
-        }
-    }
-
-    document.querySelectorAll('.menu .sidebar-item, .submenu .sidebar-item').forEach(item => {
-        item.addEventListener('click', function(event) {
-            event.stopPropagation();
-
-            const parentMenu = this.closest('.menu, .submenu');
-            const hasActiveParentChild = parentMenu.querySelector('.sidebar-item.active');
-            if (hasActiveParentChild) {
-
-                if (hasActiveParentChild !== this) {
-                    hasActiveParentChild.classList.remove('active');
-                } else {
-                    return;
-                }
-            }
-            document.querySelectorAll('.menu .sidebar-item.active, .submenu .sidebar-item.active').forEach(el => {
-                if (el !== this) el.classList.remove('active');
-            });
-
-            this.classList.add('active');
-
-            if (parentMenu && !parentMenu.classList.contains('active')) {
-                parentMenu.classList.add('active');
-            }
-            const grandParentMenu = parentMenu.closest('.sidebar-item');
-
-            if (grandParentMenu) {
-                grandParentMenu.classList.add('active');
-            }
-
-            sidebar.classList.add("nocollapsed");
-            sidebar.classList.remove("collapsed");
-        });
-    });
 </script>
 <script type="module" src="/assets/js/header.js"></script>
-
+<script type="module" src="/assets/js/sidebar.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 </html>

@@ -57,8 +57,7 @@ ob_start();
     <?php
     $content = ob_get_clean();
     include __DIR__ . '/../../layout/layout.php'; ?>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+    
     <script>
         window.endpointListaServiciosProductosDetalles = "<?php echo $routeParser->urlFor('servicios_productos_detalles.list'); ?>";
         window.endpointListaSistemas = "<?php echo $routeParser->urlFor('sistemas.list_all'); ?>";

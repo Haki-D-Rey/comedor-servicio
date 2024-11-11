@@ -47,20 +47,9 @@ class AuthController
             $timeExpirationToken = $this->getTimeRemaining($authData['expiracion']);
             $authData['expiracion'] = $timeExpirationToken;
 
-            // setcookie('jwt_token', '', time() - 3600);
-
-            // $arr_cookie_options = array(
-            //     'expires' => time() + 3600,
-            //     'path' => '/auth',
-            //     'domain' => 'localhost', // leading dot for compatibility or use subdomain
-            //     'secure' => true,     // or false
-            //     'httponly' => true,    // or false
-            //     'samesite' => 'none' // None || Lax  || Strict
-            // );
-            // setcookie('jwt_token', $authData['token'], $arr_cookie_options);
             $_SESSION['jwt_token'] = $authData['token'];
             return $response
-                ->withHeader('Location', '/formularios/control-estadisticos')  // Redirigir a /formulario
+                ->withHeader('Location', '/dashboard/')  // Redirigir a /formulario
                 ->withStatus(302);
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));

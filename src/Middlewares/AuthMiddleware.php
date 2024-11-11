@@ -24,6 +24,7 @@ class AuthMiddleware
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
+        try {
         session_start();
         $token = $_SESSION['jwt_token'] ?? null;
 
@@ -54,6 +55,7 @@ class AuthMiddleware
 
         // Si no se encontró el token en ningún lugar
         if (!$token) {
+
             throw new HttpUnauthorizedException($request, 'El token de autorización es requerido');
         }
 
@@ -63,7 +65,6 @@ class AuthMiddleware
             return $this->badRequestResponse('Invalid token structure');
         }
 
-        try {
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             $request = $request->withAttribute('user_id', $decoded->sub);
             $_SESSION['loggedin'] = True;
@@ -98,7 +99,8 @@ class AuthMiddleware
     {
         $response = new \Slim\Psr7\Response();
         $response->withHeader('Location', '/auth/login')->withStatus(302);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        return $response->withHeader('Location', '/auth/login')->withStatus(302); 
     }
 
     private function badRequestResponse(string $message): Response

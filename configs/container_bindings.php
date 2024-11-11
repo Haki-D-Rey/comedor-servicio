@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use App\Controllers\AuthController;
 use App\Controllers\ConfiguracionServiciosEstadisticosController;
 use App\Controllers\ControlEstadisticosServiciosController;
+use App\Controllers\DashboardController;
 use App\Controllers\DetalleZonaServicioHorarioController;
 use App\Controllers\UsuarioController;
 use App\Controllers\SistemasController;
@@ -238,6 +239,10 @@ return [
 
     ControlEstadisticosServiciosController::class => function (ContainerInterface $container) {
         return new ControlEstadisticosServiciosController($container->get(ControlEstadisticosServiciosServices::class));
+    },
+
+    DashboardController::class => function (ContainerInterface $container) {
+        return new DashboardController($container ,$container->get(AuthServices::class));
     },
 
 ];

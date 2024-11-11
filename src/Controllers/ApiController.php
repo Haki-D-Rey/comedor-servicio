@@ -36,23 +36,6 @@ class ApiController
         return $response->withHeader('Content-Type', 'text/html');
     }
 
-    public function formulario(Request $request, Response $response): Response
-    {   
-        session_start();
-        $routeParser = $this->container->get(RouteParser::class);
-        $data = [
-            "token" => $_SESSION['jwt_token']
-        ];
-        $user_id = $this->authServices->verifyToken($data, $this->container)['user']->sub;
-        ob_start();
-        // include __DIR__ . '/views/client/inscripcion_control.php';
-        include __DIR__ . '/../../public/views/client/formulario/inscripcion_control.php';
-        $viewContent = ob_get_clean();
-        $response->getBody()->write($viewContent);
-
-        return $response->withHeader('Content-Type', 'text/html');
-    }
-
     public function info(Request $request, Response $response): Response
     {
         ob_start();

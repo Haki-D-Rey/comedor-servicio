@@ -11,11 +11,6 @@ return function (App $app) {
 
     $app->get('/', ApiController::class . ':index');
 
-
-    $app->group('/formularios', function (RouteCollectorProxy $group) {
-        $group->get('/control-estadisticos', ApiController::class . ':formulario');
-    })->add(AuthMiddleware::class);
-
     $app->get('/info', ApiController::class . ':info');
     $app->group('/api', function (RouteCollectorProxy $group) {
         $group->get('/all', ApiController::class . ':getAll')->setName('api.all');
