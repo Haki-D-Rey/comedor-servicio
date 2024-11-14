@@ -23,7 +23,7 @@ return [
             'user' => 'postgres',
             // 'password' => 'Maleisho*-+31102019',
             'password' => 'n&ecurity2024*',
-            'dbname' => 'dining_service'
+            'dbname' => 'dining_service_t1'
         ],
     ],
 

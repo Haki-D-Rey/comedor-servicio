@@ -12,6 +12,8 @@ use App\Config;
 use Config\LoggerFactory;
 use Doctrine\DBAL\DriverManager;
 use Psr\Log\LoggerInterface;
+use Doctrine\ORM\Events;
+use App\Helpers\EntityLoadListener;
 
 //Controller
 use App\Controllers\AuthController;
@@ -27,7 +29,6 @@ use App\Controllers\ServiciosProductosDetallesController;
 use App\Controllers\ZonaController;
 use App\Controllers\ZonaUsuariosController;
 use App\Controllers\Catalogo\TipoUsuariosController;
-use App\Entity\Seguridad\TipoUsuarioPermisos;
 use App\Middlewares\AuthorizationMiddleware;
 //Repository
 use App\Repository\Catalogo\Repository\DetalleZonaServicioHorarioRepository;
@@ -82,6 +83,7 @@ return [
         $configFile = __DIR__ . '/package/doctrine.yml';
         $configArray = Yaml::parseFile($configFile);
 
+
         if (!Type::hasType('uuid')) {
             Type::addType('uuid', $configArray['doctrine']['types']['uuid']);
         }
@@ -91,10 +93,15 @@ return [
         }
         $connectionConfig = $container->get('settings')['db']['dinning_services'];
 
+        // Configuración de ORM con opciones de proxy
         $config = ORMSetup::createAttributeMetadataConfiguration(
-            [__DIR__ . '/../src/Entity'], // Directorio donde están tus entidades
-            false, // Habilitar modo de desarrollo (para caché, etc.)
+            [__DIR__ . '/../src/Entity'],
+            false,
         );
+
+        $config->setProxyDir(__DIR__ . '/../bin/cache/doctrine/proxies');
+        $config->setProxyNamespace('Proxies');
+        $config->setAutoGenerateProxyClasses(false); // true en desarrollo
 
         $connectionParams = [
             'dbname' => $connectionConfig['dbname'],
@@ -106,7 +113,15 @@ return [
         ];
 
         $connection = DriverManager::getConnection($connectionParams);
-        return new EntityManager($connection, $config);
+        $entityManager = new EntityManager($connection, $config);
+
+        // Añadir el listener para el evento `postLoad`
+        // $entityManager->getEventManager()->addEventListener(
+        //     [Events::postLoad],
+        //     new EntityLoadListener()
+        // );
+
+        return $entityManager;
     },
 
     // Alias para EntityManagerInterface
@@ -233,7 +248,7 @@ return [
     },
 
     AuthorizationService::class => function (ContainerInterface $container) {
-        return new AuthorizationService($container->get(EntityManagerInterface::class), $container->get(UsuarioRepository::class), $container->get(TipoUsuarioPermisos::class));
+        return new AuthorizationService($container->get(EntityManagerInterface::class));
     },
 
     AuthorizationMiddleware::class => function (ContainerInterface $container) {

@@ -7,3 +7,8 @@ doctrine:
     types:
         uuid: Ramsey\Uuid\Doctrine\UuidType
         jsonb: Doctrine\DBAL\Types\JsonType
+
+services:
+  App\Helpers\EntityLoadListener:
+    tags:
+      - { name: doctrine.event_listener, event: postLoad }
