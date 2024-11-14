@@ -16,6 +16,7 @@ class UsuarioDTO implements JsonSerializable
     private $fecha_modificacion;
     private $isadmin;
     private $estado;
+    private $idTipoUsuario;
 
     public function __construct(
         ?int $id,
@@ -27,7 +28,8 @@ class UsuarioDTO implements JsonSerializable
         \DateTime $fecha_creacion,
         ?\DateTime $fecha_modificacion,
         bool $isadmin,
-        bool $estado
+        bool $estado,
+        int $idTipoUsuario
     ) {
         $this->id = $id;
         $this->nombreUsuario = $nombreUsuario;
@@ -39,6 +41,7 @@ class UsuarioDTO implements JsonSerializable
         $this->fecha_modificacion = $fecha_modificacion;
         $this->isadmin = $isadmin;
         $this->estado = $estado;
+        $this->idTipoUsuario = $idTipoUsuario;
     }
 
     // Getters
@@ -92,6 +95,11 @@ class UsuarioDTO implements JsonSerializable
         return $this->estado;
     }
 
+    public function getIdTipoUsuario(): int
+    {
+        return $this->idTipoUsuario;
+    }
+
     // Implementación de JsonSerializable
     public function jsonSerialize(): array
     {
@@ -106,6 +114,7 @@ class UsuarioDTO implements JsonSerializable
             'fecha_modificacion' => $this->fecha_modificacion ? $this->fecha_modificacion->format(\DateTime::ISO8601) : null,
             'isadmin' => $this->isadmin,
             'estado' => $this->estado,
+            'idTipoUsuario' => $this->idTipoUsuario
         ];
     }
 }

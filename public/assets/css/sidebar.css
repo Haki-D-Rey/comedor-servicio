@@ -173,43 +173,58 @@
     width: 270px;
     opacity: 1;
     color: white;
- }
+}
 
- .sidebar.collapsed:hover .sidebar-text {
+.sidebar.collapsed:hover .sidebar-text {
     opacity: 1;
     width: auto;
     overflow: hidden;
     display: inline;
 }
 
- 
- .sidebar::-webkit-scrollbar {
+
+.sidebar::-webkit-scrollbar {
     width: 8px;
- }
- 
- .sidebar::-webkit-scrollbar-track {
+}
+
+.sidebar::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
- }
- 
- .sidebar::-webkit-scrollbar-thumb {
+}
+
+.sidebar::-webkit-scrollbar-thumb {
     background-color: rgba(20, 32, 198, 0.75);
     border-radius: 10px;
- }
+}
 
- .menu-list {
+/* .menu-list {
     margin-top: 20px;
     display: flex;
     flex-direction: row;
-    
- }
+} */
 
- ul.menu {
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-top: 20px;
+}
+
+.menu {
+    /* Opcional: Si necesitas que ocupe el espacio restante */
+    flex: 1;
+}
+
+.menu-footer {
+    margin-top: auto;
+}
+
+ul.menu {
     width: 100%;
- }
+}
 
- ul.menu>li {
+ul.menu>li {
     width: 100%;
     display: block;
     margin: 2px 0;
- }
+}

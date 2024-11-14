@@ -26,21 +26,26 @@ use App\Controllers\ServiciosProductosController;
 use App\Controllers\ServiciosProductosDetallesController;
 use App\Controllers\ZonaController;
 use App\Controllers\ZonaUsuariosController;
+use App\Controllers\Catalogo\TipoUsuariosController;
+use App\Entity\Seguridad\TipoUsuarioPermisos;
+use App\Middlewares\AuthorizationMiddleware;
 //Repository
 use App\Repository\Catalogo\Repository\DetalleZonaServicioHorarioRepository;
 use App\Repository\Catalogo\Repository\SistemasRepository;
 use App\Repository\Catalogo\Repository\TipoServiciosRepository;
 use App\Repository\Catalogo\Repository\ServiciosProductosRepository;
 use App\Repository\Catalogo\Repository\ServiciosProductosDetallesRepository;
+use App\Repository\Catalogo\Repository\TipoUsuariosRepository;
 use App\Repository\Catalogo\Repository\ZonaRepository;
-use App\Repository\Publico\Interface\ConfiguracionServiciosEstadisticosRepositoryInterface;
 use App\Repository\Publico\Repository\ConfiguracionServiciosEstadisticosRepository;
 use App\Repository\Publico\Repository\ControlEstadisticosServiciosRepository;
 use App\Repository\Seguridad\Repository\ZonaUsuarioRepository;
 use App\Repository\Seguridad\Repository\AuthRepository;
 use App\Repository\Seguridad\Repository\UsuarioRepository;
+use App\Services\Seguridad\AuthorizationService;
 //Services
 use App\Services\AuthServices;
+use App\Services\Catalogo\TipoUsuariosServices;
 use App\Services\ConfiguracionServiciosEstadisticosServices;
 use App\Services\ControlEstadisticosServiciosServices;
 use App\Services\DetalleZonaServicioHorarioServices;
@@ -88,7 +93,7 @@ return [
 
         $config = ORMSetup::createAttributeMetadataConfiguration(
             [__DIR__ . '/../src/Entity'], // Directorio donde están tus entidades
-            true, // Habilitar modo de desarrollo (para caché, etc.)
+            false, // Habilitar modo de desarrollo (para caché, etc.)
         );
 
         $connectionParams = [
@@ -215,6 +220,25 @@ return [
         return new ZonaUsuariosController($container->get(ZonaUsuariosServices::class));
     },
 
+    TipoUsuariosRepository::class => function (ContainerInterface $container) {
+        return new TipoUsuariosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    TipoUsuariosServices::class => function (ContainerInterface $container) {
+        return new TipoUsuariosServices($container->get(TipoUsuariosRepository::class));
+    },
+
+    TipoUsuariosController::class => function (ContainerInterface $container) {
+        return new TipoUsuariosController($container->get(TipoUsuariosServices::class));
+    },
+
+    AuthorizationService::class => function (ContainerInterface $container) {
+        return new AuthorizationService($container->get(EntityManagerInterface::class), $container->get(UsuarioRepository::class), $container->get(TipoUsuarioPermisos::class));
+    },
+
+    AuthorizationMiddleware::class => function (ContainerInterface $container) {
+        return new AuthorizationMiddleware($container->get(AuthorizationService::class), $container->get(EntityManagerInterface::class));
+    },
     //public schema
 
     ConfiguracionServiciosEstadisticosRepository::class => function (ContainerInterface $container) {
@@ -242,7 +266,7 @@ return [
     },
 
     DashboardController::class => function (ContainerInterface $container) {
-        return new DashboardController($container ,$container->get(AuthServices::class));
+        return new DashboardController($container, $container->get(AuthServices::class));
     },
 
 ];

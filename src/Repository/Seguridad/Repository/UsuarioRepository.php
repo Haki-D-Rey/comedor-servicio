@@ -33,10 +33,11 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                     $usuario->getNombres(),
                     $usuario->getApellidos(),
                     $usuario->getCorreo(),
-                    $usuario->getFecha_creacion(),
-                    $usuario->getFecha_modificacion(),
+                    $usuario->getFechaCreacion(),
+                    $usuario->getFechaModificacion(),
                     $usuario->getIsAdmin(),
-                    $usuario->getEstado()
+                    $usuario->getEstado(),
+                    $usuario->getIdTipoUsuario()
                 );
             }, $usuarios);
         } catch (\Exception $e) {
@@ -63,7 +64,8 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                 $usuario->getFecha_creacion(),
                 $usuario->getFecha_modificacion(),
                 $usuario->getIsAdmin(),
-                $usuario->getEstado()
+                $usuario->getEstado(),
+                $usuario->getIdTipoUsuario()
             );
         } catch (\Exception $e) {
             $this->logger->error('Error al obtener usuario por ID: ' . $e->getMessage(), ['exception' => $e]);
@@ -96,10 +98,11 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
             $usuario->setNombres($usuarioDTO->getNombres());
             $usuario->setApellidos($usuarioDTO->getApellidos());
             $usuario->setCorreo($usuarioDTO->getCorreo());
-            $usuario->setFecha_creacion($usuarioDTO->getFecha_creacion());
-            $usuario->setFecha_modificacion($usuarioDTO->getFecha_modificacion());
+            $usuario->setFechaCreacion($usuarioDTO->getFecha_creacion());
+            $usuario->setFechaModificacion($usuarioDTO->getFecha_modificacion());
             $usuario->setIsAdmin($usuarioDTO->getIsAdmin());
             $usuario->setEstado($usuarioDTO->getEstado());
+            $usuario->setIdTipoUsuario($usuarioDTO->getIdTipoUsuario());
 
             $this->entityManager->persist($usuario);
             $this->entityManager->flush();
@@ -161,5 +164,19 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
     public function verifyPassword(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
+    }
+
+    public function findWithTipoUsuarioPermisos($usuarioId)
+    {
+        $response = $this->createQueryBuilder('u')
+            ->innerJoin('u.tipoUsuarioPermisos', 'tup')
+            ->innerJoin('tup.tipoUsuario', 'tu')
+            ->innerJoin('tup.permiso', 'p')
+            ->where('u.id = :id')
+            ->setParameter('id', $usuarioId)
+            ->getQuery()
+            ->getResult();
+
+            return $response;
     }
 }

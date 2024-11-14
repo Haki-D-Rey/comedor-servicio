@@ -67,6 +67,7 @@ class AuthMiddleware
 
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             $request = $request->withAttribute('user_id', $decoded->sub);
+            $_SESSION['user_id'] = $decoded->sub;
             $_SESSION['loggedin'] = True;
             // session_destroy();
             return $handler->handle($request);

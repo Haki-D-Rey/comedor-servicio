@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repository\Seguridad\Interface\AuthRepositoryInterface;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Slim\Psr7\Request;
 
 class AuthServices
 {
@@ -23,6 +24,38 @@ class AuthServices
         } catch (\Exception $e) {
             throw new \RuntimeException('Error al Inciar Sesion: ' . $e->getMessage());
         }
+    }
+
+    public function postLogout(Request $request): bool 
+    {
+
+        session_start();
+        $token = $_SESSION['jwt_token'];
+
+        // Obtener el token de las cookies o del header Authorization
+        if (!$token) {
+            $cookiesHeader = $request->getHeader('cookie')[0] ?? null;
+
+            if ($cookiesHeader) {
+                $cookies = explode(';', $cookiesHeader);
+                foreach ($cookies as $cookie) {
+                    $cookie = trim($cookie);
+                    if (strpos($cookie, 'jwt_token=') === 0) {
+                        $token = str_replace('jwt_token=', '', $cookie);
+                        break;
+                    }
+                }
+            }
+
+            if (!$token) {
+                $authHeader = $request->getHeader('authorization')[0] ?? null;
+                if ($authHeader) {
+                    $token = str_replace('Bearer ', '', $authHeader);
+                }
+            }
+        }
+        session_destroy();
+        return true;
     }
 
     public function verifyToken($data, $container): array

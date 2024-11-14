@@ -1,7 +1,10 @@
 <?php
 
+
 namespace App\Entity;
 
+use App\Entity\Seguridad\TipoUsuarioPermisos;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -41,12 +44,13 @@ class Usuario
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
 
-    /**
-     * One TipoServicio has Many ServiciosProductosDetalles.
-     * @var Collection<int, ZonaUsuarios>
-     */
-    #[ORM\OneToMany(targetEntity: ZonaUsuarios::class, mappedBy: 'zonaUsuarios')]
-    private Collection $zonaUsuarios;
+    #[ORM\Column(name: 'id_tipo_usuario_permiso', type: 'integer')]
+    private int $idTipoUsuarioPermiso = 1;
+
+    /** @var ArrayCollection<TipoUsuarioPermisos, OrderItem> */
+    #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'usuario')]
+    #[ORM\JoinColumn(name: "usuario_id", referencedColumnName: "id", nullable: false)]
+    private Collection $tipoUsuarioPermiso;
 
     // Getters and Setters
 
@@ -110,23 +114,23 @@ class Usuario
         return $this;
     }
 
-    public function getFecha_creacion(): ?\DateTimeInterface
+    public function getFechaCreacion(): ?\DateTimeInterface
     {
         return $this->fecha_creacion;
     }
 
-    public function setFecha_creacion(\DateTimeInterface $fecha_creacion): self
+    public function setFechaCreacion(\DateTimeInterface $fecha_creacion): self
     {
         $this->fecha_creacion = $fecha_creacion;
         return $this;
     }
 
-    public function getFecha_modificacion(): ?\DateTimeInterface
+    public function getFechaModificacion(): ?\DateTimeInterface
     {
         return $this->fecha_modificacion;
     }
 
-    public function setFecha_modificacion(?\DateTimeInterface $fecha_modificacion): self
+    public function setFechaModificacion(?\DateTimeInterface $fecha_modificacion): self
     {
         $this->fecha_modificacion = $fecha_modificacion;
         return $this;
@@ -151,6 +155,28 @@ class Usuario
     public function setEstado(bool $estado): self
     {
         $this->estado = $estado;
+        return $this;
+    }
+
+    // public function getTipoUsuario(): TipoUsuarioPermisos
+    // {
+    //     return $this->tipoUsuarioPermiso;
+    // }
+
+    // public function setTipoUsuario(TipoUsuarioPermisos $tipoUsuario): self
+    // {
+    //     $this->tipoUsuarioPermiso = $tipoUsuario;
+    //     return $this;
+    // }
+
+    public function getIdTipoUsuario(): int
+    {
+        return $this->idTipoUsuarioPermiso;
+    }
+
+    public function setIdTipoUsuario(int $id): self
+    {
+        $this->idTipoUsuarioPermiso = $id;
         return $this;
     }
 }

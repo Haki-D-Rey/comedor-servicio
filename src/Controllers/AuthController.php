@@ -59,32 +59,7 @@ class AuthController
 
     public function logout(Request $request, Response $response)
     {
-        session_start();
-        $token = $_SESSION['jwt_token'];
-
-        // Obtener el token de las cookies o del header Authorization
-        if (!$token) {
-            $cookiesHeader = $request->getHeader('cookie')[0] ?? null;
-
-            if ($cookiesHeader) {
-                $cookies = explode(';', $cookiesHeader);
-                foreach ($cookies as $cookie) {
-                    $cookie = trim($cookie);
-                    if (strpos($cookie, 'jwt_token=') === 0) {
-                        $token = str_replace('jwt_token=', '', $cookie);
-                        break;
-                    }
-                }
-            }
-
-            if (!$token) {
-                $authHeader = $request->getHeader('authorization')[0] ?? null;
-                if ($authHeader) {
-                    $token = str_replace('Bearer ', '', $authHeader);
-                }
-            }
-        }
-        session_destroy();
+        $this->authServices->postLogout($request);
         $response->getBody()->write(json_encode(['status' => true, 'message' => 'Successfully logged out']));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }

@@ -3,6 +3,7 @@
 namespace App\Repository\Seguridad\Interface;
 
 use App\DTO\UsuarioDTO;
+use App\Entity\Usuario;
 
 interface UsuarioRepositoryInterface
 {
@@ -42,4 +43,10 @@ interface UsuarioRepositoryInterface
      * @return bool
      */
     public function verifyPassword(string $password, string $hash): bool;
+
+     /**
+     * @param int $id
+     * @return Usuario
+     */
+    public function findWithTipoUsuarioPermisos(int $usuarioId);
 }
