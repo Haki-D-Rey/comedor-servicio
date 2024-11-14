@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MyProject\Component\Sedders;
+namespace MyProject\Component\Seeders;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;

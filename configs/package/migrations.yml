@@ -6,7 +6,7 @@ table_storage:
    execution_time_column_name: execution_time
 
 migrations_paths:
-   'MyProject\Component\Sedders': './../Migrations/Sedders/'
+   'MyProject\Component\Seeders': './../Migrations/Seeders/'
    'MyProject\Component\Migrations': './../Migrations/Component/'
 
 all_or_nothing: true
