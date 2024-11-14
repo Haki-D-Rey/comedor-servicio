@@ -40,7 +40,7 @@ class Permisos
 
 
     // // Relación inversa OneToMany con la tabla intermedia
-    #[ORM\OneToMany(mappedBy: 'permiso', targetEntity: TipoUsuarioPermisos::class)]
+    #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'permiso',)]
     private Collection $tipoUsuarioPermisos;
 
     // #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'permisos')]

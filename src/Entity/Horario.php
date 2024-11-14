@@ -32,10 +32,10 @@ class Horario
     private ?\DateTime $fecha_modificacion = null;
 
     #[ORM\Column(name: 'inicio', type: 'time', nullable: false)]
-    private TimeType $inicio;
-
+    private ?\DateTime $inicio = null;
+    
     #[ORM\Column(name: 'fin', type: 'time', nullable: false)]
-    private TimeType $fin;
+    private ?\DateTime $fin = null;
 
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
@@ -45,11 +45,11 @@ class Horario
      * @var Collection<int, DetalleZonaServicioHorario>
      */
     #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'horario')]
-    private Collection $serviciosProductosDetalles;
+    private Collection $detalleZonaServicioHorario;
 
     public function __construct()
     {
-        $this->serviciosProductosDetalles = new ArrayCollection();
+        $this->detalleZonaServicioHorario = new ArrayCollection();
     }
 
     // Getters and Setters

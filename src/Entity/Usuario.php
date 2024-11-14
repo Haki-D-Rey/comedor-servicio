@@ -1,12 +1,11 @@
 <?php
 
-
 namespace App\Entity;
 
 use App\Entity\Seguridad\TipoUsuarioPermisos;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\PersistentCollection;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'seguridad.usuarios')]
@@ -47,10 +46,13 @@ class Usuario
     #[ORM\Column(name: 'id_tipo_usuario_permiso', type: 'integer')]
     private int $idTipoUsuarioPermiso = 1;
 
-    /** @var ArrayCollection<TipoUsuarioPermisos, OrderItem> */
     #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'usuario')]
     #[ORM\JoinColumn(name: "usuario_id", referencedColumnName: "id", nullable: false)]
-    private Collection $tipoUsuarioPermiso;
+    private PersistentCollection $tipoUsuarioPermiso;
+
+    public function __construct() {
+        $this->tipoUsuarioPermiso = new ArrayCollection();
+    }
 
     // Getters and Setters
 
@@ -158,16 +160,10 @@ class Usuario
         return $this;
     }
 
-    // public function getTipoUsuario(): TipoUsuarioPermisos
-    // {
-    //     return $this->tipoUsuarioPermiso;
-    // }
-
-    // public function setTipoUsuario(TipoUsuarioPermisos $tipoUsuario): self
-    // {
-    //     $this->tipoUsuarioPermiso = $tipoUsuario;
-    //     return $this;
-    // }
+    public function getTipoUsuarioPermisos(): PersistentCollection
+    {
+        return $this->tipoUsuarioPermiso;
+    }
 
     public function getIdTipoUsuario(): int
     {

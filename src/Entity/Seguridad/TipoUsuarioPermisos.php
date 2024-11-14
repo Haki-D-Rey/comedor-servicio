@@ -16,17 +16,17 @@ class TipoUsuarioPermisos
     #[ORM\Column(name: 'id', type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Usuario::class)]
+    #[ORM\ManyToOne(targetEntity: Usuario::class, inversedBy: "tipoUsuarioPermiso") ]
     #[ORM\JoinColumn(name: 'usuario_id', referencedColumnName: 'id')]
     private ?Usuario $usuario = null;
 
     // Relación ManyToOne con TipoUsuario
-    #[ORM\ManyToOne(targetEntity: TipoUsuario::class)]
+    #[ORM\ManyToOne(targetEntity: TipoUsuario::class, inversedBy: "tipoUsuarioPermisos") ]
     #[ORM\JoinColumn(name: 'tipo_usuario_id', referencedColumnName: 'id')]
     private ?TipoUsuario $tipoUsuario = null;
 
     // Relación ManyToOne con Permiso
-    #[ORM\ManyToOne(targetEntity: Permisos::class)]
+    #[ORM\ManyToOne(targetEntity: Permisos::class, inversedBy: "tipoUsuarioPermisos")]
     #[ORM\JoinColumn(name: 'permiso_id', referencedColumnName: 'id')]
     private ?Permisos $permiso = null;
 

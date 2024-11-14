@@ -28,6 +28,11 @@ class ConfiguracionServiciosEstadisticos
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado = true;
 
+    #[ORM\ManyToOne(targetEntity: ControlEstadisticosServicios::class, inversedBy: 'configuracionServiciosEstadisticos')]
+    #[ORM\JoinColumn(name: 'id_configuracion_servicios_estadisticos', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private ControlEstadisticosServicios $controlEstadisticosServicios;
+
+
     public function __construct()
     {
         $this->fechaCreacion = new \DateTime(); // Establece la fecha de creación al momento actual

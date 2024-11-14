@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -55,6 +56,14 @@ class ServiciosProductosDetalles
     #[ORM\ManyToOne(targetEntity: ServiciosProductos::class, inversedBy: 'serviciosProductosDetalles')]
     #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ServiciosProductos $serviciosProductos;
+
+        /**
+     * Many ServiciosProductosDetalles have One ServicioProducto.
+     * @var ServiciosProductos
+     */
+    #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'serviciosProductosDetalles')]
+    #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private Collection $detalleZonaServicioHorario;
 
     public function __construct()
     {

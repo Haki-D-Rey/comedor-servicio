@@ -71,8 +71,8 @@ class DetalleZonaServicioHorario
      * One ServicioProducto has Many ControlEstadisticosServicios.
      * @var Collection<int, ControlEstadisticosServicios>
      */
-    #[ORM\OneToMany(targetEntity: ControlEstadisticosServicios::class, mappedBy: 'controlEstadisticosServicios')]
-    private Collection $ControlEstadisticosServicios;
+    #[ORM\OneToMany(targetEntity: ControlEstadisticosServicios::class, mappedBy: 'detalleZonaServicioHorario')]
+    private Collection $controlEstadisticosServicios;
 
     public function getId(): ?int
     {

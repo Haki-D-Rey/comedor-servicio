@@ -34,23 +34,11 @@ class Zona
     private bool $estado;
 
     /**
-     * One ServicioProducto has Many DetalleZonaServicioHorario.
-     * @var Collection<int, DetalleZonaServicioHorario>
-     */
-    #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'zona')]
-    private Collection $serviciosProductosDetalles;
-
-    /**
      * One TipoServicio has Many ServiciosProductosDetalles.
      * @var Collection<int, ZonaUsuarios>
      */
-    #[ORM\OneToMany(targetEntity: ZonaUsuarios::class, mappedBy: 'zonaUsuarios')]
+    #[ORM\OneToMany(targetEntity: ZonaUsuarios::class, mappedBy: 'zona')]
     private Collection $zonaUsuarios;
-
-    public function __construct()
-    {
-        $this->serviciosProductosDetalles = new ArrayCollection();
-    }
 
     // Getters and Setters
 

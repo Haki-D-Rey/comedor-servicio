@@ -35,7 +35,7 @@ class TipoUsuario
     private bool $estado = true;
 
     // Relación OneToMany con la tabla intermedia
-    #[ORM\OneToMany(mappedBy: 'tipoUsuario', targetEntity: TipoUsuarioPermisos::class)]
+    #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'tipoUsuario')]
     private Collection $tipoUsuarioPermisos;
 
     public function __construct()

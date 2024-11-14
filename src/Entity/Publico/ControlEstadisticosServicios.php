@@ -22,11 +22,11 @@ class ControlEstadisticosServicios
     #[ORM\Column(name: 'uuid', type: 'uuid', unique: true)]
     private UuidInterface $uuid;
 
-    #[ORM\ManyToOne(targetEntity: DetalleZonaServicioHorario::class, inversedBy: 'detalleZonaServicioHorario')]
+    #[ORM\ManyToOne(targetEntity: DetalleZonaServicioHorario::class, inversedBy: 'controlEstadisticosServicios')]
     #[ORM\JoinColumn(name: 'id_detalle_zona_servicio_horario', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private DetalleZonaServicioHorario $detalleZonaServicioHorario;
 
-    #[ORM\ManyToOne(targetEntity: ConfiguracionServiciosEstadisticos::class, inversedBy: 'configuracionServiciosEstadisticos')]
+    #[ORM\OneToMany(targetEntity: ConfiguracionServiciosEstadisticos::class, mappedBy: 'controlEstadisticosServicios')]
     #[ORM\JoinColumn(name: 'id_configuracion_servicios_estadisticos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ConfiguracionServiciosEstadisticos $configuracionServiciosEstadisticos;
 
