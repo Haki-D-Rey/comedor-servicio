@@ -115,11 +115,11 @@ return [
         $connection = DriverManager::getConnection($connectionParams);
         $entityManager = new EntityManager($connection, $config);
 
-        // Añadir el listener para el evento `postLoad`
-        // $entityManager->getEventManager()->addEventListener(
-        //     [Events::postLoad],
-        //     new EntityLoadListener()
-        // );
+        //Añadir el listener para el evento `postLoad`
+        $entityManager->getEventManager()->addEventListener(
+            [Events::postLoad],
+            new EntityLoadListener()
+        );
 
         return $entityManager;
     },

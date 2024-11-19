@@ -166,7 +166,6 @@ final class Version20241114190628 extends AbstractMigration
             "Migration can only be executed safely on '\Doctrine\DBAL\Platforms\PostgreSQL120Platform'."
         );
 
-
     }
 
     public function down(Schema $schema): void
