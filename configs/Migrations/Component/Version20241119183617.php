@@ -75,6 +75,23 @@ final class Version20241119183617 extends AbstractMigration
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_estado_ventas_descripcion ON catalogo.estado_ventas USING gin (to_tsvector(\'spanish\', descripcion));');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_estado_ventas_estado ON catalogo.estado_ventas (estado);');
 
+
+        $this->addSql('CREATE TABLE IF NOT EXISTS catalogo.identificacion_facturacion (
+                            id SERIAL PRIMARY KEY,
+                            nombre VARCHAR(128) NOT NULL,
+                            descripcion VARCHAR(256) NOT NULL,
+                            codigo_interno VARCHAR(64) NOT NULL,
+                            fecha_creacion TIMESTAMP DEFAULT NOW(),
+                            fecha_modificacion TIMESTAMP NULL,
+                            estado BOOLEAN DEFAULT TRUE,
+                            UNIQUE (id, codigo_interno)
+                        );');
+
+        $this->addSql("CREATE INDEX IF NOT EXISTS idx_identificacion_facturacion_codigo_interno ON catalogo.identificacion_facturacion USING gin (to_tsvector('spanish', codigo_interno));");
+        $this->addSql("CREATE INDEX IF NOT EXISTS idx_identificacion_facturacion_descripcion ON catalogo.identificacion_facturacion USING gin (to_tsvector('spanish', descripcion));");
+        $this->addSql("CREATE INDEX IF NOT EXISTS idx_identificacion_facturacion_estado ON catalogo.identificacion_facturacion (estado);");
+
+
         // SCHEMA PUBLICO
 
         $this->addSql('CREATE TABLE IF NOT EXISTS public.cliente (
@@ -88,10 +105,10 @@ final class Version20241119183617 extends AbstractMigration
             fecha_creacion TIMESTAMP DEFAULT NOW(),
             fecha_modificacion TIMESTAMP NULL,
             estado BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (id_departamento) REFERENCES catalogo.departamento(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_cargo) REFERENCES catalogo.cargo(id) ON DELETE CASCADE
+            FOREIGN KEY (id_departamento) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_cargo) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE
         );');
-        
+
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_cliente_id_departamento ON public.cliente(id_departamento);');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_cliente_id_cargo ON public.cliente(id_cargo);');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_cliente_clie_docnum ON public.cliente(clie_docnum);');
@@ -106,9 +123,9 @@ final class Version20241119183617 extends AbstractMigration
             fecha_modificacion TIMESTAMP NULL,
             estado BOOLEAN DEFAULT TRUE,
             FOREIGN KEY (id_cliente) REFERENCES public.cliente(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_identificacion_facturacion) REFERENCES catalogo.lista_catalogo_detalle(id_valor) ON DELETE CASCADE
+            FOREIGN KEY (id_identificacion_facturacion) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE
         );');
-    
+
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_detalle_cliente_identificacion_facturacion_id_cliente ON public.detalle_cliente_identificacion_facturacion(id_cliente);');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_detalle_cliente_identificacion_facturacion_id_identificacion_facturacion ON public.detalle_cliente_identificacion_facturacion(id_identificacion_facturacion);');
 
@@ -124,7 +141,7 @@ final class Version20241119183617 extends AbstractMigration
             FOREIGN KEY (id_detalle_cliente_identificacion_facturacion) REFERENCES public.detalle_cliente_identificacion_facturacion(id) ON DELETE CASCADE,
             FOREIGN KEY (id_detalle_zona_servicio_horario) REFERENCES catalogo.detalle_zona_servicio_horario(id) ON DELETE CASCADE
         );');
-    
+
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_detalle_zona_servicio_horario_cliente_facturacion_id_detalle_cliente_identificacion ON public.detalle_zona_servicio_horario_cliente_facturacion(id_detalle_cliente_identificacion_facturacion);');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_detalle_zona_servicio_horario_cliente_facturacion_id_detalle_zona_servicio_horario ON public.detalle_zona_servicio_horario_cliente_facturacion(id_detalle_zona_servicio_horario);');
 
@@ -159,7 +176,7 @@ final class Version20241119183617 extends AbstractMigration
             estado BOOLEAN DEFAULT TRUE,
             UNIQUE (id, uuid),
             CONSTRAINT FK_ventas_detalle_zona FOREIGN KEY (id_detalle_zona_servicio_horario_cliente_facturacion) REFERENCES detalle_zona_servicio_horario_cliente_facturacion(id) ON DELETE CASCADE,
-            CONSTRAINT FK_ventas_estado_venta FOREIGN KEY (id_estado_venta) REFERENCES catalogo.lista_catalogo_detalle(id_valor) ON DELETE CASCADE
+            CONSTRAINT FK_ventas_estado_venta FOREIGN KEY (id_estado_venta) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE
         )');
 
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_ventas_id_detalle_zona_servicio_horario_cliente_facturacion ON ventas (id_detalle_zona_servicio_horario_cliente_facturacion)');
@@ -179,6 +196,6 @@ final class Version20241119183617 extends AbstractMigration
         $this->addSql('DROP TABLE IF EXISTS public.ventas CASCADE');
         $this->addSql('DROP TABLE IF EXISTS catalogo.estado_ventas CASCADE');
         $this->addSql('DROP TABLE IF EXISTS public.detalle_zona_servicio_horario_cliente_facturacion CASCADE');
-        $this->addSql('DROP TABLE IF EXISTS public.cliente_credito_periodico CASCADE');       
+        $this->addSql('DROP TABLE IF EXISTS public.cliente_credito_periodico CASCADE');
     }
 }

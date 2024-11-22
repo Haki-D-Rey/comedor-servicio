@@ -17,6 +17,9 @@ use App\Helpers\EntityLoadListener;
 
 //Controller
 use App\Controllers\AuthController;
+use APP\Controllers\Catalogo\CargosController;
+use APP\Controllers\Catalogo\DepartamentosController;
+use APP\Controllers\Catalogo\IdentificacionFacturacionController;
 use App\Controllers\ConfiguracionServiciosEstadisticosController;
 use App\Controllers\ControlEstadisticosServiciosController;
 use App\Controllers\DashboardController;
@@ -29,27 +32,39 @@ use App\Controllers\ServiciosProductosDetallesController;
 use App\Controllers\ZonaController;
 use App\Controllers\ZonaUsuariosController;
 use App\Controllers\Catalogo\TipoUsuariosController;
+use App\Controllers\Publico\ClientesController;
+use App\Controllers\Publico\DetalleClienteIdentificacionFacturacionController;
 use App\Middlewares\AuthorizationMiddleware;
+use App\Repository\Catalogo\Repository\CargosRepository;
+use App\Repository\Catalogo\Repository\DepartamentosRepository;
 //Repository
 use App\Repository\Catalogo\Repository\DetalleZonaServicioHorarioRepository;
+use App\Repository\Catalogo\Repository\IdentificacionFacturacionRepository;
 use App\Repository\Catalogo\Repository\SistemasRepository;
 use App\Repository\Catalogo\Repository\TipoServiciosRepository;
 use App\Repository\Catalogo\Repository\ServiciosProductosRepository;
 use App\Repository\Catalogo\Repository\ServiciosProductosDetallesRepository;
 use App\Repository\Catalogo\Repository\TipoUsuariosRepository;
 use App\Repository\Catalogo\Repository\ZonaRepository;
+use App\Repository\Publico\Repository\ClientesRepository;
 use App\Repository\Publico\Repository\ConfiguracionServiciosEstadisticosRepository;
 use App\Repository\Publico\Repository\ControlEstadisticosServiciosRepository;
+use App\Repository\Publico\Repository\DetalleClienteIdentificacionFacturacionRepository;
 use App\Repository\Seguridad\Repository\ZonaUsuarioRepository;
 use App\Repository\Seguridad\Repository\AuthRepository;
 use App\Repository\Seguridad\Repository\UsuarioRepository;
 use App\Services\Seguridad\AuthorizationService;
 //Services
 use App\Services\AuthServices;
+use App\Services\Catalogo\CargosServices;
+use App\Services\Catalogo\DepartamentosServices;
+use App\Services\Catalogo\IdentificacionFacturacionServices;
 use App\Services\Catalogo\TipoUsuariosServices;
 use App\Services\ConfiguracionServiciosEstadisticosServices;
 use App\Services\ControlEstadisticosServiciosServices;
 use App\Services\DetalleZonaServicioHorarioServices;
+use App\Services\Publico\ClientesServices;
+use App\Services\Publico\DetalleClienteIdentificacionFacturacionServices;
 use App\Services\UsuarioServices;
 use App\Services\SistemasServices;
 use App\Services\TipoServiciosServices;
@@ -247,6 +262,60 @@ return [
         return new TipoUsuariosController($container->get(TipoUsuariosServices::class));
     },
 
+    //FLUJO DE CATALOGO CARGOS
+    CargosRepository::class => function (ContainerInterface $container) {
+        return new CargosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    CargosServices::class => function (ContainerInterface $container) {
+        return new CargosServices($container->get(CargosRepository::class));
+    },
+
+    CargosController::class => function (ContainerInterface $container) {
+        return new CargosController($container->get(CargosServices::class));
+    },
+
+    //FLUJO DE CATALOGO DEPARTAMENTOS
+    DepartamentosRepository::class => function (ContainerInterface $container) {
+        return new DepartamentosRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    DepartamentosServices::class => function (ContainerInterface $container) {
+        return new DepartamentosServices($container->get(DepartamentosRepository::class));
+    },
+
+    DepartamentosController::class => function (ContainerInterface $container) {
+        return new DepartamentosController($container->get(DepartamentosServices::class));
+    },
+
+    //FLUJO DE CATALOGO IDENTIFICACIONFACTURACION
+    IdentificacionFacturacionRepository::class => function (ContainerInterface $container) {
+        return new IdentificacionFacturacionRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    IdentificacionFacturacionServices::class => function (ContainerInterface $container) {
+        return new IdentificacionFacturacionServices($container->get(IdentificacionFacturacionRepository::class));
+    },
+
+    IdentificacionFacturacionController::class => function (ContainerInterface $container) {
+        return new IdentificacionFacturacionController($container->get(IdentificacionFacturacionServices::class));
+    },
+
+      //FLUJO DE CATALOGO DETALLE CLIENTE IDENTIFICACION FACTURACION
+      DetalleClienteIdentificacionFacturacionRepository::class => function (ContainerInterface $container) {
+        return new DetalleClienteIdentificacionFacturacionRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    DetalleClienteIdentificacionFacturacionServices::class => function (ContainerInterface $container) {
+        return new DetalleClienteIdentificacionFacturacionServices($container->get(DetalleClienteIdentificacionFacturacionRepository::class));
+    },
+
+    DetalleClienteIdentificacionFacturacionController::class => function (ContainerInterface $container) {
+        return new DetalleClienteIdentificacionFacturacionController($container->get(DetalleClienteIdentificacionFacturacionServices::class));
+    },
+
+
+    //FLUJO DE PERMISOS POR CADA VISTAS O ACCESOS
     AuthorizationService::class => function (ContainerInterface $container) {
         return new AuthorizationService($container->get(EntityManagerInterface::class));
     },
@@ -279,6 +348,20 @@ return [
     ControlEstadisticosServiciosController::class => function (ContainerInterface $container) {
         return new ControlEstadisticosServiciosController($container->get(ControlEstadisticosServiciosServices::class));
     },
+
+    //FLUJO DE TRABAJO CLIENTES
+    ClientesRepository::class => function (ContainerInterface $container) {
+        return new ClientesRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ConfiguracionServiciosEstadisticosServices::class));
+    },
+
+    ClientesServices::class => function (ContainerInterface $container) {
+        return new ClientesServices($container->get(ClientesRepository::class));
+    },
+
+    ClientesController::class => function (ContainerInterface $container) {
+        return new ClientesController($container->get(ClientesServices::class));
+    },
+
 
     DashboardController::class => function (ContainerInterface $container) {
         return new DashboardController($container, $container->get(AuthServices::class));

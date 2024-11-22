@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\ListaCatalogoDetalle;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use ReflectionClass;
@@ -28,13 +29,6 @@ abstract class GenericRepository extends EntityRepository
         return $this->repository->find($id);
     }
 
-    /**
-     * Updates the entity's attributes based on the DTO values.
-     *
-     * @param object $entity The entity to update.
-     * @param object $dto The DTO containing the new values.
-     * @return void
-     */
     protected function updateEntityFromDTO($entity, $dto, $excludedProperties): void
     {
         $entityReflection = new ReflectionClass($entity);
@@ -62,30 +56,41 @@ abstract class GenericRepository extends EntityRepository
         }
     }
 
-
-    /**
-     * Marks an entity as deleted by setting its status to a specific value.
-     *
-     * @param int $id The ID of the entity to update.
-     * @param int $deletedStatus The status value indicating the entity is deleted (e.g., 0).
-     * @return void
-     */
     public function markAsDeleted(int $id, int $deletedStatus): void
     {
-            $entity = $this->repository->find($id);
-            if (!$entity) {
-                throw new \RuntimeException('Entidad no encontrada.');
-            }
+        $entity = $this->repository->find($id);
+        if (!$entity) {
+            throw new \RuntimeException('Entidad no encontrada.');
+        }
 
-            // Set the status to indicate the entity is deleted
-            // Assumes the entity has a method `setEstado` or similar
-            $method = 'setEstado';
-            if (method_exists($entity, $method)) {
-                $entity->$method($deletedStatus);
-                $this->entityManager->flush();
-            } else {
-                throw new \RuntimeException('El método de actualización del estado no existe en la entidad.');
-            }
+        // Set the status to indicate the entity is deleted
+        // Assumes the entity has a method `setEstado` or similar
+        $method = 'setEstado';
+        if (method_exists($entity, $method)) {
+            $entity->$method($deletedStatus);
+            $this->entityManager->flush();
+        } else {
+            throw new \RuntimeException('El método de actualización del estado no existe en la entidad.');
+        }
     }
 
+    public function findMatchingDetalle(int $id_lista_catalogo, int $idValor, string $entityClass): ?ListaCatalogoDetalle
+    {
+        // Query the entity repository with the provided parameters
+        $queryBuilder = $this->entityManager->getRepository($entityClass)->createQueryBuilder('d');
+
+        $queryBuilder->where('d.id_lista_catalogo = :id_lista_catalogo')
+            ->andWhere('d.id_valor = :id_valor')
+            ->setParameter('id_lista_catalogo', $id_lista_catalogo)
+            ->setParameter('id_valor', $idValor);
+
+        $result = $queryBuilder->getQuery()->getOneOrNullResult();
+
+        return $result;
+    }
+
+    private function sanitizeString(string $string): string
+    {
+        return str_replace(' ', '_', trim($string));
+    }
 }
