@@ -1,6 +1,5 @@
 <?php
-ob_start(); // Inicia el almacenamiento en búfer de salida
-// Datos de ejemplo: puedes modificar o agregar más elementos si es necesario
+ob_start();
 $items = [
     ['icon' => 'fas fa-users', 'category' => 'Visitors', 'count' => '1,294'],
     ['icon' => 'fas fa-user-check', 'category' => 'Subscribers', 'count' => '1,303'],

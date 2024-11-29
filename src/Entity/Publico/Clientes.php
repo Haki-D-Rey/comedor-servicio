@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity\Publico;
 
 use App\Entity\ListaCatalogoDetalle;
@@ -20,11 +19,13 @@ class Clientes
     #[ORM\Column(name: 'apellidos', type: 'string', length: 128, nullable: false)]
     private string $apellidos;
 
-    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class, cascade: ['persist'])]
+    // Relación con Departamento sin persistencia automática
+    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class )]
     #[ORM\JoinColumn(name: 'id_departamento', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ListaCatalogoDetalle $departamento;
 
-    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class, cascade: ['persist'])]
+    // Relación con Cargo sin persistencia automática
+    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class)]
     #[ORM\JoinColumn(name: 'id_cargo', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ListaCatalogoDetalle $cargo;
 

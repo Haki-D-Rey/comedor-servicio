@@ -93,4 +93,28 @@ abstract class GenericRepository extends EntityRepository
     {
         return str_replace(' ', '_', trim($string));
     }
+
+    public function generateInternalCode(string $prefix, int $leadingZeros, int $lastValue, string $table = null): string
+    {
+        if (!$lastValue && $table) {
+            $lastValue = $this->getLastValueFromTable($table);
+        }
+
+        $newValue = $lastValue + 1;
+        $formattedValue = str_pad($newValue, $leadingZeros, '0', STR_PAD_LEFT);
+        $newInternalCode = $prefix . $formattedValue;
+
+        return $newInternalCode;
+    }
+
+    private function getLastValueFromTable(string $table): int
+    {
+        $repository = $this->entityManager->getRepository($table);
+        $queryBuilder = $repository->createQueryBuilder('e')
+            ->select('MAX(e.id)')
+            ->getQuery();
+    
+        $lastValue = $queryBuilder->getSingleScalarResult();
+        return $lastValue !== null ? (int)$lastValue : 0;
+    }
 }

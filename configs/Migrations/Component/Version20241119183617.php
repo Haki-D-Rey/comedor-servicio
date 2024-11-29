@@ -167,6 +167,7 @@ final class Version20241119183617 extends AbstractMigration
             id SERIAL PRIMARY KEY,
             uuid UUID DEFAULT gen_random_uuid(),
             id_detalle_zona_servicio_horario_cliente_facturacion INTEGER NOT NULL,
+            id_cliente INTEGER NOT NULL,
             cantidad_facturada INTEGER NOT NULL DEFAULT 0,
             ticket_anulado BOOLEAN DEFAULT FALSE,
             cantidad_anulada INTEGER DEFAULT 0,
@@ -176,7 +177,8 @@ final class Version20241119183617 extends AbstractMigration
             estado BOOLEAN DEFAULT TRUE,
             UNIQUE (id, uuid),
             CONSTRAINT FK_ventas_detalle_zona FOREIGN KEY (id_detalle_zona_servicio_horario_cliente_facturacion) REFERENCES detalle_zona_servicio_horario_cliente_facturacion(id) ON DELETE CASCADE,
-            CONSTRAINT FK_ventas_estado_venta FOREIGN KEY (id_estado_venta) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE
+            CONSTRAINT FK_ventas_estado_venta FOREIGN KEY (id_estado_venta) REFERENCES catalogo.lista_catalogo_detalle(id) ON DELETE CASCADE,
+            CONSTRAINT FK_ventas_cliente FOREIGN KEY (id_cliente) REFERENCES public.cliente(id) ON DELETE CASCADE
         )');
 
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_ventas_id_detalle_zona_servicio_horario_cliente_facturacion ON ventas (id_detalle_zona_servicio_horario_cliente_facturacion)');

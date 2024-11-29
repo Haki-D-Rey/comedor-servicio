@@ -37,7 +37,7 @@ class ServiciosProductosDetalles
      * Many ServiciosProductosDetalles have One Sistema.
      * @var Sistemas
      */
-    #[ORM\ManyToOne(targetEntity: Sistemas::class, inversedBy: 'serviciosProductosDetalles')]
+    #[ORM\ManyToOne(targetEntity: Sistemas::class, inversedBy: 'serviciosProductosDetalles', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_sistemas', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Sistemas $sistemas = null;
 
@@ -45,7 +45,7 @@ class ServiciosProductosDetalles
      * Many ServiciosProductosDetalles have One TipoServicio.
      * @var TipoServicios
      */
-    #[ORM\ManyToOne(targetEntity: TipoServicios::class, inversedBy: 'serviciosProductosDetalles')]
+    #[ORM\ManyToOne(targetEntity: TipoServicios::class, inversedBy: 'serviciosProductosDetalles', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_tipo_servicios', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private TipoServicios $tipoServicios;
 
@@ -53,7 +53,7 @@ class ServiciosProductosDetalles
      * Many ServiciosProductosDetalles have One ServicioProducto.
      * @var ServiciosProductos
      */
-    #[ORM\ManyToOne(targetEntity: ServiciosProductos::class, inversedBy: 'serviciosProductosDetalles')]
+    #[ORM\ManyToOne(targetEntity: ServiciosProductos::class, inversedBy: 'serviciosProductosDetalles', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ServiciosProductos $serviciosProductos;
 

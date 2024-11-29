@@ -35,7 +35,7 @@ return [
         'secret' => 'haki12345',
         'issuer' => 'your-domain.com',
         'audience' => 'your-domain.com',
-        'expiration' => 3600,
+        'expiration' => 18000,
     ],
 ];
 

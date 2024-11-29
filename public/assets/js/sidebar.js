@@ -4,7 +4,7 @@ var baseURL = "";
 const apiService = new ApiService(baseURL);
 
 var itemMenu = document.querySelector('sidebar-item');
-const menuItems = document.querySelectorAll('.menu > .sidebar-item');
+const menuItems = document.querySelectorAll('.menu .sidebar-item, .menu-footer .sidebar-item'); 
 const submenuItems = document.querySelectorAll('.submenu > .sidebar-item');
 const pathUrl = [
   {
@@ -21,6 +21,11 @@ const pathUrl = [
     tagId: 'formulario-control-estadisticos',
     path: '/dashboard/formularios/control-estadisticos',
     permission: 'view_sidebar.levelone_formulario_controlestadisticos'
+  },
+  {
+    tagId: 'facturacion',
+    path: '/dashboard/facturacion/',
+    permission: 'view_sidebar.levelone_facturacion'
   },
 ];
 
@@ -60,15 +65,6 @@ const redirectUrlValid = (tagId) => {
   }
 };
 
-
-// function toggleSubMenu(element) {
-//   const submenu = element.nextElementSibling; // Obtiene el siguiente elemento (submenu)
-//   if (submenu.style.display === "block") {
-//       submenu.style.display = "none"; // Oculta el submenu
-//   } else {
-//       submenu.style.display = "block"; // Muestra el submenu
-//   }
-// }
 
 document.querySelectorAll('.menu .sidebar-item, .submenu .sidebar-item').forEach(item => {
   item.addEventListener('click', function(event) {

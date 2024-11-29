@@ -92,6 +92,23 @@
     white-space: nowrap;
 }
 
+/* Estilos generales del botón dropdown */
+.custom-dropdown-btn-ventas {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: transparent;
+    border: 2px solid #077682;
+    color: #4a4a4a;
+    padding: 0.5rem;
+    border-radius: 8px;
+    width: auto;
+    max-width: 100%;
+    text-align: start;
+    position: relative;
+    white-space: nowrap;
+}
+
 /* Personalización del pseudo-elemento ::after */
 .custom-dropdown-btn::after {
     content: '';
@@ -109,12 +126,20 @@
     .custom-dropdown-btn {
         max-width: 80%;
     }
+
+    .custom-dropdown-btn-ventas {
+        max-width: 100%;
+    }
 }
 
 /* Media query para pantallas grandes (desktops) */
 @media (min-width: 1200px) {
     .custom-dropdown-btn {
         max-width: 50%;
+    }
+
+    .custom-dropdown-btn-ventas {
+        max-width: 100%;
     }
 }
 /* Estilos para el hover */

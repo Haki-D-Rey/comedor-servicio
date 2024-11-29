@@ -4,6 +4,7 @@ namespace App\Entity\Publico;
 
 use App\Entity\Publico\Clientes;
 use App\Entity\ListaCatalogoDetalle;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -21,11 +22,11 @@ class DetalleClienteIdentificacionFacturacion
     #[ORM\Column(name: 'id_identificacion_facturacion', type: 'integer', nullable: false)]
     private int $id_identificacion_facturacion;
 
-    #[ORM\ManyToOne(targetEntity: Clientes::class)]
+    #[ORM\ManyToOne(targetEntity: Clientes::class, cascade: ['refresh'])]
     #[ORM\JoinColumn(name: 'id_cliente', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private Clientes $cliente;
 
-    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class)]
+    #[ORM\ManyToOne(targetEntity: ListaCatalogoDetalle::class, cascade: ['refresh'])]
     #[ORM\JoinColumn(name: 'id_identificacion_facturacion', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ListaCatalogoDetalle $identificacionFacturacion;
 

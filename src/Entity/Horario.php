@@ -92,23 +92,23 @@ class Horario
         return $this;
     }
 
-    public function getPeriodoInicio(): ?TimeType
+    public function getPeriodoInicio(): ?\DateTime
     {
         return $this->inicio;
     }
 
-    public function setPeriodoInicio(TimeType $inicio): self
+    public function setPeriodoInicio(\DateTime $inicio): self
     {
         $this->inicio = $inicio;
         return $this;
     }
 
-    public function getPeriodoFin(): ?TimeType
+    public function getPeriodoFin(): ?\DateTime
     {
         return $this->fin;
     }
 
-    public function setPeriodoFin(TimeType $fin): self
+    public function setPeriodoFin(\DateTime $fin): self
     {
         $this->fin = $fin;
         return $this;

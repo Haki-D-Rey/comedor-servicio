@@ -1,5 +1,19 @@
 <?php
-zzzzzzzz
+
+namespace App\Repository\Publico\Repository;
+
+use App\DTO\Publico\DetalleClienteIdentificacionFacturacionDTO;
+use App\Entity\ListaCatalogo;
+use App\Entity\ListaCatalogoDetalle;
+use App\Entity\Publico\Clientes;
+use App\Entity\Publico\DetalleClienteIdentificacionFacturacion;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Exception\ORMException;
+use App\Repository\GenericRepository;
+use App\Repository\Publico\Interface\DetalleClienteIdentificacionFacturacionRepositoryInterface;
+use Doctrine\DBAL\Exception as DBALException;
+use Psr\Log\LoggerInterface as LogLoggerInterface;
+
 class DetalleClienteIdentificacionFacturacionRepository extends GenericRepository implements DetalleClienteIdentificacionFacturacionRepositoryInterface
 {
     private $logger;

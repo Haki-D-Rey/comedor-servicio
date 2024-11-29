@@ -36,7 +36,7 @@ class ZonaUsuarios
      * Many ZonaUsuario have One Zona.
      * @var Zona
      */
-    #[ORM\ManyToOne(targetEntity: Zona::class, inversedBy: "zonaUsuarios")]
+    #[ORM\ManyToOne(targetEntity: Zona::class, inversedBy: "zonaUsuarios", cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_zona', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Zona $zona = null;
 
@@ -44,16 +44,16 @@ class ZonaUsuarios
      * Many ZonaUsuario have One Usuario.
      * @var Usuario
      */
-    #[ORM\ManyToOne(targetEntity: Usuario::class)]
+    #[ORM\ManyToOne(targetEntity: Usuario::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_usuario', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Usuario $usuario = null;
 
 
-    /**
-     * @var Collection<int, DetalleZonaServicioHorario>
-     */
-    #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'zonaUsuario')]
-    private Collection $detalleZonaServicioHorario;
+    // /**
+    //  * @var Collection<int, DetalleZonaServicioHorario>
+    //  */
+    // #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'zonaUsuario')]
+    // private Collection $detalleZonaServicioHorario;
 
 
     // Getters y Setters

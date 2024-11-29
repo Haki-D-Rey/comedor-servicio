@@ -32,8 +32,12 @@ use App\Controllers\ServiciosProductosDetallesController;
 use App\Controllers\ZonaController;
 use App\Controllers\ZonaUsuariosController;
 use App\Controllers\Catalogo\TipoUsuariosController;
+use App\Controllers\Publico\ClientesCreditoPeriodicoController;
 use App\Controllers\Publico\ClientesController;
 use App\Controllers\Publico\DetalleClienteIdentificacionFacturacionController;
+use App\Controllers\Publico\DetalleZonaServicioHorarioClienteFacturacionController;
+use App\Controllers\Publico\VentasController;
+use App\Controllers\Test\PadreController;
 use App\Middlewares\AuthorizationMiddleware;
 use App\Repository\Catalogo\Repository\CargosRepository;
 use App\Repository\Catalogo\Repository\DepartamentosRepository;
@@ -46,10 +50,13 @@ use App\Repository\Catalogo\Repository\ServiciosProductosRepository;
 use App\Repository\Catalogo\Repository\ServiciosProductosDetallesRepository;
 use App\Repository\Catalogo\Repository\TipoUsuariosRepository;
 use App\Repository\Catalogo\Repository\ZonaRepository;
+use App\Repository\Publico\Repository\ClientesCreditoPeriodicoRepository;
 use App\Repository\Publico\Repository\ClientesRepository;
 use App\Repository\Publico\Repository\ConfiguracionServiciosEstadisticosRepository;
 use App\Repository\Publico\Repository\ControlEstadisticosServiciosRepository;
 use App\Repository\Publico\Repository\DetalleClienteIdentificacionFacturacionRepository;
+use App\Repository\Publico\Repository\DetalleZonaServicioHorarioClienteFacturacionRepository;
+use App\Repository\Publico\Repository\VentasRepository;
 use App\Repository\Seguridad\Repository\ZonaUsuarioRepository;
 use App\Repository\Seguridad\Repository\AuthRepository;
 use App\Repository\Seguridad\Repository\UsuarioRepository;
@@ -63,8 +70,11 @@ use App\Services\Catalogo\TipoUsuariosServices;
 use App\Services\ConfiguracionServiciosEstadisticosServices;
 use App\Services\ControlEstadisticosServiciosServices;
 use App\Services\DetalleZonaServicioHorarioServices;
+use App\Services\Publico\ClientesCreditoPeriodicoServices;
 use App\Services\Publico\ClientesServices;
 use App\Services\Publico\DetalleClienteIdentificacionFacturacionServices;
+use App\Services\Publico\DetalleZonaServicioHorarioClienteFacturacionServices;
+use App\Services\Publico\VentasServices;
 use App\Services\UsuarioServices;
 use App\Services\SistemasServices;
 use App\Services\TipoServiciosServices;
@@ -301,8 +311,8 @@ return [
         return new IdentificacionFacturacionController($container->get(IdentificacionFacturacionServices::class));
     },
 
-      //FLUJO DE CATALOGO DETALLE CLIENTE IDENTIFICACION FACTURACION
-      DetalleClienteIdentificacionFacturacionRepository::class => function (ContainerInterface $container) {
+    //FLUJO DE CATALOGO DETALLE CLIENTE IDENTIFICACION FACTURACION
+    DetalleClienteIdentificacionFacturacionRepository::class => function (ContainerInterface $container) {
         return new DetalleClienteIdentificacionFacturacionRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
     },
 
@@ -314,6 +324,35 @@ return [
         return new DetalleClienteIdentificacionFacturacionController($container->get(DetalleClienteIdentificacionFacturacionServices::class));
     },
 
+    //FLUJO DE CATALOGO DETALLE ZONA SERVICIO HORARIO CLIENTE IDENTIFICACION FACTURACION
+    DetalleZonaServicioHorarioClienteFacturacionRepository::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioClienteFacturacionRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    DetalleZonaServicioHorarioClienteFacturacionServices::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioClienteFacturacionServices($container->get(DetalleZonaServicioHorarioClienteFacturacionRepository::class));
+    },
+
+    DetalleZonaServicioHorarioClienteFacturacionController::class => function (ContainerInterface $container) {
+        return new DetalleZonaServicioHorarioClienteFacturacionController($container->get(DetalleZonaServicioHorarioClienteFacturacionServices::class));
+    },
+
+    //FLUJO DE TRABAJO DE CLIENTE CREDITO PERIODICO POR EVENTO
+    ClientesCreditoPeriodicoRepository::class => function (ContainerInterface $container) {
+        return new ClientesCreditoPeriodicoRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class));
+    },
+
+    ClientesCreditoPeriodicoServices::class => function (ContainerInterface $container) {
+        return new ClientesCreditoPeriodicoServices($container->get(ClientesCreditoPeriodicoRepository::class));
+    },
+
+    ClientesCreditoPeriodicoController::class => function (ContainerInterface $container) {
+        return new ClientesCreditoPeriodicoController($container->get(ClientesCreditoPeriodicoServices::class));
+    },
+
+    PadreController::class => function (ContainerInterface $container) {
+        return new PadreController($container->get(EntityManagerInterface::class));
+    },
 
     //FLUJO DE PERMISOS POR CADA VISTAS O ACCESOS
     AuthorizationService::class => function (ContainerInterface $container) {
@@ -360,6 +399,19 @@ return [
 
     ClientesController::class => function (ContainerInterface $container) {
         return new ClientesController($container->get(ClientesServices::class));
+    },
+
+    //FLUJO DE TRABAJO VENTAS
+    VentasRepository::class => function (ContainerInterface $container) {
+        return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ConfiguracionServiciosEstadisticosServices::class));
+    },
+
+    VentasServices::class => function (ContainerInterface $container) {
+        return new VentasServices($container->get(VentasRepository::class));
+    },
+
+    VentasController::class => function (ContainerInterface $container) {
+        return new VentasController($container, $container->get(VentasServices::class),  $container->get(AuthServices::class));
     },
 
 

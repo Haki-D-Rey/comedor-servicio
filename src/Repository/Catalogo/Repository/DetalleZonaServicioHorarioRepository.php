@@ -7,10 +7,12 @@ use Doctrine\ORM\Exception\ORMException;
 use App\DTO\DetalleZonasServicioHorarioDTO;
 use App\DTO\ServiciosProductosDetallesDTO;
 use App\Entity\DetalleZonaServicioHorario;
+use App\Entity\Horario;
 use App\Entity\ServiciosProductosDetalles;
 use App\Entity\ZonaUsuarios;
 use App\Repository\Catalogo\Interface\DetalleZonaServicioHorarioRepositoryInterface;
 use App\Repository\GenericRepository;
+use DateTime;
 use Doctrine\DBAL\Exception as DBALException;
 use Psr\Log\LoggerInterface as LogLoggerInterface;
 
@@ -138,6 +140,7 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
                 'id_detalle_zona_servicio_horario' => $detalleZonaServicioHorario->getId(),
                 'id_servicio_detalle_producto' => $detalleZonaServicioHorario->getIdServiciosProductosDetalles(),
                 'idZonaUsuario' => $detalleZonaServicioHorario->getIdZonaUsuario(),
+                'id_horario' => $detalleZonaServicioHorario->getIdHorario(),
             ];
         }, $detalleZonaServicioHorarios);
 
@@ -153,12 +156,25 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
 
         $resultadoFinal = [];
 
+        $horario = $this->entityManager->getRepository(Horario::class);
+
         foreach ($detalleZonaServicioHorarioDTO as $detalle) {
             foreach ($servicioProductoDetalles as $servicioProductoDetalle) {
                 if ($detalle['id_servicio_detalle_producto'] == $servicioProductoDetalle->getId()) {
+                    $findHorario = $horario->findOneBy(['id' => $detalle['id_horario'], 'estado'  => true]);
+                    $perido_inicio = ($findHorario->getPeriodoInicio())->format('H:i:s');
+                    $perido_fin = ($findHorario->getPeriodoFin())->format('H:i:s');
+                    $codigo_horario = $findHorario->getcodigo_interno();
+
                     $resultadoFinal[] = [
                         'id_detalle_zona_servicio_horario' => $detalle['id_detalle_zona_servicio_horario'],
                         'id_servicio_detalle_producto' => $detalle['id_servicio_detalle_producto'],
+                        'horario' => (object) [
+                            'id' => $detalle['id_horario'],
+                            'codigo_interno' => $codigo_horario,
+                            'periodo_inicio' => $perido_inicio,
+                            'periodo_final' => $perido_fin
+                        ],
                         'idZonaUsuario' => $detalle['idZonaUsuario'],
                         'idSistemas' => $servicioProductoDetalle->getIdSistemas(),
                         'idTipoServicios' => $servicioProductoDetalle->getIdTipoServicios(),

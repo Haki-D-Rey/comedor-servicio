@@ -2,7 +2,6 @@
 
 namespace App\Helpers;
 
-use App\Middleware\AuthorizationMiddleware;
 use App\Middlewares\SaveRefererMiddleware;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
