@@ -7,10 +7,8 @@ use App\Entity\Usuario;
 class AuthorizationService
 {
     public function __construct() {}
-    public function canAccess(Usuario $usuario, string $accion): bool
+    public function canAccess(Usuario $usuario, array $tipoUsuarioPermisos, string $accion): bool
     {
-        $tipoUsuarioPermisos = $usuario->getTipoUsuarioPermisos()->toArray();
-
         if (empty($tipoUsuarioPermisos)) {
             return false;
         }

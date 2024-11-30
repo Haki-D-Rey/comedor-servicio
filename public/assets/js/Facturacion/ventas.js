@@ -21,6 +21,8 @@ const apiService = new ApiService(baseURL);
 function init() {
   dropdownZonaUsuario.disabled = false;
   dropdownSistema.disabled = true;
+  inputVentas.disabled = true;
+  inputCantidad.disabled = true;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -28,6 +30,74 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarZonasEnSelect();
   createDefaultCard();
 });
+
+// ==========================
+// REGION: Servicios de API
+// ==========================
+
+/**
+ * Función para obtener las zonas de usuarios por ID desde la API.
+ * @returns {Promise<Object>} Lista de zonas de usuarios.
+ */
+async function getZonasUsuariosById() {
+  const endpointListaZonaUsuarios = window.endpointListaZonasUsuario;
+
+  try {
+    return await apiService.get(endpointListaZonaUsuarios);
+  } catch (error) {
+    console.error("Error al obtener zonas de usuarios:", error);
+    return null;
+  }
+}
+
+/**
+ * Función para obtener las zonas de usuarios para servicios de validación desde la API.
+ * @returns {Promise<Object>} Lista de zonas de usuarios para validar servicios.
+ */
+async function getZonasUsuariosServiciosValidar() {
+  const endpointListaZonaUsuariosServiciosValidar =
+    window.endpointListaZonaUsuariosServiciosValidar;
+
+  try {
+    return await apiService.get(endpointListaZonaUsuariosServiciosValidar);
+  } catch (error) {
+    console.error(
+      "Error al obtener zonas de usuarios para validar servicios:",
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Carga la lista de sistemas y tipos de servicios desde la API.
+ * @returns {Promise<Array>} Una tupla con la lista de sistemas y tipos de servicios.
+ */
+async function cargarSistemasYServicios() {
+  const [listaSistemas, listaTipoServicios] = await Promise.all([
+    apiService.get(window.endpointListaSistemas),
+    apiService.get(window.endpointListaTipoServicios),
+  ]);
+  return [listaSistemas, listaTipoServicios];
+}
+
+async function ServicesSellDining(data) {
+  console.log("endpoint");
+  const endpointFacturacion = window.endpointFacturacion;
+  try {
+    return await apiService.post(endpointFacturacion, data);
+  } catch (error) {
+    console.error(
+      "Error al obtener zonas de usuarios para validar servicios:",
+      error
+    );
+    return null;
+  }
+}
+
+// ==========================
+// Fin de los Servicios API
+// ==========================
 
 /**
  * Cargar las zonas en el elemento select al obtener los datos de la API.
@@ -77,37 +147,6 @@ function renderZonasEnSelect(detallesZonas) {
 }
 
 /**
- * Función para obtener las zonas de usuarios por ID desde la API.
- * @returns {Promise<Object>} Lista de zonas de usuarios.
- */
-async function getZonasUsuariosById() {
-  const endpointListaZonaUsuarios = window.endpointListaZonasUsuario;
-
-  try {
-    return await apiService.get(endpointListaZonaUsuarios);
-  } catch (error) {
-    console.error("Error al obtener zonas de usuarios:", error);
-    return null;
-  }
-}
-
-/**
- * Función para obtener las zonas de usuarios por ID desde la API.
- * @returns {Promise<Object>} Lista de zonas de usuarios.
- */
-async function getZonasUsuariosServiciosValidar() {
-  const endpointListaZonaUsuariosServiciosValidar =
-    window.endpointListaZonaUsuariosServiciosValidar;
-
-  try {
-    return await apiService.get(endpointListaZonaUsuariosServiciosValidar);
-  } catch (error) {
-    console.error("Error al obtener zonas de usuarios:", error);
-    return null;
-  }
-}
-
-/**
  * Configura el evento para manejar el cambio de selección de zona.
  * Al seleccionar una zona, se cargan los detalles de servicios y productos.
  */
@@ -153,9 +192,12 @@ function changeZonasEnSelect(opcion) {
 }
 
 async function changeServiciosSelect(detalles) {
+  console.log("input");
+  if (dropdownSistema.value) {
+    inputVentas.disabled = false;
+    inputCantidad.disabled = false;
+  }
   const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
-  console.log(data);
-
   const serviciosFormateados = {};
 
   // Filtrar y reestructurar los datos
@@ -185,11 +227,7 @@ async function changeServiciosSelect(detalles) {
     }
   });
 
-  // Si no hay servicios activos, agregar 'Fuera de Servicio'
-  if (Object.keys(serviciosFormateados).length === 0) {
-    serviciosFormateados["Fuera de Servicio"] = [];
-  }
-
+  serviciosFormateados["Fuera de Servicio"] = [];
   mealServices = serviciosFormateados;
 
   renderMealServices();
@@ -203,18 +241,6 @@ async function changeServiciosSelect(detalles) {
 async function cargarDetallesServiciosPorZona(idZonaUsuario) {
   const endpoint = `/detalle-zona-servicio-horario/getByIdZonaUsuarioDetalleServicio/${idZonaUsuario}`;
   return apiService.get(endpoint);
-}
-
-/**
- * Carga la lista de sistemas y tipos de servicios desde la API.
- * @returns {Promise<Array>} Una tupla con la lista de sistemas y tipos de servicios.
- */
-async function cargarSistemasYServicios() {
-  const [listaSistemas, listaTipoServicios] = await Promise.all([
-    apiService.get(window.endpointListaSistemas),
-    apiService.get(window.endpointListaTipoServicios),
-  ]);
-  return [listaSistemas, listaTipoServicios];
 }
 
 /**
@@ -405,8 +431,8 @@ function createCarouselIndicator(service, isActive, index) {
 function createCarouselItem(service, serviceData, isActive) {
   const carouselItem = document.createElement("div");
   carouselItem.classList.add("carousel-item");
-
   // Si el servicio está activo con HR-005, no se mueve
+  console.log("fuera");
   if (isActive) {
     carouselItem.classList.add("active");
     // carouselItem.setAttribute("data-bs-ride", "false"); // No se mueve automáticamente
@@ -503,26 +529,44 @@ function renderMealServices() {
       carouselInner.appendChild(carouselItem);
     });
   } else {
-    // Si no hay servicios con cod 'HR-005', seguir la lógica normal
+    let fsIsActive = false;
+    const servicesToDelete = [];
+
     Object.keys(mealServices).forEach((service, index) => {
       const serviceData = mealServices[service];
-      const isActive =
-        serviceData.cod === "HR-005"
-          ? true
-          : isCurrentMealActive("", serviceData.start, serviceData.end);
+      let isActive = false;
 
-      // Crear el indicador y el item del carrusel
-      const indicator = createCarouselIndicator(service, isActive, index);
-      const carouselItem = createCarouselItem(service, serviceData, isActive);
+      if (
+        service !== "Fuera de Servicio" &&
+        isCurrentMealActive("", serviceData.start, serviceData.end)
+      ) {
+        isActive = true;
+        fsIsActive = false;
+      } else if (service === "Fuera de Servicio") {
+        isActive = fsIsActive ? true : false;
+        if (!isActive) {
+          servicesToDelete.push(service);
+        }
+      }
 
-      // Si el servicio está activo, se marca el índice activo
+      if (service !== "Fuera de Servicio" && !isActive) {
+        fsIsActive = !(activeIndex !== "Fuera de Servicio");
+      }
+
+      if (!servicesToDelete.includes(service)) {
+        const indicator = createCarouselIndicator(service, isActive, index);
+        const carouselItem = createCarouselItem(service, serviceData, isActive);
+        carouselIndicators.appendChild(indicator);
+        carouselInner.appendChild(carouselItem);
+      }
+
       if (isActive) {
         activeIndex = service;
       }
+    });
 
-      // Agregar el indicador y el item al carrusel
-      carouselIndicators.appendChild(indicator);
-      carouselInner.appendChild(carouselItem);
+    servicesToDelete.forEach((service) => {
+      delete mealServices[service];
     });
   }
 }
@@ -535,13 +579,11 @@ function createDefaultCard() {
   const carouselIndicators = document.querySelector(".carousel-indicators");
   const carouselInner = document.querySelector(".carousel-inner");
 
-  // Limpiar los elementos del carrusel
   carouselIndicators.innerHTML = "";
   carouselInner.innerHTML = "";
 
-  // Crear tarjeta por defecto (cuando no hay servicio activo)
   const carouselItem = document.createElement("div");
-  carouselItem.classList.add("carousel-item", "active"); // Establecer como activo
+  carouselItem.classList.add("carousel-item", "active");
 
   const card = document.createElement("div");
   card.classList.add(
@@ -562,30 +604,31 @@ function createDefaultCard() {
   const schedule = document.createElement("p");
   schedule.textContent = "Por favor, vuelva más tarde.";
 
-  // Agregar la información al cuerpo de la tarjeta
   cardBody.appendChild(title);
   cardBody.appendChild(schedule);
   card.appendChild(cardBody);
   carouselItem.appendChild(card);
 
-  // Agregar el item al carrusel
   carouselInner.appendChild(carouselItem);
 }
+let debounceTimeout;
 
 inputVentas.addEventListener("input", function (event) {
-  crearArrayServiciosActivos();
+  clearTimeout(debounceTimeout);
+
+  debounceTimeout = setTimeout(function () {
+    const response = crearArrayServiciosActivos();
+    console.log(response);
+    return;
+  }, 100);
 });
 
-// Función para crear el array con los datos filtrados de los servicios activos
 function crearArrayServiciosActivos() {
-  console.log("sasdsdddd");
-
   const codIdentificacion = inputVentas ? inputVentas.value.trim() : "";
   const cantidadFacturada = inputCantidad
     ? parseInt(inputCantidad.value, 10)
     : 0;
 
-  // Validar que los inputs no estén vacíos o que la cantidad sea válida
   if (
     !codIdentificacion ||
     isNaN(cantidadFacturada) ||
@@ -595,7 +638,6 @@ function crearArrayServiciosActivos() {
     return [];
   }
 
-  // Filtrar y recorrer los servicios activos (excepto el servicio "Fuera de Servicio")
   const serviciosActivos = Object.keys(mealServices)
     .filter(
       (service) => service !== "Fuera de Servicio" && isServiceActive(service)
@@ -603,21 +645,17 @@ function crearArrayServiciosActivos() {
     .map((service) => {
       const serviceData = mealServices[service];
 
-      // Devolver un objeto con los datos necesarios
       return {
-        cod_identificacion: codIdentificacion, // Tomado de inputVentas
+        cod_identificacion: codIdentificacion,
         idDetalleZonaServicioHorario:
           serviceData.id_detalle_zona_servicio_horario,
-        cantidadFacturada: cantidadFacturada, // Tomado de inputCantidad
+        cantidadFacturada: cantidadFacturada,
       };
     });
 
-  // Mostrar los servicios filtrados
-  console.log(serviciosActivos);
-  return serviciosActivos;
+  return ServicesSellDining(serviciosActivos);
 }
 
-// Función que valida si el servicio está activo
 function isServiceActive(service) {
   const serviceData = mealServices[service];
   if (serviceData.cod === "HR-005") {

@@ -2,6 +2,7 @@
 
 namespace App\Middlewares;
 
+use App\Entity\Seguridad\TipoUsuarioPermisos;
 use App\Entity\Usuario;
 use App\Services\AuthServices;
 use App\Services\Seguridad\AuthorizationService;
@@ -28,8 +29,9 @@ class AuthorizationMiddleware
         $requiredPermission = $route->getArgument('permission');
 
         $usuario = $this->getLoggedUser();
+        $tipoUsuarioPermisos = $this->entityManager->getRepository(TipoUsuarioPermisos::class)->findAll(['usuario_id' => $usuario->getId()]);
 
-        if (!$this->authorizationService->canAccess($usuario, $requiredPermission)) {
+        if (!$this->authorizationService->canAccess($usuario, $tipoUsuarioPermisos, $requiredPermission)) {
             $response = new \Slim\Psr7\Response();
             // $this->authServices->postLogout($request);
             // return $response->withStatus(403, 'Access Denied');

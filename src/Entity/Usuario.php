@@ -43,16 +43,16 @@ class Usuario
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
 
-    #[ORM\Column(name: 'id_tipo_usuario_permiso', type: 'integer')]
-    private int $idTipoUsuarioPermiso = 1;
+    // #[ORM\Column(name: 'id_tipo_usuario_permiso', type: 'integer')]
+    // private int $idTipoUsuarioPermiso = 1;
 
-    #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'usuario')]
-    #[ORM\JoinColumn(name: "usuario_id", referencedColumnName: "id", nullable: false)]
-    private PersistentCollection $tipoUsuarioPermiso;
+    // #[ORM\OneToMany(targetEntity: TipoUsuarioPermisos::class, mappedBy: 'usuario')]
+    // #[ORM\JoinColumn(name: "usuario_id", referencedColumnName: "id", nullable: false)]
+    // private PersistentCollection $tipoUsuarioPermiso;
 
-    public function __construct() {
-        $this->tipoUsuarioPermiso = new ArrayCollection();
-    }
+    // public function __construct() {
+    //     $this->tipoUsuarioPermiso = new ArrayCollection();
+    // }
 
     // Getters and Setters
 
@@ -160,19 +160,19 @@ class Usuario
         return $this;
     }
 
-    public function getTipoUsuarioPermisos(): PersistentCollection
-    {
-        return $this->tipoUsuarioPermiso;
-    }
+//     public function getTipoUsuarioPermisos(): PersistentCollection
+//     {
+//         return $this->tipoUsuarioPermiso;
+//     }
 
-    public function getIdTipoUsuario(): int
-    {
-        return $this->idTipoUsuarioPermiso;
-    }
+//     public function getIdTipoUsuario(): int
+//     {
+//         return $this->idTipoUsuarioPermiso;
+//     }
 
-    public function setIdTipoUsuario(int $id): self
-    {
-        $this->idTipoUsuarioPermiso = $id;
-        return $this;
-    }
+//     public function setIdTipoUsuario(int $id): self
+//     {
+//         $this->idTipoUsuarioPermiso = $id;
+//         return $this;
+//     }
 }

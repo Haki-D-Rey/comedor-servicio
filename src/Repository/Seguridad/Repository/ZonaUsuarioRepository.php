@@ -59,8 +59,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
             $usuario->getFechaCreacion(),
             $usuario->getFechaModificacion(),
             $usuario->getIsAdmin(),
-            $usuario->getEstado(),
-            $usuario->getIdTipoUsuario()
+            $usuario->getEstado()
         );
 
         if (!$usuarioDTO) {

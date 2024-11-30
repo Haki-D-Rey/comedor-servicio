@@ -119,6 +119,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
         window.endpointListaZonasUsuario = "<?php echo $routeParser->urlFor('zona_usuarios.list_relational_all', ['id' => $user_id]) ?>";
         window.endpointEnviarFormulario = "<?php echo $routeParser->urlFor('control-estadisticos-servicios.create_form'); ?>";
         window.endpointListaZonaUsuariosServiciosValidar = "<?php echo $routeParser->urlFor('detalle-zona-servicio-horario.get_zona_usuario_detalles', ["id"  => $user_id]); ?>";
+        window.endpointFacturacion = "<?php echo $routeParser->urlFor('ventas.create'); ?>";
     </script>
     <script type="module" src="/assets/js/Facturacion/ventas.js"></script>
 

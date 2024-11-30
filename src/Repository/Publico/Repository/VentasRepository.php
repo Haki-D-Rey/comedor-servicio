@@ -407,8 +407,9 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
         // Validating credits
         $idDetalleZonaServicioHorarioClienteIdentificacion = $this->validateCreditosDisponibles($ventasDTO, $filtroErrores, $horaActual, $findValueJson);
-        $findValueJson->idDetalleZonaServicioHorarioClienteIdentificacion = $idDetalleZonaServicioHorarioClienteIdentificacion;
-
+        if ($idDetalleZonaServicioHorarioClienteIdentificacion) {
+            $findValueJson->idDetalleZonaServicioHorarioClienteIdentificacion = $idDetalleZonaServicioHorarioClienteIdentificacion;
+        }
 
         return (object) ["filtroErrores" => $filtroErrores, "data" => $findValueJson];
     }
@@ -439,7 +440,6 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
                 $horaInicioFormatted = $horaInicio->format('H:i');
                 $horaFinFormatted = $horaFin->format('H:i');
 
-                // Verificar si la hora actual está dentro del rango
                 if ($horaActualFormatted < $horaInicioFormatted || $horaActualFormatted > $horaFinFormatted) {
                     $filtroErrores["error_horarios"] = "Este Servicio no está dentro del rango del horario Establecido.";
                 }
@@ -468,12 +468,18 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
                 'idDetalleZonaServicioHorario' => $ventasDTO->getIdDetalleZonaServicioHorario()
             ]);
 
+        if (empty($DetalleZonaServicioHorarioClienteIdentificacion)) {
+            $filtroErrores["error_creditos_disponibles"] = "Cliente no tiene creditos asignado a este Evento";
+            return 0;
+        }
+
         $ClienteCredito = $this->entityManager->getRepository(ClientesCreditoPeriodico::class)
             ->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()]);
 
         $cantidadFacturada = $ventasDTO->getCantidadFacturada();
         if (!$ClienteCredito->getExisteCantidadDisponible($cantidadFacturada)) {
             $filtroErrores["error_creditos_disponibles"] = "Cliente no cuenta con crédito disponible para facturar. Cantidad Disponible: " . $ClienteCredito->getCantidadCreditoDisponible() . " Credito a Facturar: " . $cantidadFacturada;
+            return 0;
         }
 
         $fechaInicio = $ClienteCredito->getPeriodoInicial();
@@ -482,9 +488,9 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         $fechaInicioFormatted = $fechaInicio->format('Y-m-d');
         $fechaFinFormatted = $fechaFin->format('Y-m-d');
 
-        // Verificar si la fecha actual está dentro del rango
         if ($fechaActualFormatted < $fechaInicioFormatted || $fechaActualFormatted > $fechaFinFormatted) {
             $filtroErrores["error_limite_credito"] = "Este Servicio no está dentro del rango de fecha permitido.";
+            return 0;
         }
 
         return $DetalleZonaServicioHorarioClienteIdentificacion->getId();
