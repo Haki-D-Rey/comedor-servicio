@@ -618,9 +618,10 @@ inputVentas.addEventListener("input", function (event) {
 
   debounceTimeout = setTimeout(function () {
     const response = crearArrayServiciosActivos();
-    console.log(response);
+    // console.log(response);
+    PopupSellDiningServices();
     return;
-  }, 100);
+  }, 500);
 });
 
 function crearArrayServiciosActivos() {
@@ -663,4 +664,46 @@ function isServiceActive(service) {
   }
 
   return isCurrentMealActive("", serviceData.start, serviceData.end);
+}
+
+function PopupSellDiningServices() {
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success",
+      cancelButton: "btn btn-danger",
+      popup:
+        "border-3 rounded-2 border-color col-6 col-sm-9 w-25 bg-success text-white",
+    },
+    buttonsStyling: true,
+  });
+
+  let timerInterval;
+  swalWithBootstrapButtons
+    .fire({
+      title: "Venta Exitosa",
+      html: "Se realizo la inserción con exito. la pagina se recargara en <b></b> segundos.",
+      icon: "success",
+      timer: 1000,
+      timerProgressBar: true,
+      didOpen: () => {
+        Swal.showLoading();
+        const timer = Swal.getPopup().querySelector("b");
+        timerInterval = setInterval(() => {
+          timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+        }, 250);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    })
+    .then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
+        inputVentas.textContent = "";
+        inputVentas.value = "";
+        inputVentas.focus();
+
+        inputCantidad.textContent = 1;
+        inputCantidad.value = 1;
+      }
+    });
 }

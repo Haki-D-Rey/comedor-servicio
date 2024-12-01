@@ -795,7 +795,7 @@ function alertConfirmForm(bodyData) {
     customClass: {
       confirmButton: "btn btn-success",
       cancelButton: "btn btn-danger",
-      popup: "border border-2 rounded-2 border-success border-opacity-75 col-12 col-sm-9",
+      popup: "border border-2 rounded-2 border-opacity-75 col-12 col-sm-9 border-color",
     },
     buttonsStyling: true,
   });
@@ -856,6 +856,7 @@ function alertConfirmForm(bodyData) {
       }
     });
 }
+
 function alertValidateDate(message) {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
