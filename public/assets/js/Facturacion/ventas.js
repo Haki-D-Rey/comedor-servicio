@@ -616,10 +616,9 @@ let debounceTimeout;
 inputVentas.addEventListener("input", function (event) {
   clearTimeout(debounceTimeout);
 
-  debounceTimeout = setTimeout(function () {
-    const response = crearArrayServiciosActivos();
-    // console.log(response);
-    PopupSellDiningServices();
+  debounceTimeout = setTimeout(async function () {
+    const response = await crearArrayServiciosActivos();
+    PopupSellDiningServices(response);
     return;
   }, 500);
 });
@@ -666,7 +665,7 @@ function isServiceActive(service) {
   return isCurrentMealActive("", serviceData.start, serviceData.end);
 }
 
-function PopupSellDiningServices() {
+function PopupSellDiningServices(response) {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
       confirmButton: "btn btn-success",
@@ -678,32 +677,79 @@ function PopupSellDiningServices() {
   });
 
   let timerInterval;
-  swalWithBootstrapButtons
-    .fire({
-      title: "Venta Exitosa",
-      html: "Se realizo la inserción con exito. la pagina se recargara en <b></b> segundos.",
-      icon: "success",
-      timer: 1000,
-      timerProgressBar: true,
-      didOpen: () => {
-        Swal.showLoading();
-        const timer = Swal.getPopup().querySelector("b");
-        timerInterval = setInterval(() => {
-          timer.textContent = `${Swal.getTimerLeft() / 1000}`;
-        }, 250);
-      },
-      willClose: () => {
-        clearInterval(timerInterval);
-      },
-    })
-    .then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-        inputVentas.textContent = "";
-        inputVentas.value = "";
-        inputVentas.focus();
+  // Verifica si hay algún error en el objeto response
+  const hasErrors = response.data.some(
+    (item) =>
+      item.error_punto_venta ||
+      item.error_horarios ||
+      item.error_validar_credencial ||
+      item.error_creditos_disponibles ||
+      item.error_limite_credito
+  );
 
-        inputCantidad.textContent = 1;
-        inputCantidad.value = 1;
-      }
+  if (hasErrors) {
+    // Si hay errores, muestra una alerta de warning con fondo rojo
+    swalWithBootstrapButtons.fire({
+      title: "Error en la Venta",
+      icon: "warning",
+      background: "#f8d7da", // Fondo rojo claro
+      html: generateErrorTable(response.data),
+      confirmButtonText: "Cerrar",
     });
+  } else {
+    // Si no hay errores, muestra la alerta de éxito
+    swalWithBootstrapButtons
+      .fire({
+        title: "Venta Exitosa",
+        html: "Se realizó la inserción con éxito. La página se recargará en <b></b> segundos.",
+        icon: "success",
+        timer: 1000,
+        timerProgressBar: true,
+        didOpen: () => {
+          Swal.showLoading();
+          const timer = Swal.getPopup().querySelector("b");
+          timerInterval = setInterval(() => {
+            timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+          }, 250);
+        },
+        willClose: () => {
+          clearInterval(timerInterval);
+        },
+      })
+      .then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+          inputVentas.textContent = "";
+          inputVentas.value = "";
+          inputVentas.focus();
+
+          inputCantidad.textContent = 1;
+          inputCantidad.value = 1;
+        }
+      });
+  }
+}
+
+// Función para generar la tabla con los errores
+function generateErrorTable(data) {
+  let tableContent =
+    '<table class="table table-bordered"><thead><tr><th>Error</th><th>Detalle</th></tr></thead><tbody>';
+  data.forEach((item) => {
+    if (item.error_punto_venta) {
+      tableContent += `<tr><td>Error Punto de Venta</td><td>${item.error_punto_venta}</td></tr>`;
+    }
+    if (item.error_horarios) {
+      tableContent += `<tr><td>Error Horarios</td><td>${item.error_horarios}</td></tr>`;
+    }
+    if (item.error_validar_credencial) {
+      tableContent += `<tr><td>Error Credencial</td><td>${item.error_validar_credencial}</td></tr>`;
+    }
+    if (item.error_creditos_disponibles) {
+      tableContent += `<tr><td>Error Créditos Disponibles</td><td>${item.error_creditos_disponibles}</td></tr>`;
+    }
+    if (item.error_limite_credito) {
+      tableContent += `<tr><td>Error Límite de Crédito</td><td>${item.error_limite_credito}</td></tr>`;
+    }
+  });
+  tableContent += "</tbody></table>";
+  return tableContent;
 }
