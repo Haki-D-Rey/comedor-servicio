@@ -164,9 +164,12 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
                 throw new \RuntimeException('El Codigo Interno ya está en uso.');
             }
 
+            $zona = $this->entityManager->getRepository(Zona::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdZona()]);
+            $usuario = $this->entityManager->getRepository(Usuario::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdUsuario()]);
+
             $zonaUsuarios = new ZonaUsuarios();
-            $zonaUsuarios->setIdUsuario($zonaUsuarioDTO->getIdUsuario());
-            $zonaUsuarios->setIdZona($zonaUsuarioDTO->getIdZona());
+            $zonaUsuarios->setZona($zona);
+            $zonaUsuarios->setUsuario($usuario);
             $zonaUsuarios->setCodigoInterno($zonaUsuarioDTO->getCodigoInterno());
             $zonaUsuarios->setFechaCreacion($zonaUsuarioDTO->getFechaCreacion());
             $zonaUsuarios->setFechaModificacion($zonaUsuarioDTO->getFechaModificacion());

@@ -89,7 +89,7 @@ abstract class GenericRepository extends EntityRepository
         return $result;
     }
 
-    private function sanitizeString(string $string): string
+    public function sanitizeString(string $string): string
     {
         return str_replace(' ', '_', trim($string));
     }

@@ -90,7 +90,7 @@ class ZonaUsuarios
         return $this->codigo_interno;
     }
 
-    public function setCodigoInterno(int $codigo_interno): self
+    public function setCodigoInterno(string $codigo_interno): self
     {
         $this->codigo_interno = $codigo_interno;
         return $this;

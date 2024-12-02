@@ -36,8 +36,7 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                     $usuario->getFechaCreacion(),
                     $usuario->getFechaModificacion(),
                     $usuario->getIsAdmin(),
-                    $usuario->getEstado(),
-                    $usuario->getIdTipoUsuario()
+                    $usuario->getEstado()
                 );
             }, $usuarios);
         } catch (\Exception $e) {
@@ -64,8 +63,7 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
                 $usuario->getFecha_creacion(),
                 $usuario->getFecha_modificacion(),
                 $usuario->getIsAdmin(),
-                $usuario->getEstado(),
-                $usuario->getIdTipoUsuario()
+                $usuario->getEstado()
             );
         } catch (\Exception $e) {
             $this->logger->error('Error al obtener usuario por ID: ' . $e->getMessage(), ['exception' => $e]);
@@ -102,7 +100,6 @@ class UsuarioRepository extends GenericRepository implements UsuarioRepositoryIn
             $usuario->setFechaModificacion($usuarioDTO->getFecha_modificacion());
             $usuario->setIsAdmin($usuarioDTO->getIsAdmin());
             $usuario->setEstado($usuarioDTO->getEstado());
-            $usuario->setIdTipoUsuario($usuarioDTO->getIdTipoUsuario());
 
             $this->entityManager->persist($usuario);
             $this->entityManager->flush();

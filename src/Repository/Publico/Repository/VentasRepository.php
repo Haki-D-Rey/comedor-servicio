@@ -11,6 +11,7 @@ use App\Entity\Publico\ClientesCreditoPeriodico;
 use App\Entity\Publico\DetalleClienteIdentificacionFacturacion;
 use App\Entity\Publico\DetalleZonaServicioHorarioClienteFacturacion;
 use App\Entity\Publico\Ventas;
+use App\Entity\Sistemas;
 use App\Entity\ZonaUsuarios;
 use App\Repository\GenericRepository;
 use App\Repository\Publico\Interface\VentasRepositoryInterface;
@@ -477,8 +478,12 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
             ->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()]);
 
         $cantidadFacturada = $ventasDTO->getCantidadFacturada();
+        $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();
+
         if (!$ClienteCredito->getExisteCantidadDisponible($cantidadFacturada)) {
-            $filtroErrores["error_creditos_disponibles"] = "Cliente no cuenta con crédito disponible para facturar. Cantidad Disponible: " . $ClienteCredito->getCantidadCreditoDisponible() . " Credito a Facturar: " . $cantidadFacturada;
+            $ultimaVentas = $this->entityManager->getRepository(Ventas::class)->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()]);
+            $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();
+            $filtroErrores["error_creditos_disponibles"] = "Cliente no cuenta con crédito disponible para facturar. Fecha de la Ultima Venta " . $ultimaVentas->getFechaEmision()->format('Y-m-d H:i:s') . " con la Cantida Facturada equivalente a  " . $ultimaVentas->getCantidadFacturada() . " del servicio " . $servicio->getNombre();
             return 0;
         }
 
@@ -725,12 +730,16 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
     public function FindValueCodIdentificacion($listaClientes, $cod_identificacion)
     {
-        $cliente = array_filter(
+        $cliente = [];
+        $filteredCliente = array_filter(
             $listaClientes,
-            fn($item) =>
-            isset($item->getJsonIdentificacion()[0]['codigo_identificador']) &&
+            fn($item) => isset($item->getJsonIdentificacion()[0]['codigo_identificador']) &&
                 $item->getJsonIdentificacion()[0]['codigo_identificador'] == $cod_identificacion
         );
+
+        if (!empty($filteredCliente)) {
+            $cliente[0] = reset($filteredCliente);
+        }
 
         if (!empty($cliente)) {
             $codigoIdentificador = $cliente[0]->getJsonIdentificacion()[0]['codigo_identificador'];

@@ -94,47 +94,6 @@ $chunkedItems = array_chunk($items, 3);
             </div>
         </div>
 
-        <div class="col-12 col-lg-6 mb-4">
-            <div class="card card-primary card-round" style="width: 420px; background: #177dff;">
-                <div class="card-header">
-                    <div class="card-head-row">
-                        <div class="card-title">Daily Sales</div>
-                        <div class="card-tools">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-label-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Export
-                                </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" href="#">Action</a>
-                                    <a class="dropdown-item" href="#">Another action</a>
-                                    <a class="dropdown-item" href="#">Something else here</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-category">March 25 - April 02</div>
-                </div>
-                <div class="card-body pb-0">
-                    <div class="mb-4 mt-2">
-                        <h1>$4,578.58</h1>
-                    </div>
-                    <div class="pull-in">
-                        <div style="position: absolute; inset: 0px; overflow: hidden; pointer-events: none; visibility: hidden; z-index: -1;" class="chartjs-size-monitor">
-                            <div class="chartjs-size-monitor-expand" style="position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1;">
-                                <div style="position:absolute;width:1000000px;height:1000000px;left:0;top:0"></div>
-                            </div>
-                            <div class="chartjs-size-monitor-shrink" style="position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1;">
-                                <div style="position:absolute;width:200%;height:200%;left:0; top:0"></div>
-                            </div>
-                        </div>
-                        <!-- <div id="chart-container" style="position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1;"> -->
-                        <canvas id="myChart1"></canvas>
-                        <!-- </div> -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 

@@ -191,47 +191,53 @@ function changeZonasEnSelect(opcion) {
   //   });
 }
 
-async function changeServiciosSelect(detalles) {
-  console.log("input");
-  if (dropdownSistema.value) {
-    inputVentas.disabled = false;
-    inputCantidad.disabled = false;
-  }
-  const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
-  const serviciosFormateados = {};
-
-  // Filtrar y reestructurar los datos
-  detalles.servicios.forEach((servicio) => {
-    // Buscar el horario correspondiente para el servicio
-    const horario = data.find(
-      (item) =>
-        item.id_detalle_zona_servicio_horario ===
-        servicio.id_detalle_zona_servicio_horario
-    );
-
-    if (horario) {
-      console.log("horario");
-      // Si se encuentra el horario, lo formateamos en el formato requerido
-      const periodoInicio = horario.horario.periodo_inicio;
-      const periodoFinal = horario.horario.periodo_final;
-      const cod = horario.horario.codigo_interno;
-
-      // Añadimos el servicio al objeto con su rango de horas
-      serviciosFormateados[servicio.name] = {
-        start: periodoInicio,
-        end: periodoFinal,
-        cod: cod,
-        id_detalle_zona_servicio_horario:
-          horario.id_detalle_zona_servicio_horario,
-      };
+dropdownSistema.addEventListener(
+  "change",
+  async function changeServiciosSelect(event) {
+    console.log("input");
+    // Obtener el elemento que fue clickeado (el <option>)
+    const selectedOption = event.target.selectedOptions[0];
+    const detalles = JSON.parse(selectedOption.dataset.detalle);
+    if (dropdownSistema.value) {
+      inputVentas.disabled = false;
+      inputCantidad.disabled = false;
     }
-  });
+    const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
+    const serviciosFormateados = {};
 
-  serviciosFormateados["Fuera de Servicio"] = [];
-  mealServices = serviciosFormateados;
+    // Filtrar y reestructurar los datos
+    detalles.servicios.forEach((servicio) => {
+      // Buscar el horario correspondiente para el servicio
+      const horario = data.find(
+        (item) =>
+          item.id_detalle_zona_servicio_horario ===
+          servicio.id_detalle_zona_servicio_horario
+      );
 
-  renderMealServices();
-}
+      if (horario) {
+        console.log("horario");
+        // Si se encuentra el horario, lo formateamos en el formato requerido
+        const periodoInicio = horario.horario.periodo_inicio;
+        const periodoFinal = horario.horario.periodo_final;
+        const cod = horario.horario.codigo_interno;
+
+        // Añadimos el servicio al objeto con su rango de horas
+        serviciosFormateados[servicio.name] = {
+          start: periodoInicio,
+          end: periodoFinal,
+          cod: cod,
+          id_detalle_zona_servicio_horario:
+            horario.id_detalle_zona_servicio_horario,
+        };
+      }
+    });
+
+    serviciosFormateados["Fuera de Servicio"] = [];
+    mealServices = serviciosFormateados;
+
+    renderMealServices();
+  }
+);
 
 /**
  * Carga los detalles de servicios y productos de una zona por su ID.
@@ -272,9 +278,10 @@ function addSelectItemClickListZona(lista, code_zone) {
         const option = document.createElement("option");
         option.value = detalle.codigo_sistema;
         option.textContent = detalle.sistema;
-        option.onclick = function () {
-          changeServiciosSelect(detalle);
-        };
+        option.setAttribute("data-detalle", JSON.stringify(detalle)); 
+        // option.onclick = function () {
+        //   changeServiciosSelect(detalle);
+        // };
         dropdownSistema.appendChild(option);
         dropdownSistema.disabled = false;
       }
@@ -689,13 +696,35 @@ function PopupSellDiningServices(response) {
 
   if (hasErrors) {
     // Si hay errores, muestra una alerta de warning con fondo rojo
-    swalWithBootstrapButtons.fire({
-      title: "Error en la Venta",
-      icon: "warning",
-      background: "#f8d7da", // Fondo rojo claro
-      html: generateErrorTable(response.data),
-      confirmButtonText: "Cerrar",
-    });
+    swalWithBootstrapButtons
+      .fire({
+        title: "Error en la Venta",
+        icon: "warning",
+        background: "#f8d7da", // Fondo rojo claro
+        html: generateErrorTable(response.data),
+        timer: 5000,
+        timerProgressBar: true,
+        didOpen: () => {
+          Swal.showLoading();
+          const timer = Swal.getPopup().querySelector("b");
+          timerInterval = setInterval(() => {
+            timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+          }, 250);
+        },
+        willClose: () => {
+          clearInterval(timerInterval);
+        },
+      })
+      .then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+          inputVentas.textContent = "";
+          inputVentas.value = "";
+          inputVentas.focus();
+
+          inputCantidad.textContent = 1;
+          inputCantidad.value = 1;
+        }
+      });
   } else {
     // Si no hay errores, muestra la alerta de éxito
     swalWithBootstrapButtons
