@@ -41,7 +41,7 @@ class ZonaUsuariosServices
         }
     }
 
-    public function createZonaUsuario(ZonaUsuarioDTO $zonaUsuarioDTO): void
+    public function createZonaUsuario(array $zonaUsuarioDTO): void
     {
         try {
             $this->zonaUsuariosRepository->createZonaUsuario($zonaUsuarioDTO);

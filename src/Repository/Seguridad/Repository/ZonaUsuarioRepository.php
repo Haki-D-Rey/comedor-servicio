@@ -124,7 +124,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         }, $zonaUsuarios);
 
         return [
-            'DatosUsuario' => $usuarioDTO,  
+            'DatosUsuario' => $usuarioDTO,
             'DetallesZonas' => $zonasDTO,
         ];
     }
@@ -153,36 +153,139 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         }
     }
 
-    public function createZonaUsuario(ZonaUsuarioDTO $zonaUsuarioDTO): void
+    public function createZonaUsuario(array $zonaUsuarioDTOs): void
     {
+        $batchSize = 20;
+        $i = 0;
+        $valuesInsert = [];
+        $paramsInsert = [];
+        $updateCasesCodigoInterno = [];
+        $updateCasesFechaModificacion = [];
+        $updateCasesEstado = [];
+        $paramsUpdate = [];
+        $idsToUpdate = [];
+
+        $this->entityManager->beginTransaction();
+
         try {
+            foreach ($zonaUsuarioDTOs as $zonaUsuarioDTO) {
+                // Buscar zona y usuario
+                $zona = $this->entityManager->getRepository(Zona::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdZona()]);
+                $usuario = $this->entityManager->getRepository(Usuario::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdUsuario()]);
 
-            $existingcodigo_interno = $this->entityManager->getRepository(ZonaUsuarios::class)
-                ->findOneBy(['codigo_interno' => $zonaUsuarioDTO->getCodigoInterno()]);
+                if (!$zona) {
+                    throw new \RuntimeException("Zona con ID {$zonaUsuarioDTO->getIdZona()} no encontrada.");
+                }
+                if (!$usuario) {
+                    throw new \RuntimeException("Usuario con ID {$zonaUsuarioDTO->getIdUsuario()} no encontrado.");
+                }
 
-            if ($existingcodigo_interno) {
-                throw new \RuntimeException('El Codigo Interno ya está en uso.');
+                // Verificar si ya existe una relación Zona-Usuario
+                $existingRecord = $this->entityManager->getRepository(ZonaUsuarios::class)
+                    ->findOneBy([
+                        'zona' => $zona,
+                        'usuario' => $usuario
+                    ]);
+
+                if ($existingRecord) {
+                    // Si existe, agregar a las actualizaciones
+                    $this->prepareUpdateValues($i, $zonaUsuarioDTO, $existingRecord, $updateCasesCodigoInterno, $updateCasesFechaModificacion, $updateCasesEstado, $paramsUpdate, $idsToUpdate);
+                } else {
+                    // Si no existe, agregar a las inserciones
+                    $this->prepareInsertValues($zonaUsuarioDTO, $i, $paramsInsert, $valuesInsert);
+                }
+
+                // Control de batch: cada 20 registros se hace la inserción o actualización
+                if (($i + 1) % $batchSize === 0) {
+                    if (!empty($valuesInsert)) {
+                        $this->insertZonaUsuario($valuesInsert, $paramsInsert);
+                    }
+
+                    if (!empty($paramsUpdate)) {
+                        $this->updateZonaUsuarioData($paramsUpdate, $updateCasesCodigoInterno, $updateCasesFechaModificacion, $updateCasesEstado, $idsToUpdate);
+                    }
+
+                    // Reset para el siguiente batch
+                    $valuesInsert = [];
+                    $paramsInsert = [];
+                    $idsToUpdate = [];
+                }
+
+                ++$i;
             }
 
-            $zona = $this->entityManager->getRepository(Zona::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdZona()]);
-            $usuario = $this->entityManager->getRepository(Usuario::class)->findOneBy(['id' => $zonaUsuarioDTO->getIdUsuario()]);
+            // Realizar las inserciones y actualizaciones restantes si hay registros pendientes
+            if (!empty($valuesInsert)) {
+                $this->insertZonaUsuario($valuesInsert, $paramsInsert);
+            }
 
-            $zonaUsuarios = new ZonaUsuarios();
-            $zonaUsuarios->setZona($zona);
-            $zonaUsuarios->setUsuario($usuario);
-            $zonaUsuarios->setCodigoInterno($zonaUsuarioDTO->getCodigoInterno());
-            $zonaUsuarios->setFechaCreacion($zonaUsuarioDTO->getFechaCreacion());
-            $zonaUsuarios->setFechaModificacion($zonaUsuarioDTO->getFechaModificacion());
-            $zonaUsuarios->setEstado($zonaUsuarioDTO->getEstado());
-            $this->entityManager->persist($zonaUsuarios);
-            $this->entityManager->flush();
+            if (!empty($paramsUpdate)) {
+                $this->updateZonaUsuarioData($paramsUpdate, $updateCasesCodigoInterno, $updateCasesFechaModificacion, $updateCasesEstado, $idsToUpdate);
+            }
+
+            // Commit la transacción
+            $this->entityManager->commit();
+        } catch (\RuntimeException $e) {
+            $this->entityManager->rollback();
+            $this->logger->error('Error al crear la relación Zona Usuario: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException($e->getMessage());
         } catch (ORMException | DBALException $e) {
-            $this->logger->error('Error al crear la relacion Zona Usuario: ' . $e->getMessage(), ['exception' => $e]);
-            throw new \RuntimeException('Error al crear la relacion Zona Usuario.');
+            $this->entityManager->rollback();
+            $this->logger->error('Error al crear la relación Zona Usuario en la base de datos: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error al crear la relación Zona Usuario.');
         } catch (\Throwable $e) {
-            $this->logger->error('Error inesperado al crear la relacion Zona Usuario: ' . $e->getMessage(), ['exception' => $e]);
+            $this->entityManager->rollback();
+            $this->logger->error('Error inesperado al crear la relación Zona Usuario: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException($e->getMessage());
         }
+    }
+
+    private function prepareInsertValues($zonaUsuarioDTO, $i, &$paramsInsert, &$valuesInsert)
+    {
+        $codigo_interno = $this->generateInternalCode('ZU-', 3, 0, ZonaUsuarios::class);
+        $valuesInsert[] = '(:id_zona' . $i . ', :id_usuario' . $i . ', :codigo_interno' . $i . ', :fecha_creacion' . $i . ', :fecha_modificacion' . $i . ', :estado' . $i . ')';
+        $paramsInsert['id_zona' . $i] = $zonaUsuarioDTO->getIdZona();
+        $paramsInsert['id_usuario' . $i] = $zonaUsuarioDTO->getIdUsuario();
+        $paramsInsert['codigo_interno' . $i] = $codigo_interno;
+        $paramsInsert['fecha_creacion' . $i] = $zonaUsuarioDTO->getFechaCreacion()->format('Y-m-d H:i:s');
+        $paramsInsert['fecha_modificacion' . $i] = $zonaUsuarioDTO->getFechaModificacion() ? $zonaUsuarioDTO->getFechaModificacion()->format('Y-m-d H:i:s') : null;
+        $paramsInsert['estado' . $i] = $zonaUsuarioDTO->getEstado();
+    }
+
+    private function prepareUpdateValues($i, $zonaUsuarioDTO, $existingRecord, &$updateCasesCodigoInterno, &$updateCasesFechaModificacion, &$updateCasesEstado, &$paramsUpdate, &$idsToUpdate)
+    {
+        // Preparar los casos de actualización
+        $updateCasesCodigoInterno[] = "WHEN id = :id_zona_usuario" . $i . " THEN :codigo_interno" . $i;
+        $updateCasesFechaModificacion[] = "WHEN id = :id_zona_usuario" . $i . " THEN :fecha_modificacion" . $i;
+        $updateCasesEstado[] = "WHEN id = :id_zona_usuario" . $i . " THEN :estado" . $i;
+
+        // Agregar parámetros para la actualización
+        $paramsUpdate["id_zona_usuario" . $i] = $existingRecord->getId();
+        $paramsUpdate["codigo_interno" . $i] =  $existingRecord->getCodigoInterno();
+        $paramsUpdate["fecha_modificacion" . $i] = (new \DateTime())->format('Y-m-d H:i:s');
+        $paramsUpdate["estado" . $i] = $zonaUsuarioDTO->getEstado();
+
+        // Agregar el id a la lista de ids a actualizar
+        $idsToUpdate[] = $existingRecord->getId();
+    }
+
+    private function insertZonaUsuario(array $valuesInsert, array $paramsInsert): void
+    {
+        $sql = "INSERT INTO seguridad.zona_usuario (id_zona, id_usuario, codigo_interno, fecha_creacion, fecha_modificacion, estado) 
+                VALUES " . implode(', ', $valuesInsert);
+        $this->entityManager->getConnection()->executeQuery($sql, $paramsInsert);
+    }
+
+    private function updateZonaUsuarioData($paramsUpdate, $updateCasesCodigoInterno, $updateCasesFechaModificacion, $updateCasesEstado, $idsToUpdate): void
+    {
+        $whereClause = "WHERE id IN (" . implode(', ', $idsToUpdate) . ")";
+
+        $sqlUpdateFinal = "UPDATE seguridad.zona_usuario SET 
+            codigo_interno = CASE " . rtrim(implode(' ', $updateCasesCodigoInterno), ', ') . " END,
+            fecha_modificacion = CASE " . rtrim(implode(' ', $updateCasesFechaModificacion), ', ') . " END::TIMESTAMP,
+            estado = CASE " . rtrim(implode(' ', $updateCasesEstado), ', ') . " END::BOOLEAN " . $whereClause;
+
+        $this->entityManager->getConnection()->executeQuery($sqlUpdateFinal, $paramsUpdate);
     }
 
     public function updateZonaUsuario(int $id, ZonaUsuarioDTO $zonaUsuarioDTO): void

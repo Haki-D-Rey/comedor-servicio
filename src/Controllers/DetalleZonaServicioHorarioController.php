@@ -78,20 +78,26 @@ class DetalleZonaServicioHorarioController
         $data = json_decode($request->getBody()->getContents(), true);
 
         try {
-            $tipoServiciosDTO = new DetalleZonasServicioHorarioDTO(
-                null,
-                $data['idServiciosProductosDetalles'],
-                $data['idHorario'],
-                $data['idZonaUsuario'],
-                $data['nombre'],
-                $data['descripcion'],
-                $data['codigo_interno'],
-                new \DateTime(),
-                null,
-                $data['estado'] ?? true
-            );
 
-            $this->detalleZonaServicioHorarioServices->createDetalleZonasServicioHorario($tipoServiciosDTO);
+            $detallesZonaServicioHorarioDTOs = [];
+            foreach ($data as $detalleData) {
+
+                $detalleDTO = new DetalleZonasServicioHorarioDTO(
+                    null,
+                    $detalleData['idServiciosProductosDetalles'],
+                    $detalleData['idHorario'],
+                    $detalleData['idZonaUsuario'],
+                    $detalleData['nombre'],
+                    $detalleData['descripcion'],
+                    $detalleData['codigo_interno'],
+                    new \DateTime(),
+                    null,
+                    $detalleData['estado'] ?? true
+                );
+
+                $detallesZonaServicioHorarioDTOs[] = $detalleDTO;
+            }
+            $this->detalleZonaServicioHorarioServices->createDetalleZonasServicioHorario($detallesZonaServicioHorarioDTOs);
             $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Tipo de Servicio creado exitosamente']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
         } catch (\Exception $e) {

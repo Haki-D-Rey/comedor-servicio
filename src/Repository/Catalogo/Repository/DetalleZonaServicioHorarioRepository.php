@@ -219,45 +219,214 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
         }
     }
 
-    public function createDetalleZonasServicioHorario(DetalleZonasServicioHorarioDTO $detalleZonasServicioHorarioDTO): void
+    public function createDetalleZonasServicioHorario(array $detalleZonasServicioHorarioDTOs): void
     {
+        $batchSize = 20;  // Tamaño del lote de inserciones/actualizaciones
+        $i = 0;
+        $valuesInsert = [];
+        $paramsInsert = [];
+        $updateCasesCodigoInterno = [];
+        $updateCasesNombre = [];
+        $updateCasesDescripcion = [];
+        $updateCasesFechaModificacion = [];
+        $updateCasesEstado = [];
+        $paramsUpdate = [];
+        $idsToUpdate = [];
+
+        $this->entityManager->beginTransaction();
+
         try {
+            foreach ($detalleZonasServicioHorarioDTOs as $detalleZonasServicioHorarioDTO) {
+                // Verificar si el codigo_interno ya está en uso
+                $existingCodigoInterno = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)
+                    ->findOneBy(['codigo_interno' => $detalleZonasServicioHorarioDTO->getcodigo_interno()]);
 
-            $existingcodigo_interno = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)
-                ->findOneBy(['codigo_interno' => $detalleZonasServicioHorarioDTO->getcodigo_interno()]);
+                if ($existingCodigoInterno) {
+                    throw new \RuntimeException("El Codigo Interno '{$detalleZonasServicioHorarioDTO->getcodigo_interno()}' ya está en uso.");
+                }
 
-            if ($existingcodigo_interno) {
-                throw new \RuntimeException('El Codigo Interno ya está en uso.');
+                // Verificar si el nombre ya está en uso
+                $existingNombre = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)
+                    ->findOneBy(['nombre' => $detalleZonasServicioHorarioDTO->getNombre()]);
+
+                if ($existingNombre) {
+                    throw new \RuntimeException("El Nombre '{$detalleZonasServicioHorarioDTO->getNombre()}' ya está en uso.");
+                }
+
+                // Buscar las entidades relacionadas (id_servicios_productos_detalles, id_horario, id_zona_usuario)
+                $idServiciosProductoDetalles = $this->entityManager->getRepository(ServiciosProductosDetalles::class)->findOneBy(['id' => $detalleZonasServicioHorarioDTO->getIdServiciosProductoDetalles()]);
+                $idHorario = $this->entityManager->getRepository(Horario::class)->findOneBy(['id' => $detalleZonasServicioHorarioDTO->getIdHorario()]);
+                $idZonaUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(['id' => $detalleZonasServicioHorarioDTO->getIdZonaUsuario()]);
+
+                if (!$idServiciosProductoDetalles) {
+                    throw new \RuntimeException("ServiciosProductoDetalles con ID {$detalleZonasServicioHorarioDTO->getIdServiciosProductoDetalles()} no encontrado.");
+                }
+                if (!$idHorario) {
+                    throw new \RuntimeException("Horario con ID {$detalleZonasServicioHorarioDTO->getIdHorario()} no encontrado.");
+                }
+                if (!$idZonaUsuario) {
+                    throw new \RuntimeException("ZonaUsuario con ID {$detalleZonasServicioHorarioDTO->getIdZonaUsuario()} no encontrado.");
+                }
+
+                // Si ya existe un registro con las mismas claves, preparar para actualización
+                $existingRecord = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)
+                    ->findOneBy([
+                        'codigo_interno' => $detalleZonasServicioHorarioDTO->getcodigo_interno(),
+                        'nombre' => $detalleZonasServicioHorarioDTO->getNombre()
+                    ]);
+
+                if ($existingRecord) {
+                    // Preparar los valores de la actualización
+                    $this->prepareUpdateValues(
+                        $i,
+                        $detalleZonasServicioHorarioDTO,
+                        $existingRecord,
+                        $updateCasesCodigoInterno,
+                        $updateCasesNombre,
+                        $updateCasesDescripcion,
+                        $updateCasesFechaModificacion,
+                        $updateCasesEstado,
+                        $paramsUpdate,
+                        $idsToUpdate
+                    );
+                } else {
+                    // Preparar los valores para la inserción
+                    $this->prepareInsertValues($i, $detalleZonasServicioHorarioDTO, $paramsInsert, $valuesInsert);
+                }
+
+                // Controlar el tamaño del batch: cada 20 registros
+                if (($i + 1) % $batchSize === 0) {
+                    if (!empty($valuesInsert)) {
+                        $this->insertDetalleZonaServicioHorario($valuesInsert, $paramsInsert);
+                    }
+
+                    if (!empty($paramsUpdate)) {
+                        $this->updateDetalleZonaServicioHorarioData(
+                            $paramsUpdate,
+                            $updateCasesCodigoInterno,
+                            $updateCasesNombre,
+                            $updateCasesDescripcion,
+                            $updateCasesFechaModificacion,
+                            $updateCasesEstado,
+                            $idsToUpdate
+                        );
+                    }
+
+                    // Reset para el siguiente lote
+                    $valuesInsert = [];
+                    $paramsInsert = [];
+                    $idsToUpdate = [];
+                }
+
+                ++$i;
             }
 
-            $existingNombre = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)
-                ->findOneBy(['nombre' => $detalleZonasServicioHorarioDTO->getNombre()]);
-
-            if ($existingNombre) {
-                throw new \RuntimeException('El Nombre ya está en uso.');
+            // Realizar las inserciones y actualizaciones restantes si hay registros pendientes
+            if (!empty($valuesInsert)) {
+                $this->insertDetalleZonaServicioHorario($valuesInsert, $paramsInsert);
             }
 
-            $detalleZonasServicioHorario = new DetalleZonaServicioHorario();
-            $detalleZonasServicioHorario->setIdServiciosProductosDetalles($detalleZonasServicioHorarioDTO->getIdServiciosProductoDetalles());
-            $detalleZonasServicioHorario->setIdHorario($detalleZonasServicioHorarioDTO->getIdHorario());
-            $detalleZonasServicioHorario->setIdZonaUsuario($detalleZonasServicioHorarioDTO->getIdZonaUsuario());
-            $detalleZonasServicioHorario->setNombre($detalleZonasServicioHorarioDTO->getNombre());
-            $detalleZonasServicioHorario->setDescripcion($detalleZonasServicioHorarioDTO->getDescripcion());
-            $detalleZonasServicioHorario->setCodigoInterno($detalleZonasServicioHorarioDTO->getcodigo_interno());
-            $detalleZonasServicioHorario->setFechaCreacion($detalleZonasServicioHorarioDTO->getFecha_creacion());
-            $detalleZonasServicioHorario->setFechaModificacion($detalleZonasServicioHorarioDTO->getFecha_modificacion());
-            $detalleZonasServicioHorario->setEstado($detalleZonasServicioHorarioDTO->getEstado());
+            if (!empty($paramsUpdate)) {
+                $this->updateDetalleZonaServicioHorarioData(
+                    $paramsUpdate,
+                    $updateCasesCodigoInterno,
+                    $updateCasesNombre,
+                    $updateCasesDescripcion,
+                    $updateCasesFechaModificacion,
+                    $updateCasesEstado,
+                    $idsToUpdate
+                );
+            }
 
-            $this->entityManager->persist($detalleZonasServicioHorario);
-            $this->entityManager->flush();
+            // Commit la transacción
+            $this->entityManager->commit();
         } catch (ORMException | DBALException $e) {
-            $this->logger->error('Error al crear el Servicio del Producto: ' . $e->getMessage(), ['exception' => $e]);
-            throw new \RuntimeException('Error al crear usuario.');
+            // Manejo de excepciones de base de datos
+            $this->entityManager->rollback();
+            $this->logger->error('Error al crear el Detalle Zonas Servicio Horario: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error al crear el Detalle Zonas Servicio Horario.');
         } catch (\Throwable $e) {
-            $this->logger->error('Error inesperado al crear el Servicio del Producto: ' . $e->getMessage(), ['exception' => $e]);
+            // Manejo de otras excepciones
+            $this->entityManager->rollback();
+            $this->logger->error('Error inesperado al crear el Detalle Zonas Servicio Horario: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException($e->getMessage());
         }
     }
+
+    private function prepareInsertValues($i, $detalleZonasServicioHorarioDTO, &$paramsInsert, &$valuesInsert)
+    {
+        $codigo_interno = $this->generateInternalCode('DZSH-', 4, 0, DetalleZonaServicioHorario::class);
+        $valuesInsert[] = '(:id_servicios_productos_detalles' . $i . ', :id_horario' . $i . ', :id_zona_usuario' . $i . ', :nombre' . $i . ', :descripcion' . $i . ', :codigo_interno' . $i . ', :fecha_creacion' . $i . ', :fecha_modificacion' . $i . ', :estado' . $i . ')';
+        $paramsInsert['id_servicios_productos_detalles' . $i] = $detalleZonasServicioHorarioDTO->getIdServiciosProductoDetalles();
+        $paramsInsert['id_horario' . $i] = $detalleZonasServicioHorarioDTO->getIdHorario();
+        $paramsInsert['id_zona_usuario' . $i] = $detalleZonasServicioHorarioDTO->getIdZonaUsuario();
+        $paramsInsert['nombre' . $i] = $detalleZonasServicioHorarioDTO->getNombre();
+        $paramsInsert['descripcion' . $i] = $detalleZonasServicioHorarioDTO->getDescripcion();
+        $paramsInsert['codigo_interno' . $i] = $codigo_interno;
+        $paramsInsert['fecha_creacion' . $i] = $detalleZonasServicioHorarioDTO->getfecha_creacion()->format('Y-m-d H:i:s');
+        $paramsInsert['fecha_modificacion' . $i] = $detalleZonasServicioHorarioDTO->getfecha_modificacion() ? $detalleZonasServicioHorarioDTO->getFechaModificacion()->format('Y-m-d H:i:s') : null;
+        $paramsInsert['estado' . $i] = $detalleZonasServicioHorarioDTO->getEstado();
+    }
+
+    private function prepareUpdateValues(
+        $i,
+        $detalleZonasServicioHorarioDTO,
+        $existingRecord,
+        &$updateCasesCodigoInterno,
+        &$updateCasesNombre,
+        &$updateCasesDescripcion,
+        &$updateCasesFechaModificacion,
+        &$updateCasesEstado,
+        &$paramsUpdate,
+        &$idsToUpdate
+    ) {
+        // Preparar los casos de actualización para cada campo
+        $updateCasesCodigoInterno[] = "WHEN id = :id_detalle_zona_servicio_horario" . $i . " THEN :codigo_interno" . $i;
+        $updateCasesNombre[] = "WHEN id = :id_detalle_zona_servicio_horario" . $i . " THEN :nombre" . $i;
+        $updateCasesDescripcion[] = "WHEN id = :id_detalle_zona_servicio_horario" . $i . " THEN :descripcion" . $i;
+        $updateCasesFechaModificacion[] = "WHEN id = :id_detalle_zona_servicio_horario" . $i . " THEN :fecha_modificacion" . $i;
+        $updateCasesEstado[] = "WHEN id = :id_detalle_zona_servicio_horario" . $i . " THEN :estado" . $i;
+
+        // Agregar parámetros para la actualización
+        $paramsUpdate["id_detalle_zona_servicio_horario" . $i] = $existingRecord->getId();
+        $paramsUpdate["codigo_interno" . $i] = $existingRecord->getCodigoInterno();
+        $paramsUpdate["nombre" . $i] = $detalleZonasServicioHorarioDTO->getNombre();
+        $paramsUpdate["descripcion" . $i] = $detalleZonasServicioHorarioDTO->getDescripcion();
+        $paramsUpdate["fecha_modificacion" . $i] = (new \DateTime())->format('Y-m-d H:i:s');
+        $paramsUpdate["estado" . $i] = $detalleZonasServicioHorarioDTO->getEstado();
+
+        // Agregar el id a la lista de ids a actualizar
+        $idsToUpdate[] = $existingRecord->getId();
+    }
+
+    private function insertDetalleZonaServicioHorario(array $valuesInsert, array $paramsInsert): void
+    {
+        $sql = "INSERT INTO catalogo.detalle_zona_servicio_horario (id_servicios_productos_detalles, id_horario, id_zona_usuario, nombre, descripcion, codigo_interno, fecha_creacion, fecha_modificacion, estado) 
+            VALUES " . implode(', ', $valuesInsert);
+        $this->entityManager->getConnection()->executeQuery($sql, $paramsInsert);
+    }
+
+    private function updateDetalleZonaServicioHorarioData(
+        $paramsUpdate,
+        $updateCasesCodigoInterno,
+        $updateCasesNombre,
+        $updateCasesDescripcion,
+        $updateCasesFechaModificacion,
+        $updateCasesEstado,
+        $idsToUpdate
+    ): void {
+        $whereClause = "WHERE id IN (" . implode(', ', $idsToUpdate) . ")";
+
+        $sqlUpdateFinal = "UPDATE catalogo.detalle_zona_servicio_horario SET 
+        codigo_interno = CASE " . rtrim(implode(' ', $updateCasesCodigoInterno), ', ') . " END,
+        nombre = CASE " . rtrim(implode(' ', $updateCasesNombre), ', ') . " END,
+        descripcion = CASE " . rtrim(implode(' ', $updateCasesDescripcion), ', ') . " END,
+        fecha_modificacion = CASE " . rtrim(implode(' ', $updateCasesFechaModificacion), ', ') . " END,
+        estado = CASE " . rtrim(implode(' ', $updateCasesEstado), ', ') . " END " . $whereClause;
+
+        $this->entityManager->getConnection()->executeQuery($sqlUpdateFinal, $paramsUpdate);
+    }
+
 
     public function updateDetalleZonasServicioHorario(int $id, DetalleZonasServicioHorarioDTO $detalleZonasServicioHorarioDTO): void
     {

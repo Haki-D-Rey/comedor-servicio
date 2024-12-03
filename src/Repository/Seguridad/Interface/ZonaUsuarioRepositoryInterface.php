@@ -24,10 +24,10 @@ interface ZonaUsuarioRepositoryInterface
     public function getZonaUsuarioById(int $id): ?ZonaUsuarioDTO;
 
     /**
-     * @param ZonaUsuarioDTO $zonaUsuarioDTO
+     * @param array $zonaUsuarioDTO
      * @return bool
      */
-    public function createZonaUsuario(ZonaUsuarioDTO $zonaUsuarioDTO): void;
+    public function createZonaUsuario(array $zonaUsuarioDTO): void;
 
     /**
      * @param int $id

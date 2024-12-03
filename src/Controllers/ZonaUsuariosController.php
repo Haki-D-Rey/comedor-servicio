@@ -65,17 +65,22 @@ class ZonaUsuariosController
         $data = json_decode($request->getBody()->getContents(), true);
 
         try {
-            $zonaUsuarioDTO = new ZonaUsuarioDTO(
-                null,
-                $data['id_zona'],
-                $data['id_usuario'],
-                $data['codigo_interno'],
-                new \DateTime(),
-                null,
-                $data['estado'] ?? true
-            );
 
-            $this->zonaUsuariosServices->createZonaUsuario($zonaUsuarioDTO);
+            $zonaUsuarioDTOs = [];
+            foreach ($data as $zonausuario) {
+
+                $zonaUsuarioDTO = new ZonaUsuarioDTO(
+                    null,
+                    $zonausuario['id_zona'],
+                    $zonausuario['id_usuario'],
+                    $zonausuario['codigo_interno'],
+                    new \DateTime(),
+                    null,
+                    $zonausuario['estado'] ?? true
+                );
+                $zonaUsuarioDTOs[] = $zonaUsuarioDTO;
+            }
+            $this->zonaUsuariosServices->createZonaUsuario($zonaUsuarioDTOs);
             $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Zona Relacionado al Usuario creado exitosamente']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
         } catch (\Exception $e) {

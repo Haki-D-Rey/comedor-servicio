@@ -30,10 +30,10 @@ interface DetalleZonaServicioHorarioRepositoryInterface
     public function getDetalleZonasServicioHorarioById(int $id): ?DetalleZonasServicioHorarioDTO;
 
     /**
-     * @param DetalleZonasServicioHorarioDTO $DetalleZonasServicioHorarioDTO
+     * @param array $DetalleZonasServicioHorarioDTO
      * @return bool
      */
-    public function createDetalleZonasServicioHorario(DetalleZonasServicioHorarioDTO $DetalleZonaServicioHorarioDTO): void;
+    public function createDetalleZonasServicioHorario(array $DetalleZonaServicioHorarioDTO): void;
 
     /**
      * @param int $id

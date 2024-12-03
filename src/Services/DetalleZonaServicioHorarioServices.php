@@ -51,7 +51,7 @@ class DetalleZonaServicioHorarioServices
         }
     }
 
-    public function createDetalleZonasServicioHorario(DetalleZonasServicioHorarioDTO $detalleZonasServicioHorarioDTO): void
+    public function createDetalleZonasServicioHorario(array $detalleZonasServicioHorarioDTO): void
     {
         try {
             $this->detalleZonaServicioHorarioRepository->createDetalleZonasServicioHorario($detalleZonasServicioHorarioDTO);
