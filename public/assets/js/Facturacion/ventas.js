@@ -153,7 +153,7 @@ function renderZonasEnSelect(detallesZonas) {
 function changeZonasEnSelect(opcion) {
   //   dropdownZonaUsuario.addEventListener("change", async (event) => {
   contentDropdownZona.textContent = opcion.zonas.nombre;
-  console.log("chnge");
+  contentDropdownZona.value = opcion.zonas.codigo_interno;
   const idZonaUsuario = event.target.value;
   if (!idZonaUsuario) return;
 
@@ -198,10 +198,10 @@ dropdownSistema.addEventListener(
     // Obtener el elemento que fue clickeado (el <option>)
     const selectedOption = event.target.selectedOptions[0];
     const detalles = JSON.parse(selectedOption.dataset.detalle);
-    if (dropdownSistema.value) {
-      inputVentas.disabled = false;
-      inputCantidad.disabled = false;
-    }
+    // if (dropdownSistema.value) {
+    //   inputVentas.disabled = false;
+    //   inputCantidad.disabled = false;
+    // }
     const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
     const serviciosFormateados = {};
 
@@ -278,7 +278,7 @@ function addSelectItemClickListZona(lista, code_zone) {
         const option = document.createElement("option");
         option.value = detalle.codigo_sistema;
         option.textContent = detalle.sistema;
-        option.setAttribute("data-detalle", JSON.stringify(detalle)); 
+        option.setAttribute("data-detalle", JSON.stringify(detalle));
         // option.onclick = function () {
         //   changeServiciosSelect(detalle);
         // };
@@ -569,6 +569,16 @@ function renderMealServices() {
 
       if (isActive) {
         activeIndex = service;
+        if (service == "Fuera de Servicio") {
+          inputCantidad.disabled = true;
+          inputVentas.disabled = true;
+        } else {
+          inputVentas.disabled = false;
+          inputVentas.focus();
+          inputCantidad.disabled = false;
+          inputCantidad.textContent = 1
+          inputCantidad.value = 1
+        }
       }
     });
 
@@ -641,7 +651,7 @@ function crearArrayServiciosActivos() {
     isNaN(cantidadFacturada) ||
     cantidadFacturada <= 0
   ) {
-    console.error("Código de identificación o cantidad no válidos.");
+    console.warn("Código de identificación o cantidad no válidos.");
     return [];
   }
 
@@ -782,3 +792,12 @@ function generateErrorTable(data) {
   tableContent += "</tbody></table>";
   return tableContent;
 }
+
+function triggerChangeEvent() {
+  if (contentDropdownZona.value && dropdownSistema.value) {
+    const event = new Event("change");
+    dropdownSistema.dispatchEvent(event);
+  }
+}
+
+setInterval(triggerChangeEvent, 3000);

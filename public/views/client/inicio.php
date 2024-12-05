@@ -96,7 +96,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
                 <div class="col-md-6">
                     <div class="content-search">
                         <label for="inputCodigo" class="form-label">Lector de Tarjetas</label>
-                        <input id="inputCodigo" class="input-content" type="text" placeholder="Escanea o ingresa código" style="height: 40px; width: 98%; border: 2px solid #077682;">
+                        <input id="inputCodigo" class="input-content" type="password" placeholder="Escanea o ingresa código" style="height: 40px; width: 98%; border: 2px solid #077682;">
                     </div>
                 </div>
                 <div class="col-md-6 mt-auto mr-0">

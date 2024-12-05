@@ -232,6 +232,7 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
         $updateCasesEstado = [];
         $paramsUpdate = [];
         $idsToUpdate = [];
+        $codigo_interno = null;
 
         $this->entityManager->beginTransaction();
 
@@ -291,7 +292,7 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
                     );
                 } else {
                     // Preparar los valores para la inserción
-                    $this->prepareInsertValues($i, $detalleZonasServicioHorarioDTO, $paramsInsert, $valuesInsert);
+                    $this->prepareInsertValues($i, $detalleZonasServicioHorarioDTO, $paramsInsert, $valuesInsert, $codigo_interno);
                 }
 
                 // Controlar el tamaño del batch: cada 20 registros
@@ -353,9 +354,15 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
         }
     }
 
-    private function prepareInsertValues($i, $detalleZonasServicioHorarioDTO, &$paramsInsert, &$valuesInsert)
+    private function prepareInsertValues($i, $detalleZonasServicioHorarioDTO, &$paramsInsert, &$valuesInsert, &$codigo_interno)
     {
-        $codigo_interno = $this->generateInternalCode('DZSH-', 4, 0, DetalleZonaServicioHorario::class);
+        // Si es la primera inserción, generamos el código base
+        if ($codigo_interno === null) {
+            $codigo_interno = $this->generateInternalCode('DZSH-', 4, 0, DetalleZonaServicioHorario::class);
+        } else {
+            $codigo_interno = $this->incrementCode($codigo_interno, 4);
+        }
+
         $valuesInsert[] = '(:id_servicios_productos_detalles' . $i . ', :id_horario' . $i . ', :id_zona_usuario' . $i . ', :nombre' . $i . ', :descripcion' . $i . ', :codigo_interno' . $i . ', :fecha_creacion' . $i . ', :fecha_modificacion' . $i . ', :estado' . $i . ')';
         $paramsInsert['id_servicios_productos_detalles' . $i] = $detalleZonasServicioHorarioDTO->getIdServiciosProductoDetalles();
         $paramsInsert['id_horario' . $i] = $detalleZonasServicioHorarioDTO->getIdHorario();

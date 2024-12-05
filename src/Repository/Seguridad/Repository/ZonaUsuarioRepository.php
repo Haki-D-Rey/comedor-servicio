@@ -129,6 +129,89 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         ];
     }
 
+    public function getEstadisticosPanel(int $id): array
+    {
+        $usuario = $this->entityManager->getRepository(Usuario::class)->find($id);
+        $usuarioDTO = new UsuarioDTO(
+            $usuario->getId(),
+            $usuario->getNombreUsuario(),
+            $usuario->getContrasenia(),
+            $usuario->getNombres(),
+            $usuario->getApellidos(),
+            $usuario->getCorreo(),
+            $usuario->getFechaCreacion(),
+            $usuario->getFechaModificacion(),
+            $usuario->getIsAdmin(),
+            $usuario->getEstado()
+        );
+
+        if (!$usuarioDTO) {
+            return [
+                'usuario' => null,
+                'idZonaUsuario' => null,
+                'zonas' => [],
+            ];
+        }
+        $zonaUsuarios = $this->findBy(['id_usuario' => $id, 'estado' => true]);
+
+        if (!$zonaUsuarios) {
+            return [
+                'usuario' => $usuarioDTO,
+                'idZonaUsuario' => null,
+                'zonas' => [],
+            ];
+        }
+        $idsZona = array_map(function ($zonaUsuario) {
+            return $zonaUsuario->getIdZona();
+        }, $zonaUsuarios);
+
+        if (!empty($idsZona)) {
+            $zonas = $this->entityManager->getRepository(Zona::class)->findBy([
+                'id' => $idsZona,
+                'estado' => true,
+            ]);
+        } else {
+            $zonas = [];
+        }
+
+        $zonasDTO = array_map(function ($zonaUsuario) use ($zonas) {
+            // Buscar la zona correspondiente al idZona del objeto $zonaUsuario
+            $zonaCorrespondiente = array_filter($zonas, function ($zona) use ($zonaUsuario) {
+                return $zona->getId() === $zonaUsuario->getIdZona();
+            });
+
+            // Si se encuentra la zona correspondiente, la transformamos en DTO
+            if ($zonaCorrespondiente) {
+                $zonaCorrespondiente = array_shift($zonaCorrespondiente); // Obtener el primer elemento
+                return [
+                    "idZonaUsuario" => $zonaUsuario->getId(),
+                    "codigoInternoZonaUsuario" => $zonaUsuario->getCodigoInterno(),
+                    "zonas" => new ZonaDTO(
+                        $zonaCorrespondiente->getId(),
+                        $zonaCorrespondiente->getNombre(),
+                        $zonaCorrespondiente->getDescripcion(),
+                        $zonaCorrespondiente->getcodigo_interno(),
+                        $zonaCorrespondiente->getFecha_creacion(),
+                        $zonaCorrespondiente->getFecha_modificacion(),
+                        $zonaCorrespondiente->getEstado()
+                    )
+                ];
+            }
+
+            // Si no se encuentra una zona, retornar un valor nulo
+            return [
+                "idZonaUsuario" => $zonaUsuario->getId(),
+                "codigoInternoZonaUsuario" => $zonaUsuario->getCodigoInterno(),
+                "zonas" => null
+            ];
+        }, $zonaUsuarios);
+
+        return [
+            'DatosUsuario' => $usuarioDTO,
+            'DetallesZonas' => $zonasDTO,
+        ];
+    }
+
 
     public function getZonaUsuarioById(int $id): ?ZonaUsuarioDTO
     {
@@ -164,6 +247,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         $updateCasesEstado = [];
         $paramsUpdate = [];
         $idsToUpdate = [];
+        $codigo_interno = null;
 
         $this->entityManager->beginTransaction();
 
@@ -192,7 +276,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
                     $this->prepareUpdateValues($i, $zonaUsuarioDTO, $existingRecord, $updateCasesCodigoInterno, $updateCasesFechaModificacion, $updateCasesEstado, $paramsUpdate, $idsToUpdate);
                 } else {
                     // Si no existe, agregar a las inserciones
-                    $this->prepareInsertValues($zonaUsuarioDTO, $i, $paramsInsert, $valuesInsert);
+                    $this->prepareInsertValues($zonaUsuarioDTO, $i, $paramsInsert, $valuesInsert, $codigo_interno);
                 }
 
                 // Control de batch: cada 20 registros se hace la inserción o actualización
@@ -240,9 +324,13 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         }
     }
 
-    private function prepareInsertValues($zonaUsuarioDTO, $i, &$paramsInsert, &$valuesInsert)
+    private function prepareInsertValues($zonaUsuarioDTO, $i, &$paramsInsert, &$valuesInsert, &$codigo_interno)
     {
-        $codigo_interno = $this->generateInternalCode('ZU-', 3, 0, ZonaUsuarios::class);
+        if ($codigo_interno == null) {
+            $codigo_interno = $this->generateInternalCode('ZU-', 3, 0, ZonaUsuarios::class);
+        } else {
+            $codigo_interno = $this->incrementCode($codigo_interno, 3);
+        }
         $valuesInsert[] = '(:id_zona' . $i . ', :id_usuario' . $i . ', :codigo_interno' . $i . ', :fecha_creacion' . $i . ', :fecha_modificacion' . $i . ', :estado' . $i . ')';
         $paramsInsert['id_zona' . $i] = $zonaUsuarioDTO->getIdZona();
         $paramsInsert['id_usuario' . $i] = $zonaUsuarioDTO->getIdUsuario();

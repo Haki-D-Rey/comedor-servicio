@@ -81,9 +81,13 @@ abstract class GenericRepository extends EntityRepository
 
         $queryBuilder->where('d.id_lista_catalogo = :id_lista_catalogo')
             ->andWhere('d.id_valor = :id_valor')
+            ->andWhere('d.estado = :estado')
             ->setParameter('id_lista_catalogo', $id_lista_catalogo)
-            ->setParameter('id_valor', $idValor);
+            ->setParameter('id_valor', $idValor)
+            ->setParameter('estado', true)
+            ->setMaxResults(1);  // Limita a un solo resultado
 
+        // Obtener el resultado
         $result = $queryBuilder->getQuery()->getOneOrNullResult();
 
         return $result;
@@ -113,8 +117,23 @@ abstract class GenericRepository extends EntityRepository
         $queryBuilder = $repository->createQueryBuilder('e')
             ->select('MAX(e.id)')
             ->getQuery();
-    
+
         $lastValue = $queryBuilder->getSingleScalarResult();
         return $lastValue !== null ? (int)$lastValue : 0;
+    }
+
+    public function incrementCode($codigo_interno, $leading_zero)
+    {
+        $pattern = '/(\D+)(\d+)$/';
+        if (preg_match($pattern, $codigo_interno, $matches)) {
+            $prefix = $matches[1];
+            $number = (int)$matches[2];
+
+            $number++;
+
+            $new_code = $prefix . str_pad($number, $leading_zero, '0', STR_PAD_LEFT);
+            return $new_code;
+        }
+        return $codigo_interno;
     }
 }

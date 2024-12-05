@@ -450,12 +450,56 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
     private function validateCredencial($ventasDTO, &$filtroErrores): object
     {
-        $listaClientes = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->findAll();
-        $findValueJson = $this->FindValueCodIdentificacion($listaClientes, $ventasDTO->getCodIdentificacion());
+        // $listaClientes = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->findAll();
+        // Definir la consulta SQL
+        $query = "
+                    SELECT
+                        id,
+                        id_cliente,
+                        jsonb_extract_path_text(value, 'codigo_identificador') AS codigo_identificador,
+                        jsonb_extract_path_text(value, 'codigo_interno') AS codigo_interno
+                    FROM 
+                        public.detalle_cliente_identificacion_facturacion,
+                        jsonb_array_elements(json_identificacion) AS value
+                    WHERE 
+                        jsonb_extract_path_text(value, 'codigo_interno') = :codigo_interno
+                        AND jsonb_extract_path_text(value, 'codigo_identificador') = :codigo_identificador
+                ";
 
+        // Definir los parámetros para la consulta
+        $params = [
+            'codigo_interno' => 'ITF-001', // Cambié estos valores a los que se obtienen del DTO
+            'codigo_identificador' => $ventasDTO->getCodIdentificacion()
+        ];
+
+        // Ejecutar la consulta usando Doctrine DBAL
+        $result = $this->entityManager->getConnection()->executeQuery($query, $params);
+
+        // Obtener el resultado
+        $rows = $result->fetchAllAssociative(); // Devuelve un array asociativo con los resultados
+
+        // Verificar si la consulta devolvió resultados
+        if (count($rows) > 0) {
+            // Si se encontró el cliente, asignamos los datos al objeto de retorno
+            $findValueJson = (object)[
+                'status' => true,
+                'cod_identificacion' => $rows[0]['codigo_identificador'],
+                'id_detalle_cliente_identificacion_facturacion' => $rows[0]['id'],
+                'id_cliente' => $rows[0]['id_cliente'],
+            ];
+        } else {
+            // Si no se encontró el cliente, establecemos el status como false
+            $findValueJson = (object)[
+                'status' => false,
+                'value' => null
+            ];
+        }
+
+        // Si el cliente no fue encontrado, agregar error al filtro
         if (!$findValueJson->status) {
             $filtroErrores["error_validar_credencial"] = "Cliente con el número de identificación " . $ventasDTO->getCodIdentificacion() . " no fue encontrado";
         }
+
         return $findValueJson;
     }
 
@@ -481,9 +525,13 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();
 
         if (!$ClienteCredito->getExisteCantidadDisponible($cantidadFacturada)) {
-            $ultimaVentas = $this->entityManager->getRepository(Ventas::class)->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()]);
+            $ultimaVentas = $this->entityManager->getRepository(Ventas::class)
+                ->findOneBy(
+                    ['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()],
+                    ['fechaEmision' => 'DESC']
+                );
             $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();
-            $filtroErrores["error_creditos_disponibles"] = "Cliente no cuenta con crédito disponible para facturar. Fecha de la Ultima Venta " . $ultimaVentas->getFechaEmision()->format('Y-m-d H:i:s') . " con la Cantida Facturada equivalente a  " . $ultimaVentas->getCantidadFacturada() . " del servicio " . $servicio->getNombre();
+            $filtroErrores["error_creditos_disponibles"] = "No se puede realizar la facturación porque el cliente no cuenta con crédito disponible. La última venta registrada fue el " . $ultimaVentas->getFechaEmision()->format('d/m/Y H:i:s') . ", donde se facturó una cantidad de " . $ultimaVentas->getCantidadFacturada() . " del servicio " . $servicio->getNombre() . ".";
             return 0;
         }
 

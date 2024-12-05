@@ -41,6 +41,21 @@ class ZonaUsuariosController
         }
     }
 
+    public function getStadisticZone(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        try {
+            $resultado = $this->zonaUsuariosServices->getRelationalZonaUsuarioById($id);
+            $response->getBody()->write(json_encode($resultado));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    
+
     public function getZonaUsuarioById(Request $request, Response $response, array $args): Response
     {
         try {

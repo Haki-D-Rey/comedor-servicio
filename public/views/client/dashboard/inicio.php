@@ -1,11 +1,10 @@
 <?php
 ob_start();
 $items = [
-    ['icon' => 'fas fa-users', 'category' => 'Visitors', 'count' => '1,294'],
-    ['icon' => 'fas fa-user-check', 'category' => 'Subscribers', 'count' => '1,303'],
-    ['icon' => 'fas fa-users', 'category' => 'Visitors', 'count' => '1,294'],
-    ['icon' => 'fas fa-user-check', 'category' => 'Subscribers', 'count' => '1,303'],
-    ['icon' => 'fas fa-users', 'category' => 'Visitors', 'count' => '1,294']
+    ['icon' => 'fas fa-users', 'category' => 'Personal', 'count' => '2560'],
+    ['icon' => 'fas fa-user-check', 'category' => 'Ventas', 'count' => '50'],
+    ['icon' => 'fas fa-users', 'category' => 'Servicios', 'count' => '12'],
+    ['icon' => 'fas fa-user-check', 'category' => 'eventos', 'count' => '2']
 ];
 
 // Divide los elementos en grupos de 3 para el carrusel
