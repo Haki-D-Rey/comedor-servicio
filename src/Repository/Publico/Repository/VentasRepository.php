@@ -452,7 +452,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
     {
         // $listaClientes = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->findAll();
         // Definir la consulta SQL
-        $query = "
+            $query = "
                     SELECT
                         id,
                         id_cliente,
@@ -470,7 +470,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         // Definir los parámetros para la consulta
         $params = [
             'codigo_interno' => 'ITF-001', // Cambié estos valores a los que se obtienen del DTO
-            'codigo_identificador' => $ventasDTO->getCodIdentificacion()
+            'codigo_identificador' => str_pad($ventasDTO->getCodIdentificacion(), 10, '0', STR_PAD_LEFT)
         ];
 
         // Ejecutar la consulta usando Doctrine DBAL

@@ -637,7 +637,7 @@ inputVentas.addEventListener("input", function (event) {
     const response = await crearArrayServiciosActivos();
     PopupSellDiningServices(response);
     return;
-  }, 500);
+  }, 700);
 });
 
 function crearArrayServiciosActivos() {
