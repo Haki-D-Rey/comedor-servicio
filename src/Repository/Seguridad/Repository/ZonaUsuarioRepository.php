@@ -7,6 +7,7 @@ use App\DTO\ZonaDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use App\DTO\ZonaUsuarioDTO;
+use App\Entity\DetalleZonaServicioHorario;
 use App\Entity\Usuario;
 use App\Entity\Zona;
 use App\Entity\ZonaUsuarios;
@@ -129,87 +130,78 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         ];
     }
 
-    public function getEstadisticosPanel(int $id): array
+    public function getStadisticZone(object $filtro): array
     {
-        $usuario = $this->entityManager->getRepository(Usuario::class)->find($id);
-        $usuarioDTO = new UsuarioDTO(
-            $usuario->getId(),
-            $usuario->getNombreUsuario(),
-            $usuario->getContrasenia(),
-            $usuario->getNombres(),
-            $usuario->getApellidos(),
-            $usuario->getCorreo(),
-            $usuario->getFechaCreacion(),
-            $usuario->getFechaModificacion(),
-            $usuario->getIsAdmin(),
-            $usuario->getEstado()
-        );
+        $zoneuser_code = $filtro->zonecode;
+        $id_detalle_zona_servicio_horario = $filtro->id_detalle_zona_servicio_horario;
+        $zoneuser = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(["codigo_interno" => $zoneuser_code]);
+        $params = $id_detalle_zona_servicio_horario
+            ? ["idZonaUsuario" => $zoneuser->getId(), "id" => $id_detalle_zona_servicio_horario]
+            : ["idZonaUsuario" => $zoneuser->getId()];
 
-        if (!$usuarioDTO) {
-            return [
-                'usuario' => null,
-                'idZonaUsuario' => null,
-                'zonas' => [],
-            ];
-        }
-        $zonaUsuarios = $this->findBy(['id_usuario' => $id, 'estado' => true]);
+        $detalleZonaHorarioServicio = $this->entityManager
+            ->getRepository(DetalleZonaServicioHorario::class)
+            ->findBy($params);
+            
+        // Obtener los IDs de los detalles de zona y servicio
+        $detalleIds = array_map(function ($detalle) {
+            return $detalle->getId();
+        }, $detalleZonaHorarioServicio);
 
-        if (!$zonaUsuarios) {
-            return [
-                'usuario' => $usuarioDTO,
-                'idZonaUsuario' => null,
-                'zonas' => [],
-            ];
-        }
-        $idsZona = array_map(function ($zonaUsuario) {
-            return $zonaUsuario->getIdZona();
-        }, $zonaUsuarios);
+        // 1. Ejecutar la primera consulta SQL (detalles de zona y servicio con el número de clientes)
+        $query1 = "
+            SELECT TB.id, TB.id_zona_usuario, TB.id AS IdDetalleZonaServicioHorario, COUNT(TBZ.id) AS ClienteCount
+            FROM catalogo.detalle_zona_servicio_horario TB
+            INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion TBZ
+                ON TBZ.id_detalle_zona_servicio_horario = TB.id
+            WHERE TB.id_zona_usuario = :zonaUsuarioId
+            AND TB.id IN (:idsDetalleZonaServicio)
+            GROUP BY TB.id";
 
-        if (!empty($idsZona)) {
-            $zonas = $this->entityManager->getRepository(Zona::class)->findBy([
-                'id' => $idsZona,
-                'estado' => true,
-            ]);
-        } else {
-            $zonas = [];
-        }
-
-        $zonasDTO = array_map(function ($zonaUsuario) use ($zonas) {
-            // Buscar la zona correspondiente al idZona del objeto $zonaUsuario
-            $zonaCorrespondiente = array_filter($zonas, function ($zona) use ($zonaUsuario) {
-                return $zona->getId() === $zonaUsuario->getIdZona();
-            });
-
-            // Si se encuentra la zona correspondiente, la transformamos en DTO
-            if ($zonaCorrespondiente) {
-                $zonaCorrespondiente = array_shift($zonaCorrespondiente); // Obtener el primer elemento
-                return [
-                    "idZonaUsuario" => $zonaUsuario->getId(),
-                    "codigoInternoZonaUsuario" => $zonaUsuario->getCodigoInterno(),
-                    "zonas" => new ZonaDTO(
-                        $zonaCorrespondiente->getId(),
-                        $zonaCorrespondiente->getNombre(),
-                        $zonaCorrespondiente->getDescripcion(),
-                        $zonaCorrespondiente->getcodigo_interno(),
-                        $zonaCorrespondiente->getFecha_creacion(),
-                        $zonaCorrespondiente->getFecha_modificacion(),
-                        $zonaCorrespondiente->getEstado()
-                    )
-                ];
-            }
-
-            // Si no se encuentra una zona, retornar un valor nulo
-            return [
-                "idZonaUsuario" => $zonaUsuario->getId(),
-                "codigoInternoZonaUsuario" => $zonaUsuario->getCodigoInterno(),
-                "zonas" => null
-            ];
-        }, $zonaUsuarios);
-
-        return [
-            'DatosUsuario' => $usuarioDTO,
-            'DetallesZonas' => $zonasDTO,
+        // Asignar los parámetros de la consulta, incluyendo la lista de IDs
+        // Definir los parámetros para la consulta
+        $params = [
+            'zonaUsuarioId' => $zoneuser->getId(), // Cambié estos valores a los que se obtienen del DTO
+            'idsDetalleZonaServicio' => implode(',', $detalleIds)
         ];
+
+        $result = $this->entityManager->getConnection()->executeQuery($query1, $params);
+        $clientesData = $result->fetchAllAssociative();
+
+        // 2. Ejecutar la segunda consulta SQL (contar las ventas)
+        $query2 = "
+                    SELECT COUNT(1) AS VentaCount, TB.id as IdDetalleZonaServicioHorario
+                    FROM catalogo.detalle_zona_servicio_horario TB
+                    INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion TBZ
+                        ON TBZ.id_detalle_zona_servicio_horario = TB.id
+                    INNER JOIN public.ventas TBV
+                        ON TBZ.id = TBV.id_detalle_zona_servicio_horario_cliente_facturacion
+                    WHERE TB.id_zona_usuario = :zonaUsuarioId
+                    AND TB.id IN (:idsDetalleZonaServicio)
+                    GROUP BY TB.id";
+
+        $params = [
+            'zonaUsuarioId' => $zoneuser->getId(), // Cambié estos valores a los que se obtienen del DTO
+            'idsDetalleZonaServicio' => implode(',', $detalleIds)
+        ];
+
+        $result = $this->entityManager->getConnection()->executeQuery($query2, $params);
+        $ventasData = $result->fetchAllAssociative();
+
+        $finalResults = [];
+        foreach ($clientesData as $cliente) {
+            $venta = current(array_filter($ventasData, function ($v) use ($cliente) {
+                return $v['iddetallezonaserviciohorario'] == $cliente['iddetallezonaserviciohorario'];
+            }));
+
+            // Añadir los resultados combinados
+            $finalResults[] = [
+                'IdDetalleZonaServicioHorario' => $cliente['iddetallezonaserviciohorario'],
+                'ClienteCount' => (int) $cliente['clientecount'],
+                'VentaCount' => $venta ? (int) $venta['ventacount'] : 0
+            ];
+        }
+        return $finalResults;
     }
 
 

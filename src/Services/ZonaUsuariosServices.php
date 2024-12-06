@@ -32,6 +32,15 @@ class ZonaUsuariosServices
         }
     }
 
+    public function getStadisticZone(object $filtro): array
+    {
+        try {
+            return $this->zonaUsuariosRepository->getStadisticZone($filtro);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al obtener el Catalogo Detalle del Servicio del Producto: ' . $e->getMessage());
+        }
+    }
+
     public function getZonaUsuarioById(int $id): ?ZonaUsuarioDTO
     {
         try {

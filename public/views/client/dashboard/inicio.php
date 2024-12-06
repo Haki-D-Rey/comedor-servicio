@@ -1,10 +1,10 @@
 <?php
 ob_start();
 $items = [
-    ['icon' => 'fas fa-users', 'category' => 'Personal', 'count' => '2560'],
-    ['icon' => 'fas fa-user-check', 'category' => 'Ventas', 'count' => '50'],
-    ['icon' => 'fas fa-users', 'category' => 'Servicios', 'count' => '12'],
-    ['icon' => 'fas fa-user-check', 'category' => 'eventos', 'count' => '2']
+    ['icon' => 'fas fa-users', 'category' => 'Personal Inscritos', 'count' => '0'],
+    ['icon' => 'fas fa-user-check', 'category' => 'Ventas', 'count' => '0'],
+    ['icon' => 'fas fa-users', 'category' => 'Servicio', 'count' => '0'],
+    ['icon' => 'fas fa-user-check', 'category' => 'eventos', 'count' => '0']
 ];
 
 // Divide los elementos en grupos de 3 para el carrusel
@@ -15,13 +15,23 @@ $chunkedItems = array_chunk($items, 3);
         <h3>BIENVENIDO AL PANEL ADMINISTRADOR</h3>
     </div>
 
-    <!-- Dropdown con estilos de Bootstrap y personalizados -->
-    <div class="dropdown">
-        <button class="dropdown-toggle custom-dropdown-btn" type="button" id="dropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
-            Selecciona una opción
-        </button>
-        <ul id="dropdownList" class="dropdown-menu custom-dropdown-menu" aria-labelledby="dropdownMenu">
-        </ul>
+    <div class="d-flex flex-row gap-2">
+        <!-- Dropdown con estilos de Bootstrap y personalizados -->
+        <div class="dropdown">
+            <button class="dropdown-toggle custom-dropdown-btn" type="button" id="dropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                Selecciona un Evento
+            </button>
+            <ul id="dropdownList" class="dropdown-menu custom-dropdown-menu" aria-labelledby="dropdownMenu1">
+            </ul>
+        </div>
+        <!-- Dropdown con estilos de Bootstrap y personalizados -->
+        <div class="dropdown">
+            <button class="dropdown-toggle custom-dropdown-btn" type="button" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                Seleccione Servicio
+            </button>
+            <ul id="dropdownList2" class="dropdown-menu custom-dropdown-menu" aria-labelledby="dropdownMenu2">
+            </ul>
+        </div>
     </div>
 
     <div id="carouselExampleDark" class="carousel carousel-dark slide" style="width: 100%; height: 200px;">
@@ -74,142 +84,29 @@ $chunkedItems = array_chunk($items, 3);
         </button>
     </div>
 
-    <!-- Fila para las gráficas -->
-    <div class="row mb-5">
-        <!-- Gráfica de la izquierda que ocupa toda la columna en dispositivos pequeños -->
-        <div class="col-12 col-lg-6 mb-4">
-            <div class="chart-container" style="position: relative; height: 300px;">
-                <canvas id="myChart"></canvas>
-            </div>
+    <!-- <div class="d-grid custom-grid">
+        <div class="chart-container p-3">
+            <canvas id="acquisitions"></canvas>
         </div>
-
-        <!-- Gráfica de la derecha con dos canvas anidados -->
-        <div class="col-12 col-lg-6">
-            <div class="chart-container" style="position: relative; height: 300px;">
-                <canvas id="acquisitions"></canvas>
-            </div>
-            <div class="chart-container mt-3" style="position: relative; height: 300px;">
-                <canvas id="acquisitions2"></canvas>
-            </div>
+        <div class="chart-container p-3">
+            <canvas id="acquisitions2"></canvas>
         </div>
+    </div> -->
 
-    </div>
+
 </div>
 
 <?php
 $content = ob_get_clean();
 include __DIR__ . '/../../layout/layout.php'; ?>
-
-
+<script>
+    window.endpointListaRelacionZonaUsuario = "<?php echo $routeParser->urlFor('zona_usuarios.list_relational_all', ['id' => $user_id]) ?>";
+    window.endpointListaServicioRelacionZonaUsuario = "<?php echo $routeParser->urlFor('zona_usuarios.list_stadistic_zone') ?>"; 
+</script>
+<script type="module" src="./../../../assets/js/Dashboard/panel.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script type="module">
-    import ApiService from "./../../assets/js/apiservice.js";
-    var baseURL = "";
-    var ListaDetallesZonas = [];
-
-    const apiService = new ApiService(baseURL);
-
-    const getZonasUsuariosById = async () => {
-        const endpointListaZonaUsuarios = "<?php echo $routeParser->urlFor('zona_usuarios.list_relational_all', ['id' => $user_id]) ?>";
-        try {
-            return await apiService.get(endpointListaZonaUsuarios);
-        } catch (error) {
-            console.error("Error al obtener zonas de usuarios:", error);
-            return null;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', async function() {
-        const dropdownList = document.getElementById('dropdownList');
-
-        const {
-            DetallesZonas
-        } = await getZonasUsuariosById();
-        ListaDetallesZonas = DetallesZonas;
-
-        DetallesZonas.forEach(opcion => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.classList.add('dropdown-item');
-            a.href = '#';
-            a.textContent = opcion.zonas.nombre;
-            a.value = opcion.codigoInternoZonaUsuario;
-            a.onclick = function() {
-                handleDropdownClick(opcion);
-            };
-
-            li.appendChild(a);
-            dropdownList.appendChild(li);
-        });
-    });
-
-
-    const handleDropdownClick = (option) => {
-        document.getElementById('dropdownMenu').textContent = option.zonas.nombre;
-        console.log("Opción seleccionada: " + option.zonas.nombre);
-    }
-
-    const ctx = document.getElementById('myChart');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.6)',
-                    'rgba(54, 162, 235, 0.6)',
-                    'rgba(255, 206, 86, 0.6)',
-                    'rgba(75, 192, 192, 0.6)',
-                    'rgba(153, 102, 255, 0.6)',
-                    'rgba(255, 159, 64, 0.6)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 2,
-                borderRadius: 5,
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#333'
-                    },
-                    grid: {
-                        color: 'rgba(200, 200, 200, 0.3)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#333'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#333',
-                        font: {
-                            size: 14
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-
     (async function() {
         const data = [{
                 year: 2010,

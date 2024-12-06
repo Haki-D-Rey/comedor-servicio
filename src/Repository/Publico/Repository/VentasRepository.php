@@ -378,7 +378,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
     private function getEstadoVenta(ListaCatalogo $idCatalogoBusqueda): ListaCatalogoDetalle
     {
-        return $this->entityManager->getRepository(ListaCatalogoDetalle::class)->findOneBy(['id_lista_catalogo' => $idCatalogoBusqueda->getId()]);
+        return $this->entityManager->getRepository(ListaCatalogoDetalle::class)->findOneBy(['id_lista_catalogo' => $idCatalogoBusqueda->getId(), 'estado' => true]);
     }
 
     private function validateVenta($ventasDTO, $idUsuario, $horaActual, &$filtroValidaciones)
@@ -417,8 +417,8 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
     private function validatePuntoVenta($ventasDTO, $idUsuario, &$filtroErrores)
     {
-        $DetalleZonaServicioHorario = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()]);
-        $zonaUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(['id' => $DetalleZonaServicioHorario->getZonaUsuario()->getId()]);
+        $DetalleZonaServicioHorario = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario(), 'estado' => true]);
+        $zonaUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(['id' => $DetalleZonaServicioHorario->getZonaUsuario()->getId(), 'estado' => true]);
 
         if (!(isset($zonaUsuario) && $zonaUsuario->getUsuario()->getId() == $idUsuario)) {
             $filtroErrores["error_punto_venta"] = 'El Cliente no tiene puntos de Créditos Válidos para este Evento';
@@ -427,8 +427,8 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 
     private function validateHorarios($ventasDTO, $horaActual, &$filtroErrores)
     {
-        $DetalleZonaServicioHorario = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()]);
-        $horario = $this->entityManager->getRepository(Horario::class)->findOneBy(['id' => $DetalleZonaServicioHorario->getHorario()->getId()]);
+        $DetalleZonaServicioHorario = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario(), 'estado' => true]);
+        $horario = $this->entityManager->getRepository(Horario::class)->findOneBy(['id' => $DetalleZonaServicioHorario->getHorario()->getId(), 'estado' => true]);
 
         if (!$horario) {
             $filtroErrores["error_horarios"] = 'No se encontró el horario para este evento';
@@ -464,6 +464,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
                     WHERE 
                         jsonb_extract_path_text(value, 'codigo_interno') = :codigo_interno
                         AND jsonb_extract_path_text(value, 'codigo_identificador') = :codigo_identificador
+                        AND estado = true
                 ";
 
         // Definir los parámetros para la consulta
@@ -510,7 +511,8 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         $DetalleZonaServicioHorarioClienteIdentificacion = $this->entityManager->getRepository(DetalleZonaServicioHorarioClienteFacturacion::class)
             ->findOneBy([
                 'idDetalleClienteIdentificacionFacturacion' => $idDetalleClienteIdentifiacionFacturacion,
-                'idDetalleZonaServicioHorario' => $ventasDTO->getIdDetalleZonaServicioHorario()
+                'idDetalleZonaServicioHorario' => $ventasDTO->getIdDetalleZonaServicioHorario(),
+                'estado' => true
             ]);
 
         if (empty($DetalleZonaServicioHorarioClienteIdentificacion)) {
@@ -519,15 +521,20 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         }
 
         $ClienteCredito = $this->entityManager->getRepository(ClientesCreditoPeriodico::class)
-            ->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()]);
+            ->findOneBy(['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId(), 'estado' => true]);
+
+        if (empty($ClienteCredito)) {
+            $filtroErrores["error_creditos_disponibles"] = "Cliente no tiene creditos asignado a este Evento";
+            return 0;
+        }
 
         $cantidadFacturada = $ventasDTO->getCantidadFacturada();
-        $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();
+        $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario(), 'estado' => true])->getServiciosProductosDetalles();
 
         if (!$ClienteCredito->getExisteCantidadDisponible($cantidadFacturada)) {
             $ultimaVentas = $this->entityManager->getRepository(Ventas::class)
                 ->findOneBy(
-                    ['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId()],
+                    ['detalleZonaServicioHorarioClienteFacturacion' => $DetalleZonaServicioHorarioClienteIdentificacion->getId(), 'estado' => true],
                     ['fechaEmision' => 'DESC']
                 );
             $servicio = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()])->getServiciosProductosDetalles();

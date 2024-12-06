@@ -10,12 +10,18 @@ interface ZonaUsuarioRepositoryInterface
      * @return ZonaUsuarioDTO[]
      */
     public function getAllZonaUsuarios(): array;
-    
+
     /**
      * @param int $id
      * @return array|null
      */
     public function getRelationalZonaUsuarioById(int $id): array;
+
+    /**
+     * @param object $filtroCode
+     * @return array|null
+     */
+    public function getStadisticZone(object $filtro): array;
 
     /**
      * @param int $id
