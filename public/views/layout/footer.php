@@ -1,6 +1,6 @@
 <!-- footer.php -->
 <div class="container-footer">
-    <p>&copy; 2024 Servicio Comedor Clientes - Hospital Militar Escuela Dr. Alejandro Davila Bolaños</p>
+    <p>&copy; 2024 Sistena Unificado de Registro de Eventos (SURE) - Hospital Militar Escuela Dr. Alejandro Davila Bolaños</p>
     <div class="container-div2">
         <a class="container-footer-div-social" href="https://www.facebook.com" target="_blank">
             <span>Facebook</span>
