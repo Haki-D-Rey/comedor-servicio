@@ -976,7 +976,7 @@ inputSearch.addEventListener("input", function (event) {
 
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
-      await this.buscarServicio(query);
+      await buscarServicio(query);
     }, 100);
   } else {
     resultList.style.display = "none";
