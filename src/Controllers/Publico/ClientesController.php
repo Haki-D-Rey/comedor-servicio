@@ -141,4 +141,90 @@ class ClientesController
             }
         }
     }
+
+    public function getSearchClients(Request $request, Response $response): Response
+    {
+        try {
+
+            $queryParams = $request->getQueryParams();
+            $query = strtolower($queryParams['q'] ?? '');
+
+            if (empty($query)) {
+                $response->getBody()->write(json_encode(['estado' => false, 'message' => 'Parámetro de búsqueda vacío']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            $partes = explode('-', $query);
+            $nombreBusqueda = $partes[0] ?? '';
+            $apellidoBusqueda = $partes[1] ?? '';
+
+            $filtro = ["nombres" => $nombreBusqueda, "apellidos" => $apellidoBusqueda];
+            $clientes = $this->clientesServices->getSearchClients($filtro);
+
+            $resultados = array_filter($clientes, function ($cliente) use ($nombreBusqueda, $apellidoBusqueda) {
+                $nombreCliente = strtolower(trim($cliente->getNombres() ?? ''));
+                $apellidoCliente = strtolower(trim($cliente->getApellidos() ?? ''));
+
+                $nombreBusqueda = trim($nombreBusqueda ?? '');
+                $apellidoBusqueda = trim($apellidoBusqueda ?? '');
+
+                $similitudNombre = 0;
+                $similitudApellido = 0;
+
+                if ($nombreCliente == 'cesar adan') {
+                    $l = 1;
+                }
+
+                if (!empty($nombreBusqueda) && !empty($apellidoBusqueda)) {
+                    similar_text($nombreBusqueda, $nombreCliente, $similitudNombre);
+                    similar_text($apellidoBusqueda, $apellidoCliente, $similitudApellido);
+                    return $similitudNombre > 48 && $similitudApellido > 48;
+                }
+
+                if (!empty($nombreBusqueda) && empty($apellidoBusqueda)) {
+                    similar_text($nombreBusqueda, $nombreCliente, $similitudNombre);
+                    return $similitudNombre > 90 || strpos($nombreCliente, $nombreBusqueda) !== false;
+                }
+
+                if (empty($nombreBusqueda) && !empty($apellidoBusqueda)) {
+                    similar_text($apellidoBusqueda, $apellidoCliente, $similitudApellido);
+                    return $similitudApellido > 90 || strpos($apellidoCliente, $apellidoBusqueda) !== false;
+                }
+
+                return false;
+            });
+
+
+            $resultados = array_map(function ($cliente) {
+                return [
+                    'id' => $cliente->getId(),
+                    'nombres' => $cliente->getNombres(),
+                    'apellidos' => $cliente->getApellidos()
+                ];
+            }, $resultados);
+
+            $response->getBody()->write(json_encode(array_values($resultados)));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+
+    public function getClientsRelationalIdentification(Request $request, Response $response): Response
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $query = strtolower($queryParams['q'] ?? '');
+
+            $filtro = json_decode($query);
+            $clientes = $this->clientesServices->getClientsRelationalIdentification($filtro);
+            $response->getBody()->write(json_encode($clientes));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
 }

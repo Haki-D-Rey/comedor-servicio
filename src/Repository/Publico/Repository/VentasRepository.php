@@ -8,13 +8,12 @@ use App\Entity\Horario;
 use App\Entity\ListaCatalogo;
 use App\Entity\ListaCatalogoDetalle;
 use App\Entity\Publico\ClientesCreditoPeriodico;
-use App\Entity\Publico\DetalleClienteIdentificacionFacturacion;
 use App\Entity\Publico\DetalleZonaServicioHorarioClienteFacturacion;
 use App\Entity\Publico\Ventas;
-use App\Entity\Sistemas;
 use App\Entity\ZonaUsuarios;
 use App\Repository\GenericRepository;
 use App\Repository\Publico\Interface\VentasRepositoryInterface;
+use App\Services\Publico\ClientesServices;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\DBAL\Exception as DBALException;
@@ -23,11 +22,13 @@ use Psr\Log\LoggerInterface as LogLoggerInterface;
 class VentasRepository extends GenericRepository implements VentasRepositoryInterface
 {
     private $logger;
+    private ClientesServices $clientesServices;
 
-    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface)
+    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface, ClientesServices $clientesServices)
     {
         parent::__construct($entityManager, Ventas::class);
         $this->logger = $loggerInterface;
+        $this->clientesServices = $clientesServices;
     }
 
     public function getAllVentas(): array
@@ -386,6 +387,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         $filtroErrores = [
             "idDetalleZonaServicioHorario" => "",
             "cod_identificacion" => "",
+            "codigo_internoIF" => "",
             "error_punto_venta" => "",
             "error_horarios" => "",
             "error_validar_credencial" => "",
@@ -393,9 +395,9 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
             "error_limite_credito" => ""
         ];
 
-        $filtroErrores['idDetalleZonaServicioHorario'] = $ventasDTO->getIdDetalleZonaServicioHorario();
-        $filtroErrores['cod_identificacion'] = $ventasDTO->getCodIdentificacion();
-
+        $filtroErrores['idDetalleZonaServicioHorario'] = $ventasDTO->getIdDetalleZonaServicioHorario() || 0;
+        $filtroErrores['cod_identificacion'] = $ventasDTO->getCodIdentificacion() || "";
+        $filtroErrores['codigo_internoIF'] = $ventasDTO->getCodigoInternoIF() || "";
 
         // Validating point of sale
         $this->validatePuntoVenta($ventasDTO, $idUsuario, $filtroErrores);
@@ -404,7 +406,22 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         $this->validateHorarios($ventasDTO, $horaActual, $filtroErrores);
 
         // Validating credenciales
-        $findValueJson = $this->validateCredencial($ventasDTO, $filtroErrores);
+        if ($ventasDTO->getCodigoInternoIF() == 'ITF-001') {
+            $findValueJson = $this->validateCredencial($ventasDTO, $filtroErrores);
+        } else {
+            $filtro = [
+                "id_cliente" => (int) $ventasDTO->getCodIdentificacion(),
+                "id_detalle_zona_servicio_horario" =>  $ventasDTO->getIdDetalleZonaServicioHorario()
+            ];
+            $clienteIdentificacion = $this->clientesServices->getClientsRelationalIdentification($filtro);
+
+            $findValueJson = (object)[
+                'status' => true,
+                'cod_identificacion' => json_decode($clienteIdentificacion[0]['json_identificacion'])[0]->codigo_identificador,
+                'id_detalle_cliente_identificacion_facturacion' => $clienteIdentificacion[0]['id_detalle_cliente_identificacion_facturacion'],
+                'id_cliente' => $ventasDTO->getCodIdentificacion(),
+            ];
+        }
 
         // Validating credits
         $idDetalleZonaServicioHorarioClienteIdentificacion = $this->validateCreditosDisponibles($ventasDTO, $filtroErrores, $horaActual, $findValueJson);
@@ -452,7 +469,7 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
     {
         // $listaClientes = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->findAll();
         // Definir la consulta SQL
-            $query = "
+        $query = "
                     SELECT
                         id,
                         id_cliente,

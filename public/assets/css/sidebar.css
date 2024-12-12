@@ -157,6 +157,11 @@
     transition: transform 0.3s ease;
 }
 
+
+#toggleButton2 {
+    transition: transform 0.3s ease;
+}
+
 .animate-icon {
     transform: translateX(5px);
     /* Desplazamiento hacia la derecha */

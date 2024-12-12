@@ -13,7 +13,29 @@ var dropdownZonaUsuario = document.getElementById("dropdownList");
 var dropdownSistema = document.getElementById("dropdown_sistema");
 var inputVentas = document.getElementById("inputCodigo");
 var inputCantidad = document.getElementById("inputCantidad");
+var toggleButtonIdentificador = document.querySelector(
+  "#toggleButtonIdentificador"
+);
+var buttonLector = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layout-sidebar-inset-reverse" viewBox="0 0 16 16">
+  <path d="M2 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zm12-1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>
+  <path d="M13 4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"/>
+</svg><span id="iconLabel" style="margin-left: 14px;">Lector de Tarjeta</span>`;
 
+var buttonFiltro = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layout-sidebar-inset" viewBox="0 0 16 16">
+            <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2z" />
+            <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+        </svg><span id="iconLabel" style="margin-left: 14px;">Filtro de Busqueda</span>`;
+
+// Elementos DOM
+var inputSearch = document.getElementById("inputSearch");
+const contentInputSearch = document.getElementById("content-input-search");
+const contentInputCodigo = document.getElementById("content-input-codigo");
+
+var loadingIcon = document.getElementById("loadingIcon");
+var successIcon = document.getElementById("successIcon");
+var resultList = document.getElementById("resultList");
+
+var debounceTimer = 0;
 var mealServices = [];
 
 const apiService = new ApiService(baseURL);
@@ -23,6 +45,8 @@ function init() {
   dropdownSistema.disabled = true;
   inputVentas.disabled = true;
   inputCantidad.disabled = true;
+  inputSearch.disabled = true;
+  contentInputSearch.style.display = "none";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -86,6 +110,31 @@ async function ServicesSellDining(data) {
   const endpointFacturacion = window.endpointFacturacion;
   try {
     return await apiService.post(endpointFacturacion, data);
+  } catch (error) {
+    console.error(
+      "Error al obtener zonas de usuarios para validar servicios:",
+      error
+    );
+    return null;
+  }
+}
+async function getSearchClientByName(query) {
+  const endpointFilterClientByName = `${window.endpointFilterClientByName}?q=${query}`;
+  try {
+    return await apiService.get(endpointFilterClientByName);
+  } catch (error) {
+    console.error(
+      "Error al obtener zonas de usuarios para validar servicios:",
+      error
+    );
+    return null;
+  }
+}
+
+async function getClientIdentificationRelational(query) {
+  const endpointClientRelationalIdentification = `${window.endpointClientRelationalIdentification}?q=${query}`;
+  try {
+    return await apiService.get(endpointClientRelationalIdentification);
   } catch (error) {
     console.error(
       "Error al obtener zonas de usuarios para validar servicios:",
@@ -572,12 +621,16 @@ function renderMealServices() {
         if (service == "Fuera de Servicio") {
           inputCantidad.disabled = true;
           inputVentas.disabled = true;
+          inputSearch.disabled = true;
         } else {
           inputVentas.disabled = false;
-          inputVentas.focus();
+          if (!inputSearch.value && !inputSearch) {
+            inputVentas.focus();
+          }
           inputCantidad.disabled = false;
-          inputCantidad.textContent = 1
-          inputCantidad.value = 1
+          inputSearch.disabled = false;
+          inputCantidad.textContent = 1;
+          inputCantidad.value = 1;
         }
       }
     });
@@ -630,7 +683,7 @@ function createDefaultCard() {
 }
 let debounceTimeout;
 
-inputVentas.addEventListener("input", function (event) {
+function postSellServices() {
   clearTimeout(debounceTimeout);
 
   debounceTimeout = setTimeout(async function () {
@@ -638,10 +691,31 @@ inputVentas.addEventListener("input", function (event) {
     PopupSellDiningServices(response);
     return;
   }, 700);
+}
+
+inputVentas.addEventListener("input", function () {
+  return postSellServices();
 });
 
 function crearArrayServiciosActivos() {
-  const codIdentificacion = inputVentas ? inputVentas.value.trim() : "";
+  let codIdentificacion = "";
+  if (
+    toggleButtonIdentificador.value === "ITF-001" ||
+    !toggleButtonIdentificador.value
+  ) {
+    codIdentificacion = inputVentas.value ? inputVentas.value.trim() : null;
+  } else {
+    codIdentificacion =
+      inputSearch.value && inputSearch.getAttribute("data-id")
+        ? inputSearch.getAttribute("data-id")
+        : 0;
+  }
+
+  // const codIdentificacion =
+  //   inputVentas.value && toggleButtonIdentificador.value === "ITF-001"
+  //     ? inputVentas.value.trim()
+  //     : inputSearch.getAttribute("data-id") || "";
+
   const cantidadFacturada = inputCantidad
     ? parseInt(inputCantidad.value, 10)
     : 0;
@@ -667,6 +741,7 @@ function crearArrayServiciosActivos() {
         idDetalleZonaServicioHorario:
           serviceData.id_detalle_zona_servicio_horario,
         cantidadFacturada: cantidadFacturada,
+        codigoInternoIF: toggleButtonIdentificador.value || "ITF-001",
       };
     });
 
@@ -693,7 +768,8 @@ function PopupSellDiningServices(response) {
     buttonsStyling: true,
   });
 
-  let timerInterval;
+  var timerInterval;
+  var timer = 0;
   // Verifica si hay algún error en el objeto response
   const hasErrors = response.data.some(
     (item) =>
@@ -716,7 +792,7 @@ function PopupSellDiningServices(response) {
         timerProgressBar: true,
         didOpen: () => {
           Swal.showLoading();
-          const timer = Swal.getPopup().querySelector("b");
+          timer = Swal.getPopup().querySelector("b");
           timerInterval = setInterval(() => {
             timer.textContent = `${Swal.getTimerLeft() / 1000}`;
           }, 250);
@@ -730,9 +806,12 @@ function PopupSellDiningServices(response) {
           inputVentas.textContent = "";
           inputVentas.value = "";
           inputVentas.focus();
-
           inputCantidad.textContent = 1;
           inputCantidad.value = 1;
+          inputSearch.textContent = "";
+          inputSearch.value = "";
+          successIcon.style.display = "none";
+          loadingIcon.style.display = "none";
         }
       });
   } else {
@@ -760,7 +839,10 @@ function PopupSellDiningServices(response) {
           inputVentas.textContent = "";
           inputVentas.value = "";
           inputVentas.focus();
-
+          inputSearch.textContent = "";
+          inputSearch.value = "";
+          successIcon.style.display = "none";
+          loadingIcon.style.display = "none";
           inputCantidad.textContent = 1;
           inputCantidad.value = 1;
         }
@@ -800,4 +882,123 @@ function triggerChangeEvent() {
   }
 }
 
-setInterval(triggerChangeEvent, 3000);
+setInterval(triggerChangeEvent, 10000);
+
+//-------------------------------------------------------
+// Eventos del Boton de Seleccion de Identificador Filtro
+//-------------------------------------------------------
+
+let isActive = true;
+
+const toggleButton = () => {
+  if (toggleButtonIdentificador.value === "ITF-002" && !isActive) {
+    toggleButtonIdentificador.innerHTML = buttonLector;
+    toggleButtonIdentificador.value = "ITF-001";
+  } else {
+    toggleButtonIdentificador.innerHTML = buttonFiltro;
+    toggleButtonIdentificador.value = "ITF-002";
+  }
+
+  inputSearch.textContent = "";
+  inputSearch.value = "";
+  inputVentas.textContent = "";
+  inputVentas.value = "";
+  successIcon.style.display = "none";
+  loadingIcon.style.display = "none";
+
+  // Agregar animación
+  toggleButtonIdentificador.classList.add("animate-icon");
+  setTimeout(() => {
+    toggleButtonIdentificador.classList.remove("animate-icon");
+  }, 200);
+
+  // Alternar estado
+  isActive = !isActive;
+};
+
+function toggleInputs(value) {
+  if (value === "ITF-001") {
+    contentInputSearch.style.display = "none";
+    contentInputCodigo.style.display = "block";
+  } else if (value === "ITF-002") {
+    contentInputSearch.style.display = "block";
+    contentInputCodigo.style.display = "none";
+  }
+}
+
+const onClickToggleIdentificador = () => {
+  toggleButton();
+  const currentValue = toggleButtonIdentificador.value;
+  toggleInputs(currentValue);
+};
+
+// Evento de clic para alternar el botón
+toggleButtonIdentificador.addEventListener("click", onClickToggleIdentificador);
+
+async function buscarServicio(query) {
+  if (!query.trim()) {
+    resultList.style.display = "none";
+    resultList.innerHTML = "";
+    loadingIcon.style.display = "none"; // Ocultar ícono de carga
+    return;
+  }
+
+  try {
+    const response = await getSearchClientByName(encodeURIComponent(query));
+    console.log(response);
+    // Crear la lista dinámica
+    resultList.innerHTML = response
+      .map(
+        (item) => `
+        <li class="list-group-item" data-id="${item.id}" data-nombre="${item.nombres} ${item.apellidos}">
+            ${item.nombres} ${item.apellidos}
+        </li>`
+      )
+      .join("");
+
+    resultList.style.display = "block";
+    loadingIcon.style.display = "none"; // Ocultar ícono de carga
+  } catch (error) {
+    console.error("Error al consultar el servicio:", error);
+    resultList.innerHTML =
+      "<li class='list-group-item'>Error al cargar resultados</li>";
+    resultList.style.display = "block";
+    loadingIcon.style.display = "none"; // Ocultar ícono de carga
+  }
+}
+
+inputSearch.addEventListener("input", function (event) {
+  const query = event.target.value.trim();
+
+  if (query.length >= 4) {
+    successIcon.style.display = "none";
+    loadingIcon.style.display = "inline-block";
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      await this.buscarServicio(query);
+    }, 100);
+  } else {
+    resultList.style.display = "none";
+    resultList.innerHTML = "";
+    loadingIcon.style.display = "none";
+  }
+});
+
+resultList.addEventListener("click", function (event) {
+  const target = event.target;
+
+  if (target.tagName === "LI") {
+    const id = target.getAttribute("data-id");
+    const nombre = target.getAttribute("data-nombre");
+    inputSearch.setAttribute("data-id", id);
+
+    inputSearch.value = nombre;
+
+    resultList.style.display = "none";
+    resultList.innerHTML = "";
+    successIcon.style.display = "inline-block";
+    loadingIcon.style.display = "none";
+  }
+  return postSellServices();
+});

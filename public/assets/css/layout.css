@@ -756,3 +756,41 @@ video {
 .border-color {
   border: 2px solid #077682 !important;
 }
+
+.input-container {
+  position: relative;
+  top: -35px;
+  left: -25px;
+  width: 50px;
+}
+
+
+.container-toogle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: auto;
+  margin: 2rem 0;
+  border: 2px solid #077682;
+  background-color: #014a2ce3;
+  color: white;
+  font-size: 22px;
+  height: 50px;
+}
+
+.container-toogle svg {
+  width: 26px;
+  height: 26px;
+}
+
+.container-toogle:hover {
+  cursor: pointer;
+}
+
+#iconLabel {
+  font-size: 14px;
+  font-weight: bold;
+}

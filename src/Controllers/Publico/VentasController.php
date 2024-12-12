@@ -93,7 +93,8 @@ class VentasController
                 $ventaDTO = new VentasFacturacionDTO(
                     $item['cod_identificacion'],
                     $item['idDetalleZonaServicioHorario'],
-                    $item['cantidadFacturada']
+                    $item['cantidadFacturada'],
+                    $item['codigoInternoIF'],
                 );
 
                 $ventasDTOs[] = $ventaDTO;

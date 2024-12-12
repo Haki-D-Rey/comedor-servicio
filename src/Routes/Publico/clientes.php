@@ -12,7 +12,8 @@ return function (App $app) {
     $app->group('/clientes', function (RouteCollectorProxy $group) {
         // Rutas estáticas
         $group->get('/all', ClientesController ::class . ':getAllClientes')->setName('clientes.list_all');
-    
+        $group->get('/busqueda', ClientesController::class . ':getSearchClients')->setName('clientes.get_filter_client');
+        $group->get('/clientRelationalIdentificaction', ClientesController::class . ':getClientsRelationalIdentification')->setName('clientes.get_client_relational_identification');
         // Rutas dinámicas
         $group->get('/{id}', ClientesController ::class . ':getClienteById')->setName('clientes.view');
         $group->post('/', ClientesController ::class . ':createCliente')->setName('clientes.create');

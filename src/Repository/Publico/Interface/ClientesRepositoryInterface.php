@@ -35,4 +35,16 @@ interface ClientesRepositoryInterface
      * @return void
      */
     public function deleteCliente(int $id): void;
+
+    /**
+     * @param array $filtro
+     * @return array
+     */
+    public function getSearchClients(array $filtro): array;
+
+     /**
+     * @param array $filtro
+     * @return array
+     */
+    public function getClientsRelationalIdentification(array $filtro): array;
 }

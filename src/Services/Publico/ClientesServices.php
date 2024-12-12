@@ -58,4 +58,23 @@ class ClientesServices
             throw new \RuntimeException('Error al eliminar el cliente: ' . $e->getMessage());
         }
     }
+
+    public function getSearchClients(array $filtro): array
+    {
+        try {
+            return $this->clientesRepository->getSearchClients($filtro);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al eliminar el cliente: ' . $e->getMessage());
+        }
+    }
+
+    public function getClientsRelationalIdentification(array $filtro): array
+    {
+        try {
+            return $this->clientesRepository->getClientsRelationalIdentification($filtro);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al eliminar el cliente: ' . $e->getMessage());
+        }
+    }
+    
 }

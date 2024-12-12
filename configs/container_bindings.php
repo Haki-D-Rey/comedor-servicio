@@ -350,10 +350,6 @@ return [
         return new ClientesCreditoPeriodicoController($container->get(ClientesCreditoPeriodicoServices::class));
     },
 
-    PadreController::class => function (ContainerInterface $container) {
-        return new PadreController($container->get(EntityManagerInterface::class));
-    },
-
     //FLUJO DE PERMISOS POR CADA VISTAS O ACCESOS
     AuthorizationService::class => function (ContainerInterface $container) {
         return new AuthorizationService($container->get(EntityManagerInterface::class));
@@ -403,7 +399,7 @@ return [
 
     //FLUJO DE TRABAJO VENTAS
     VentasRepository::class => function (ContainerInterface $container) {
-        return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ConfiguracionServiciosEstadisticosServices::class));
+        return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ClientesServices::class));
     },
 
     VentasServices::class => function (ContainerInterface $container) {

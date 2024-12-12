@@ -6,6 +6,8 @@ use App\DTO\Publico\ClientesDTO;
 use App\Entity\ListaCatalogo;
 use App\Entity\ListaCatalogoDetalle;
 use App\Entity\Publico\Clientes;
+use App\Entity\Publico\DetalleClienteIdentificacionFacturacion;
+use App\Entity\Publico\DetalleZonaServicioHorarioClienteFacturacion;
 use App\Repository\Publico\Interface\ClientesRepositoryInterface;
 use App\Repository\GenericRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -167,41 +169,41 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
     public function updateCliente(int $id, ClientesDTO $clientesDTO): void
     {
         $this->entityManager->beginTransaction();  // Iniciar la transacción
-    
+
         try {
             // Obtener los catálogos necesarios por código interno
             $listaCatalogoRepository = $this->entityManager->getRepository(ListaCatalogo::class);
             $listaCatalogo = $listaCatalogoRepository->findBy([
                 'codigo_interno' => ['LCU-001', 'LCU-002']
             ]);
-    
+
             if (count($listaCatalogo) < 2) {
                 throw new \Exception('No se encontraron los catálogos necesarios.');
             }
-    
+
             $idDepartamentoCatalogo = $listaCatalogo[0]->getId(); // LCU-001
             $idCargoCatalogo = $listaCatalogo[1]->getId(); // LCU-002
-    
+
             // Buscar el cliente por ID
             $cliente = $this->entityManager->getRepository(Clientes::class)->find($id);
             if (!$cliente) {
                 throw new \Exception("Cliente con ID {$id} no encontrado.");
             }
-    
+
             // Validar que no haya otro cliente con el mismo correo
             $existingCorreo = $this->entityManager->getRepository(Clientes::class)
                 ->findOneBy(['correo' => $clientesDTO->getCorreo()]);
             if ($existingCorreo && $existingCorreo->getId() !== $cliente->getId()) {
                 throw new \RuntimeException("El correo {$clientesDTO->getCorreo()} ya está en uso.");
             }
-    
+
             // Validar que no haya otro cliente con el mismo número de documento
             $existingDocnum = $this->entityManager->getRepository(Clientes::class)
                 ->findOneBy(['clieDocnum' => $clientesDTO->getClieDocnum()]);
             if ($existingDocnum && $existingDocnum->getId() !== $cliente->getId()) {
                 throw new \RuntimeException("El número de documento {$clientesDTO->getClieDocnum()} ya está en uso.");
             }
-    
+
             // Validar que no haya otro cliente con el mismo nombre completo
             $clienteNombreCompletoSanitized = $this->sanitizeString($clientesDTO->getNombres() . ' ' . $clientesDTO->getApellidos());
             $existingNombreCompleto = $this->entityManager->getRepository(Clientes::class)
@@ -209,22 +211,22 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
             if ($existingNombreCompleto && $existingNombreCompleto->getId() !== $cliente->getId()) {
                 throw new \RuntimeException("El nombre completo '{$clientesDTO->getNombres()} {$clientesDTO->getApellidos()}' ya está en uso.");
             }
-    
+
             // Obtener el departamento y cargo correspondientes a los catálogos
             $departamento = $this->findMatchingDetalle($idDepartamentoCatalogo, $clientesDTO->getIdDepartamento(), ListaCatalogoDetalle::class);
             $cargo = $this->findMatchingDetalle($idCargoCatalogo, $clientesDTO->getIdCargo(), ListaCatalogoDetalle::class);
-    
+
             if (!$departamento || !$cargo) {
                 throw new \Exception('Departamento o Cargo no encontrado.');
             }
-    
+
             // Excluir la propiedad fecha_creacion al actualizar
             $excludePropertyName = ['fecha_creacion'];
             $this->updateEntityFromDTO($cliente, $clientesDTO, $excludePropertyName);
-    
+
             // Persistir los cambios en la base de datos
             $this->entityManager->flush();
-    
+
             // Confirmar la transacción
             $this->entityManager->commit();
         } catch (ORMException | DBALException $e) {
@@ -237,7 +239,7 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
             throw new \RuntimeException($e->getMessage());
         }
     }
-    
+
 
     public function deleteCliente(int $id): void
     {
@@ -246,6 +248,86 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
         } catch (ORMException | DBALException $e) {
             $this->logger->error('Error al eliminar cliente: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException($e->getMessage());
+        }
+    }
+
+    public function getSearchClients(array $filtro): array
+    {
+        try {
+            $nombreBusqueda = strtolower(trim($filtro['nombres'] ?? ''));
+            $apellidoBusqueda = strtolower(trim($filtro['apellidos'] ?? ''));
+
+            // Crear QueryBuilder
+            $qb = $this->entityManager->createQueryBuilder();
+
+            // Construir la consulta
+            $qb->select('c')
+                ->from(Clientes::class, 'c')
+                ->where('c.estado = true'); // Condición base para agregar dinámicamente filtros
+
+            if (!empty($apellidoBusqueda)) {
+                $qb->andWhere('LOWER(c.apellidos) LIKE :apellidoBusqueda')
+                    ->setParameter('apellidoBusqueda', '%' . $apellidoBusqueda . '%');
+            }
+
+            if (!empty($nombreBusqueda)) {
+                $qb->andWhere('LOWER(c.nombres) LIKE :nombreBusqueda')
+                    ->setParameter('nombreBusqueda', '%' . $nombreBusqueda . '%');
+            }
+
+            // Ejecutar la consulta y devolver los resultados
+            return $qb->getQuery()->getResult();
+        } catch (\Exception $e) {
+            $this->logger->error('Error en la búsqueda de clientes: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error al buscar clientes: ' . $e->getMessage());
+        }
+    }
+
+    public function getClientsRelationalIdentification(array $filtros): array
+    {
+        try {
+            $id_cliente = $filtros['id_cliente'];
+            $id_detalle_zona_servicio_horario = $filtros['id_detalle_zona_servicio_horario'];
+            // // Crear QueryBuilder
+            // $qb = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->createQueryBuilder('c');
+
+            // // Construir la consulta
+            // $qb->innerJoin(DetalleZonaServicioHorarioClienteFacturacion::class, 'dzsci', 'c.cliente = dzsci.DetalleClienteIdentificacionFacturacion')
+            //     ->where('c.estado = true'); // Condición base para agregar dinámicamente filtros
+
+            // if (!empty($id_cliente)) {
+            //     $qb->andWhere('c.cliente = :id_cliente')
+            //         ->setParameter('id_cliente', $id_cliente);
+            // }
+
+            // if (!empty($id_detalle_zona_servicio_horario)) {
+            //     $qb->andWhere('dzsci.detalleZonaServicioHorario = :id_detalle_zona_servicio_horario')
+            //         ->setParameter('id_detalle_zona_servicio_horario', $id_detalle_zona_servicio_horario);
+            // }
+
+            // Ejecutar la consulta y devolver los resultados
+            // return $qb->getQuery()->getResult();
+
+
+            // 2. Ejecutar la segunda consulta SQL (contar las ventas)
+            $query = "SELECT dzsci.*, c.json_identificacion
+                    FROM public.detalle_cliente_identificacion_facturacion AS c
+                    INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion AS dzsci
+                        ON dzsci.id_detalle_cliente_identificacion_facturacion = c.id
+                    WHERE c.id_cliente = :id_cliente
+                        AND dzsci.id_detalle_zona_servicio_horario = :id_detalle_zona_servicio_horario
+                        AND dzsci.estado = true AND c.estado = true";
+
+            $params = [
+                'id_cliente' => $id_cliente, // Cambié estos valores a los que se obtienen del DTO
+                'id_detalle_zona_servicio_horario' => $id_detalle_zona_servicio_horario
+            ];
+
+            $result = $this->entityManager->getConnection()->executeQuery($query, $params);
+            return $result->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error en la búsqueda de clientes: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error al buscar clientes: ' . $e->getMessage());
         }
     }
 }
