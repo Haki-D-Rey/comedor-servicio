@@ -60,7 +60,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
                 <div class="col-md-6">
                     <div id="content-input-search" class="content-search" style="display: none;">
                         <label for="inputSearch" class="form-label">Filtro de Búsqueda</label>
-                        <input id="inputSearch" class="input-content" type="text" placeholder="Buscar..." oninput="buscarServicio(this.value)" style="height: 40px; width: 98%; border: 2px solid #077682;">
+                        <input id="inputSearch" class="input-content" type="text" placeholder="Buscar..." style="height: 40px; width: 98%; border: 2px solid #077682;">
                         <div class="input-container">
                             <span id="loadingIcon" style="display: none;">
                                 <!-- Ícono de carga -->

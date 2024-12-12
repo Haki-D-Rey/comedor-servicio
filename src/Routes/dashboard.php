@@ -22,6 +22,11 @@ return function (App $app) {
         $group->group('/formularios', function (RouteCollectorProxy $form) {
             $form->get('/control-estadisticos', DashboardController::class . ':formulario');
         });
+        
+         $group->group('/reportes', function (RouteCollectorProxy $reportes) {
+            $reportes->get('/', DashboardController::class . ':reportes_index')->setName('dashboard.reportes_index');
+        });
+
 
         // Facturación group
         $group->group('/facturacion', function (RouteCollectorProxy $ventas) {

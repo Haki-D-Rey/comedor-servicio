@@ -56,5 +56,23 @@ class DashboardController
         return $response->withHeader('Content-Type', 'text/html');
     }
 
+    public function reportes_index(Request $request, Response $response): Response
+    {   
+        session_start();
+        $routeParser = $this->container->get(RouteParser::class);
+        $data = [
+            "token" => $_SESSION['jwt_token']
+        ];
+        $user_id = $this->authServices->verifyToken($data, $this->container)['user']->sub;
+        ob_start();
+        // include __DIR__ . '/views/client/inscripcion_control.php';
+        include __DIR__ . '/../../public/views/client/dashboard/reportes.php';
+        $viewContent = ob_get_clean();
+        $response->getBody()->write($viewContent);
+
+        return $response->withHeader('Content-Type', 'text/html');
+    }
+
+
 
 }
