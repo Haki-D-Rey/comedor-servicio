@@ -15,7 +15,8 @@
     "monolog/monolog": "^3.7",
     "ramsey/uuid-doctrine": "^2.1",
     "symfony/yaml": "^7.1",
-    "doctrine/migrations": "^3.8"
+    "doctrine/migrations": "^3.8",
+    "phpoffice/phpspreadsheet": "^3.6"
   },
   "autoload": {
     "psr-4": {

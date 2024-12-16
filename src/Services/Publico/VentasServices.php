@@ -38,4 +38,9 @@ class VentasServices
     {
         $this->ventasRepositoryInterface->deleteVenta($id);
     }
+
+    public function getReportVentas(array $filtros): array
+    {
+        return $this->ventasRepositoryInterface->getReportVentas($filtros);
+    }
 }

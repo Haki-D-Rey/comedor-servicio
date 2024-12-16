@@ -36,4 +36,10 @@ interface VentasRepositoryInterface
      * @return void
      */
     public function deleteVenta(int $id): void;
+
+    public function getReportVentas(array $filtros): array;
+
+    public function getDetailedReportByClient(array $filtros): array;
+
+    public function getConsolidatedReportByZone(array $filtros): array;
 }

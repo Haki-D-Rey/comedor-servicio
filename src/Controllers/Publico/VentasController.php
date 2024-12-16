@@ -161,6 +161,28 @@ class VentasController
         }
     }
 
+    public function getReportVentas(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $query = strtolower($queryParams['q'] ?? '');
+
+            $filtro = (array) json_decode($query);
+            $report = $this->ventasServices->getReportVentas($filtro);
+
+            if ($report === null) {
+                $response->getBody()->write(json_encode(['estado' => false, 'message' => 'Crédito periódico no encontrado']));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+            }
+
+            $response->getBody()->write(json_encode($report));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
     /**
      * Validaciones de los datos de crédito periódico.
      */

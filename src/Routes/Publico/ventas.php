@@ -12,6 +12,7 @@ return function (App $app) {
     $app->group('/ventas', function (RouteCollectorProxy $group) {
         // Rutas estáticas
         $group->get('/all', VentasController ::class . ':getAllVentas')->setName('ventas.list_all');
+        $group->get('/reporte', VentasController ::class . ':getReportVentas')->setName('ventas.get_report');
     
         // Rutas dinámicas
         $group->get('/{id}', VentasController ::class . ':getVentaById')->setName('ventas.view');

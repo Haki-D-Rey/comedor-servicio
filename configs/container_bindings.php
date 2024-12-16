@@ -80,6 +80,7 @@ use App\Services\SistemasServices;
 use App\Services\TipoServiciosServices;
 use App\Services\ServiciosProductosServices;
 use App\Services\ServiciosProductosDetallesServices;
+use App\Services\Utils\UtilServices;
 use App\Services\ZonaServices;
 use App\Services\ZonaUsuariosServices;
 use Doctrine\DBAL\Types\Type;
@@ -397,9 +398,13 @@ return [
         return new ClientesController($container->get(ClientesServices::class));
     },
 
+    UtilServices::class => function () {
+        return new UtilServices();
+    },
+
     //FLUJO DE TRABAJO VENTAS
     VentasRepository::class => function (ContainerInterface $container) {
-        return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ClientesServices::class));
+        return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ClientesServices::class), $container->get(UtilServices::class));
     },
 
     VentasServices::class => function (ContainerInterface $container) {

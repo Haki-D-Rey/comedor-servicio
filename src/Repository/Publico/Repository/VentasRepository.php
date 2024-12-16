@@ -14,6 +14,7 @@ use App\Entity\ZonaUsuarios;
 use App\Repository\GenericRepository;
 use App\Repository\Publico\Interface\VentasRepositoryInterface;
 use App\Services\Publico\ClientesServices;
+use App\Services\Utils\UtilServices;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\DBAL\Exception as DBALException;
@@ -23,12 +24,14 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
 {
     private $logger;
     private ClientesServices $clientesServices;
+    private UtilServices $utilServices;
 
-    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface, ClientesServices $clientesServices)
+    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface, ClientesServices $clientesServices, UtilServices $utilServices)
     {
         parent::__construct($entityManager, Ventas::class);
         $this->logger = $loggerInterface;
         $this->clientesServices = $clientesServices;
+        $this->utilServices = $utilServices;
     }
 
     public function getAllVentas(): array
@@ -840,6 +843,163 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         } catch (\Exception $e) {
             $this->logger->error('Error al insertar clientes crédito periódico: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException('Error al insertar clientes crédito periódico: ' . $e->getMessage());
+        }
+    }
+
+    public function getReportVentas(array $filtros): array
+    {
+        $tipo = $filtros['tipo'];
+
+        $Template = [
+            "id_zona" => "id_zona",
+            "fecha_emision" => "fecha_emision",
+            "evento" => "evento",
+            "id_usuario" => "id_usuario",
+            "facturador" => "facturador",
+            "id" => "id",
+            "nombre_servicio" => "nombre_servicio",
+            "cantidad_total_facturada" => "cantidad_total_facturada"
+        ];
+
+        if ($tipo === 'consolidated') {
+            $result = $this->getConsolidatedReportByZone($filtros);
+        }
+
+        if ($tipo === 'detailed') {
+            $result = $this->getDetailedReportByClient($filtros);
+        }
+
+        $devices = [
+            (object)[
+                "id_zona" => 4,
+                "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+                "id_usuario" => 4,
+                "facturador" => "Tecnico Programador Senior",
+                "id" => 42,
+                "nombre_servicio" => "Cena Navideño",
+                "cantidad_total_facturada" => 15,
+                "fecha_emision" => "2024-12-12"
+            ]
+        ];
+
+        // Agrupar por 'id_zona' y 'fecha_emision'
+        $mutatedArray = $this->utilServices->transformArray($devices, $Template, true, ['id_zona', 'fecha_emision']);
+
+
+        return $mutatedArray;
+    }
+
+    public function getDetailedReportByClient(array $filtros): array
+    {
+        try {
+            // Extract the filters
+            $id_zona = $filtros['id_zona'];
+            $fecha_inicio = $filtros['fecha_inicio'];
+            $fecha_fin = $filtros['fecha_fin'];
+
+            // Build the SQL query
+            $query = "
+                SELECT z.descripcion AS Evento, 
+                       CONCAT(u.nombres, ' ' ,u.apellidos) AS Facturador, 
+                       CONCAT(c.nombres, ' ', c.apellidos) AS Cliente, 
+                       c.clie_docnum, 
+                       spd.nombre AS nombre_servicio, 
+                       SUM(v.cantidad_facturada) AS cantidad_total_facturada, 
+                       DATE(v.fecha_emision) AS fecha_emision
+                FROM seguridad.zona_usuario zu
+                INNER JOIN catalogo.detalle_zona_servicio_horario dzsh
+                    ON zu.id = dzsh.id_zona_usuario
+                INNER JOIN catalogo.servicios_productos_detalles spd
+                    ON spd.id = dzsh.id_servicios_productos_detalles
+                INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion dzshcf
+                    ON dzsh.id = dzshcf.id_detalle_zona_servicio_horario
+                INNER JOIN public.ventas v
+                    ON dzshcf.id = v.id_detalle_zona_servicio_horario_cliente_facturacion
+                INNER JOIN catalogo.zona z
+                    ON zu.id_zona = z.id
+                INNER JOIN seguridad.usuarios u
+                    ON zu.id_usuario = u.id
+                INNER JOIN public.cliente c
+                    ON v.id_cliente = c.id
+                WHERE zu.id_zona = :id_zona 
+                    AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+                GROUP BY z.descripcion, u.nombres, u.apellidos, c.nombres, c.apellidos, c.clie_docnum, spd.nombre, DATE(v.fecha_emision), zu.id_usuario, dzsh.id
+                ORDER BY DATE(v.fecha_emision), zu.id_usuario, dzsh.id
+            ";
+
+            // Parameters for the query
+            $params = [
+                'id_zona' => $id_zona,
+                'fecha_inicio' => $fecha_inicio,
+                'fecha_fin' => $fecha_fin,
+            ];
+
+            // Get the Doctrine connection and execute the query
+            $connection = $this->entityManager->getConnection();
+            $stmt = $connection->executeQuery($query, $params);
+
+            // Fetch the results as an associative array
+            return $stmt->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error while fetching detailed report by client: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error while fetching detailed report by client: ' . $e->getMessage());
+        }
+    }
+
+
+    public function getConsolidatedReportByZone(array $filtros): array
+    {
+        try {
+            // Extract the filters
+            $id_zona = $filtros['id_zona'];
+            $fecha_inicio = $filtros['fecha_inicio'];
+            $fecha_fin = $filtros['fecha_fin'];
+
+            // Build the SQL query
+            $query = "
+            SELECT zu.id_zona, 
+                   z.descripcion as Evento, 
+                   zu.id_usuario, 
+                   CONCAT(u.nombres, ' ' ,u.apellidos) as Facturador, 
+                   dzsh.id, 
+                   spd.nombre as nombre_servicio, 
+                   SUM(v.cantidad_facturada) AS cantidad_total_facturada,
+                   DATE(v.fecha_emision) AS fecha_emision
+            FROM seguridad.zona_usuario zu
+            INNER JOIN catalogo.detalle_zona_servicio_horario dzsh
+                ON zu.id = dzsh.id_zona_usuario
+            INNER JOIN catalogo.servicios_productos_detalles spd
+                ON spd.id = dzsh.id_servicios_productos_detalles
+            INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion dzshcf
+                ON dzsh.id = dzshcf.id_detalle_zona_servicio_horario
+            INNER JOIN public.ventas v
+                ON dzshcf.id = v.id_detalle_zona_servicio_horario_cliente_facturacion
+            INNER JOIN catalogo.zona z
+                ON zu.id_zona = z.id
+            INNER JOIN seguridad.usuarios u
+                ON zu.id_usuario = u.id
+            WHERE zu.id_zona = :id_zona 
+            AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+            GROUP BY zu.id_usuario, dzsh.id, zu.id_zona, z.descripcion, u.nombres, u.apellidos, spd.nombre, DATE(v.fecha_emision)
+            ORDER BY zu.id_usuario, dzsh.id_servicios_productos_detalles, DATE(v.fecha_emision)
+        ";
+
+            // Prepare the parameters
+            $params = [
+                'id_zona' => $id_zona,
+                'fecha_inicio' => $fecha_inicio,
+                'fecha_fin' => $fecha_fin
+            ];
+
+            // Get the Doctrine connection and execute the query
+            $connection = $this->entityManager->getConnection();
+            $stmt = $connection->executeQuery($query, $params);
+
+            // Fetch the results as an associative array
+            return $stmt->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error while fetching consolidated report: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error while fetching consolidated report: ' . $e->getMessage());
         }
     }
 }
