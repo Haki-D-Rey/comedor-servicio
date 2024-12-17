@@ -80,6 +80,7 @@ use App\Services\SistemasServices;
 use App\Services\TipoServiciosServices;
 use App\Services\ServiciosProductosServices;
 use App\Services\ServiciosProductosDetallesServices;
+use App\Services\Utils\ExcelServicesReportesVentas;
 use App\Services\Utils\UtilServices;
 use App\Services\ZonaServices;
 use App\Services\ZonaUsuariosServices;
@@ -402,19 +403,22 @@ return [
         return new UtilServices();
     },
 
+    ExcelServicesReportesVentas::class => function () {
+        return new ExcelServicesReportesVentas();
+    },
+
     //FLUJO DE TRABAJO VENTAS
     VentasRepository::class => function (ContainerInterface $container) {
         return new VentasRepository($container->get(EntityManagerInterface::class), $container->get(LoggerInterface::class), $container->get(ClientesServices::class), $container->get(UtilServices::class));
     },
 
     VentasServices::class => function (ContainerInterface $container) {
-        return new VentasServices($container->get(VentasRepository::class));
+        return new VentasServices($container->get(VentasRepository::class),$container->get(ExcelServicesReportesVentas::class));
     },
 
     VentasController::class => function (ContainerInterface $container) {
         return new VentasController($container, $container->get(VentasServices::class),  $container->get(AuthServices::class));
     },
-
 
     DashboardController::class => function (ContainerInterface $container) {
         return new DashboardController($container, $container->get(AuthServices::class));

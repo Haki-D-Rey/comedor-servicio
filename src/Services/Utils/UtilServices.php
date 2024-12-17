@@ -22,75 +22,52 @@ class UtilServices
     private static function groupAndTransform(array $devices, array $template, array $groupFields): array
     {
         $grouped = [];
-
+    
         foreach ($devices as $device) {
-            // Convertir a objeto si el dispositivo es un array
             if (is_array($device)) {
-                $device = json_decode(json_encode($device)); // Cast array to object
+                $device = json_decode(json_encode($device)); // Convertir array a objeto
             }
-
-            // Construir los valores de agrupación dinámicamente según los campos proporcionados
+    
+            // Construir los valores de agrupación dinámicamente basados en los campos definidos en el template
             $groupValues = [];
             foreach ($groupFields as $field) {
-                // Verificar si el campo existe en el template y si la propiedad existe en el dispositivo
                 if (isset($template[$field]) && property_exists($device, $template[$field])) {
-                    $groupValues[] = $device->{$template[$field]};  // Acceso a la propiedad del objeto
+                    $groupValues[] = $device->{$template[$field]};
                 } else {
-                    // Si no existe, agregar valor nulo o lo que desees
                     $groupValues[] = null;
                 }
             }
-
-            // Crear una clave compuesta de los valores de agrupación
+    
+            // Crear una clave compuesta para la agrupación
             $groupKey = implode('|', $groupValues);
-
+    
             // Inicializar el grupo si no existe
             if (!isset($grouped[$groupKey])) {
-                $grouped[$groupKey] = self::initializeGroupedItem($device, $template, $groupFields);
+                $grouped[$groupKey] = [];
+    
+                // Llenar los campos dinámicos para la agrupación inicial
+                foreach ($groupFields as $field) {
+                    $grouped[$groupKey][$field] = $device->{$template[$field]} ?? null;
+                }
+    
+                // Agregar un campo de agrupación dinámica
+                $grouped[$groupKey]['data'] = [];
             }
-
-            // Agregar los datos del dispositivo al grupo
-            $dataToAdd = [];
+    
+            // Preparar los datos para el campo "data" (excluyendo campos de agrupación)
+            $dataItem = [];
             foreach ($template as $key => $field) {
                 if (!in_array($key, $groupFields) && property_exists($device, $field)) {
-                    $dataToAdd[$key] = $device->{$field};  // Acceso a la propiedad del objeto
+                    $dataItem[$key] = $device->{$field};
                 }
             }
-
-            // Agrupar los datos por fecha_emision u otros campos dinámicos
-            $fechaEmision = $device->{$template['fecha_emision']};
-
-            // Si no existe la fecha_emision, inicializarla
-            if (!isset($grouped[$groupKey][$fechaEmision])) {
-                $grouped[$groupKey][$fechaEmision] = [];
-            }
-
-            // Agregar los datos agrupados a la fecha correspondiente
-            $grouped[$groupKey][$fechaEmision][] = $dataToAdd;
+    
+            // Agregar el elemento transformado al campo "data"
+            $grouped[$groupKey]['data'][] = $dataItem;
         }
-
-        // Ajustar el formato final para que los resultados estén como un array de objetos
-        $finalResult = [];
-        foreach ($grouped as $groupKey => $group) {
-            // Obtener el valor de los campos de agrupación (por ejemplo, id_zona y fecha_emision)
-            $keys = explode('|', $groupKey);
-            $groupItem = [];
-
-            // Añadir los grupos de fecha_emision y sus datos correspondientes
-            foreach ($group as $fecha => $data) {
-                $groupItem[$fecha] = $data;
-            }
-
-            // Asignar la clave del primer campo de agrupación como id_zona
-            $groupItem['id_zona'] = $keys[0];
-
-            // **Eliminamos el campo fecha_emision fuera del agrupado**
-
-            // Añadir el grupo al resultado final
-            $finalResult[] = $groupItem;
-        }
-
-        return $finalResult;
+    
+        // Convertir a un array indexado
+        return array_values($grouped);
     }
 
     private static function initializeGroupedItem(stdClass $device, array $template, array $groupFields): array

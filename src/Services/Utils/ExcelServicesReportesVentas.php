@@ -2,206 +2,247 @@
 
 namespace App\Services\Utils;
 
-use App\Controllers\ApiController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use stdClass;
 
-class ExcelReportEventsService
+class ExcelServicesReportesVentas
 {
-    // public function setDocumentProperties(Spreadsheet $spreadsheet)
-    // {
-    //     // Configurar propiedades del documento
-    //     return $spreadsheet->getProperties()->setCreator("Tu nombre")
-    //         ->setLastModifiedBy("Tu nombre")
-    //         ->setTitle("Reporte de Inscripciones XXI Congreso y Precongreso Cientifíco Médico")
-    //         ->setSubject("Reporte de inscripciones")
-    //         ->setDescription("Este archivo contiene el reporte de inscripciones.")
-    //         ->setKeywords("inscripciones reporte excel")
-    //         ->setCategory("Reporte");
-    // }
+    public function setDocumentProperties(Spreadsheet $spreadsheet)
+    {
+        // Configurar propiedades del documento
+        return $spreadsheet->getProperties()->setCreator("Tu nombre")
+            ->setLastModifiedBy("Tu nombre")
+            ->setTitle("Reporte de Inscripciones XXI Congreso y Precongreso Cientifíco Médico")
+            ->setSubject("Reporte de inscripciones")
+            ->setDescription("Este archivo contiene el reporte de inscripciones.")
+            ->setKeywords("inscripciones reporte excel")
+            ->setCategory("Reporte");
+    }
 
-    // public function setHeaders(Worksheet $sheet)
-    // {
-    //     // Configurar encabezados
-    //     $sheet->mergeCells('B2:B3');
-    //     $sheet->setCellValue('B2', 'Fecha');
+    public function setHeaders(Worksheet $sheet)
+    {
+        return $sheet;
+    }
 
-    //     $sheet->mergeCells('C2:C3');
-    //     $sheet->setCellValue('C2', 'Plan Inscripción');
+    public function formData(array $data, Worksheet $sheet, int $fila): void
+    {
+        $currentRow = $fila; // Empezar desde la fila inicial proporcionada
+        $totalServicios = [];
+        $granTotal = 0;
 
-    //     $sheet->mergeCells('D2:D3');
-    //     $sheet->setCellValue('D2', 'Cantidad');
+        // 1. Recolectar y ordenar servicios únicos según el campo "order"
+        $serviciosOrdenados = [];
+        foreach ($data as $item) {
+            foreach ($item['data'] as $servicio) {
+                $serviciosOrdenados[$servicio['nombre_servicio']] = $servicio['order'];
+            }
+        }
+        // Ordenar los servicios por "order"
+        asort($serviciosOrdenados);
 
-    //     return $sheet;
-    // }
+        // 2. Asignar columnas dinámicas según el orden
+        $columnMap = [];
+        $colIndex = ord('C'); // Empezar desde la columna C
+        foreach ($serviciosOrdenados as $servicio => $order) {
+            $columnMap[$servicio] = chr($colIndex); // Asignar columna dinámica
+            $colIndex++;
+        }
 
-    // public function setHeadersInstitutions(Worksheet $sheet)
-    // {
-    //     // Configurar encabezados
-    //     $sheet->mergeCells('B2:B3');
-    //     $sheet->setCellValue('B2', 'Fecha');
+        // 3. ENCABEZADO PRINCIPAL: Evento
+        $sheet->mergeCells("B$currentRow:" . chr($colIndex - 1) . "$currentRow");
+        $sheet->setCellValue("B$currentRow", "Zona asignada para el Auditoria");
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $currentRow++;
 
-    //     $sheet->mergeCells('C2:C3');
-    //     $sheet->setCellValue('C2', 'Tipo Institución');
+        // 4. Encabezados dinámicos en base al orden
+        $sheet->setCellValue('B' . $currentRow, 'Fecha');
+        foreach ($columnMap as $servicio => $col) {
+            $sheet->setCellValue($col . $currentRow, $servicio); // Nombre del servicio en el orden correcto
+        }
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
+        $currentRow++;
 
-    //     $sheet->mergeCells('D2:D3');
-    //     $sheet->setCellValue('D2', 'Plan Inscripción');
+        // 5. Datos dinámicos
+        foreach ($data as $item) {
+            $fecha = $item['fecha_emision'];
+            $servicioTotales = array_fill_keys(array_values($columnMap), 0); // Inicializar totales por servicio
 
-    //     $sheet->mergeCells('E2:E3');
-    //     $sheet->setCellValue('E2', 'Cantidad');
+            foreach ($item['data'] as $plan) {
+                if (isset($columnMap[$plan['nombre_servicio']])) {
+                    $col = $columnMap[$plan['nombre_servicio']];
+                    $servicioTotales[$col] += $plan['cantidad_total_facturada'];
+                }
+            }
 
-    //     return $sheet;
-    // }
+            // Escribir fila de datos
+            $sheet->setCellValue('B' . $currentRow, $fecha);
+            foreach ($servicioTotales as $col => $cantidad) {
+                $sheet->setCellValue($col . $currentRow, $cantidad > 0 ? $cantidad : '');
+            }
 
-    // public function getData(array $parametros): array
-    // {
-    //     $Api = new ApiController();
-    //     $datos = $Api->getPlanInscripcionEvents($parametros);
-    //     $datosInstitutions = $Api->getPlanInscripcionEventsInstitutions($parametros);
-    //     $resultadosInstituciones = $this->validateStructuredInstitutionsData($datosInstitutions);
+            // Acumular totales generales
+            foreach ($servicioTotales as $col => $cantidad) {
+                $totalServicios[$col] = ($totalServicios[$col] ?? 0) + $cantidad;
+                $granTotal += $cantidad;
+            }
+            $currentRow++;
+        }
 
-    //     $resultados = [];
-    //     foreach ($datos as $data) {
-    //         // var_dump($data);
+        // 6. Totales por servicio
+        $sheet->setCellValue('B' . $currentRow, 'TOTAL SERVICIOS');
+        foreach ($totalServicios as $col => $total) {
+            $sheet->setCellValue($col . $currentRow, $total);
+        }
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
+        $currentRow++;
 
-    //         // Crear el objeto de datos
-    //         $objectData = new stdClass();
-    //         $objectData->cantidad = $data->cantidad;
-    //         $objectData->plan = $data->plan;
+        // 7. Total cierre
+        $sheet->mergeCells("B$currentRow:" . chr($colIndex - 2) . "$currentRow");
+        $sheet->setCellValue('B' . $currentRow, 'TOTAL CIERRE');
+        $sheet->setCellValue(chr($colIndex - 1) . $currentRow, $granTotal);
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
+        $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-    //         // Verificar si la fecha ya existe en el array resultados
-    //         if (!isset($resultados[$data->fecha])) {
-    //             // Si no existe, crear un array vacío para esa fecha
-    //             $resultados[$data->fecha] = [];
-    //         }
+        // Aplicar bordes y ajustar ancho automático
+        $sheet->getStyle("B$fila:" . chr($colIndex - 1) . "$currentRow")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ]);
 
-    //         // Añadir el objeto de datos al array correspondiente a la fecha
-    //         array_push($resultados[$data->fecha], $objectData);
-    //     }
+        foreach (range('B', chr($colIndex - 1)) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+    }
 
-    //     return [
-    //         "Datos" => $resultados,
-    //         "Datos_Instituciones" => $resultadosInstituciones
-    //     ];
-    // }
 
     // public function formData(array $data, Worksheet $sheet, int $fila): void
     // {
-    //     $row = $fila;
-    //     $rowColumn = 0;
-    //     foreach ($data as $fecha => $planes) {
+
+    //     $data = [
+    //         [
+    //             "id_zona"=> 4,
+    //             "fecha_emision" => "2024-12-12",
+    //             "data" => [
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Cena Navideña",
+    //                     "cantidad_total_facturada" => 15
+    //                 ],
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Desayuno Ejecutivo",
+    //                     "cantidad_total_facturada" => 20
+    //                 ],
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Almuerzo Corporativo",
+    //                     "cantidad_total_facturada" => 25
+    //                 ]
+    //             ]
+    //         ],
+    //         [
+    //             "id_zona"=> 4,
+    //             "fecha_emision" => "2024-12-13",
+    //             "data" => [
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Cena Navideña",
+    //                     "cantidad_total_facturada" => 15
+    //                 ],
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Desayuno Ejecutivo",
+    //                     "cantidad_total_facturada" => 20
+    //                 ],
+    //                 [
+    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
+    //                     "nombre_servicio" => "Almuerzo Corporativo",
+    //                     "cantidad_total_facturada" => 25
+    //                 ]
+    //             ]
+    //         ],
+    //         [
+    //             "id_zona"=> 7,
+    //             "fecha_emision" => "2024-12-15",
+    //             "data" => [
+    //                 [
+    //                     "evento" => "Auditoria del Edificio 2B - HMEADB",
+    //                     "nombre_servicio" => "Cena de Cierre",
+    //                     "cantidad_total_facturada" => 30
+    //                 ]
+    //             ]
+    //         ]
+    //     ];
+
+
+
+    //     $currentRow = $fila;  // Aseguramos que la fila inicial es 4
+    //     // Iterar los datos
+    //     foreach ($data as $item) {
+    //         $fecha = $item['fecha_emision'];
+    //         $planes = $item['data'];
     //         $numPlanes = count($planes);
-    //         // Fusionar celdas para la fecha
-    //         $sheet->mergeCells('B' . $row . ':B' . ($row + $numPlanes - 1));
-    //         $sheet->setCellValue('B' . $row, $fecha);
+
+    //         // Fusionar y colocar la fecha
+    //         $sheet->mergeCells("B$currentRow:B" . ($currentRow + $numPlanes - 1));
+    //         $sheet->setCellValue("B$currentRow", $fecha);
 
     //         foreach ($planes as $index => $plan) {
-    //             $currentRow = $row + $index;
-    //             $sheet->setCellValue('C' . $currentRow, $plan->plan);
-    //             $sheet->setCellValue('D' . $currentRow, $plan->cantidad);
+    //             $sheet->setCellValue('C' . ($currentRow + $index), $plan['evento']);
+    //             $sheet->setCellValue('D' . ($currentRow + $index), $plan['nombre_servicio']);
+    //             $sheet->setCellValue('E' . ($currentRow + $index), $plan['cantidad_total_facturada']);
     //         }
 
-    //         // Incrementar $row para la próxima fecha
-    //         $row += $numPlanes;
-    //         $rowColumn = $row;
+    //         $currentRow += $numPlanes;
     //     }
 
-    //     //total
-    //     // Calcular totales para la fila actual
-    //     $sheet->setCellValue('D' . $rowColumn, "=SUM(D${fila}:D${rowColumn})");
-
-    //     $sheet->mergeCells('B' . $rowColumn . ':C' . $rowColumn);
-    //     $sheet->setCellValue('B' . $rowColumn, 'TOTAL');
-
-    //     // Aplicar estilos a las celdas
-    //     $sheet->getStyle('B2:D2')->getFont()->setBold(true);
-    //     $sheet->getStyle('B2:B' . $rowColumn)->getFont()->setBold(true);
-    //     $sheet->getStyle('B' . $rowColumn . ':D' . $rowColumn)->getFont()->setBold(true);
-    //     $sheet->getStyle('B2:D' . $rowColumn)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    //     $sheet->getStyle('B2:D' . $rowColumn)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-    //     $sheet->getStyle('B2:B9')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    //     $sheet->getStyle('B2:B9')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-    //     // Opcional: Ajustar el ancho de las columnas para mejor visualización
-    //     foreach (range('B', 'D') as $column) {
-    //         $sheet->getColumnDimension($column)->setAutoSize(true);
-    //     }
-
-    //     // Aplicar bordes a las celdas
-    //     $highestRow = $sheet->getHighestRow();
-    //     $sheet->getStyle('B2:D' . $highestRow)->applyFromArray([
+    //     // Aplicar estilos a todo el rango de datos
+    //     $initalRow = $fila - 2;
+    //     $lastRow = $currentRow - 1;
+    //     $sheet->getStyle("B$initalRow:E$lastRow")->applyFromArray([
     //         'borders' => [
     //             'allBorders' => [
-    //                 'borderStyle' => Border::BORDER_THIN,
+    //                 'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
     //                 'color' => ['argb' => 'FF000000'],
     //             ],
     //         ],
+    //         'alignment' => [
+    //             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+    //             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+    //         ],
     //     ]);
+    //     $sheet->getStyle('B2:E2')->getFont()->setBold(true);
+
+    //     // Ajustar ancho automático de las columnas
+    //     foreach (range('B', 'E') as $col) {
+    //         $sheet->getColumnDimension($col)->setAutoSize(true);
+    //     }
     // }
 
-    // // public function formDataInstituciones(array $data, Worksheet $sheet, int $fila): void
-    // // {
-    // //     $row = $fila;
-    // //     $numPlanes = count($data);
-    // //     $rowColumn = $row + $numPlanes;
-    // //     foreach ($data as $index => $item) {
-    // //         $currentRow = $row + $index;
-    // //         // Fusionar celdas para la fecha
-    // //         $sheet->mergeCells('B' . $row . ':B' . ($rowColumn - 1));
-    // //         $sheet->setCellValue('B' . $row, date('Y-m-d'));
 
-    // //         $sheet->setCellValue('C' . $currentRow, $item->nombre_institucion);
-    // //         $sheet->setCellValue('D' . $currentRow, $item->plan);
-    // //         $sheet->setCellValue('E' . $currentRow, $item->total_cantidad);
-    // //     }
+    public function saveFile(Spreadsheet $spreadsheet, string $reportName): array
+    {
+        // Guardar el archivo
+        $writer = new Xlsx($spreadsheet);
+        $writer->save("$reportName.xlsx");
 
-    // //     //total
-    // //     // Calcular totales para la fila actual
-    // //     $sheet->setCellValue('E' . $rowColumn, "=SUM(E${fila}:E${rowColumn})");
-
-    // //     $sheet->mergeCells('B' . $rowColumn . ':D' . $rowColumn);
-    // //     $sheet->setCellValue('B' . $rowColumn, 'TOTAL');
-
-    // //     // Aplicar estilos a las celdas
-    // //     $sheet->getStyle('B2:E2')->getFont()->setBold(true);
-    // //     $sheet->getStyle('B2:B' . $rowColumn)->getFont()->setBold(true);
-    // //     $sheet->getStyle('B' . $rowColumn . ':E' . $rowColumn)->getFont()->setBold(true);
-    // //     $sheet->getStyle('B2:E' . $rowColumn)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    // //     $sheet->getStyle('B2:E' . $rowColumn)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-    // //     $sheet->getStyle('B2:B9')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-    // //     $sheet->getStyle('B2:B9')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-    // //     // Opcional: Ajustar el ancho de las columnas para mejor visualización
-    // //     foreach (range('B', 'E') as $column) {
-    // //         $sheet->getColumnDimension($column)->setAutoSize(true);
-    // //     }
-
-    // //     // Aplicar bordes a las celdas
-    // //     $highestRow = $sheet->getHighestRow();
-    // //     $sheet->getStyle('B2:E' . $highestRow)->applyFromArray([
-    // //         'borders' => [
-    // //             'allBorders' => [
-    // //                 'borderStyle' => Border::BORDER_THIN,
-    // //                 'color' => ['argb' => 'FF000000'],
-    // //             ],
-    // //         ],
-    // //     ]);
-    // // }
-
-    // public function saveFile(Spreadsheet $spreadsheet, string $reportName): array
-    // {
-    //     // Guardar el archivo
-    //     $writer = new Xlsx($spreadsheet);
-    //     $writer->save("$reportName.xlsx");
-
-    //     // Guardar el archivo en el servidor
-    //     $filename = "$reportName.xlsx";
-    //     $writer = new Xlsx($spreadsheet);
-    //     $writer->save($filename);
-    //     return [
-    //         "writer" => $writer,
-    //         "filename" => $filename
-    //     ];
-    // }
+        // Guardar el archivo en el servidor
+        $filename = "$reportName.xlsx";
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filename);
+        return [
+            "writer" => $writer,
+            "filename" => $filename
+        ];
+    }
 }
