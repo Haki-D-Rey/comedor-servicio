@@ -27,6 +27,11 @@ const pathUrl = [
     path: '/dashboard/facturacion/',
     permission: 'view_sidebar.levelone_facturacion'
   },
+  {
+    tagId: 'reportes',
+    path: '/dashboard/reportes/',
+    permission: 'view_sidebar.levelone_reportes'
+  },
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,7 +42,7 @@ function init() {
  menuItems.forEach((item) => {
   item.addEventListener('click', () => {
     const tagId = item.getAttribute('data-id');
-    console.log(tagId);
+    //console.log(tagId);
     if (tagId) {
       redirectUrlValid(tagId);
     }

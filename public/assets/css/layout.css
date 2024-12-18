@@ -192,9 +192,9 @@ video {
 
 .container-footer {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
-  column-gap: 2rem;
+  row-gap: 1rem;
   align-items: center;
 }
 

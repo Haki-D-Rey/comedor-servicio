@@ -8,6 +8,8 @@ var ListaDetallesZonas = [];
 var listaSistemas = [];
 var listaTipoServicios = [];
 var baseURL = "";
+
+// Elementos DOM
 var contentDropdownZona = document.getElementById("dropdownMenu");
 var dropdownZonaUsuario = document.getElementById("dropdownList");
 var dropdownSistema = document.getElementById("dropdown_sistema");
@@ -16,6 +18,15 @@ var inputCantidad = document.getElementById("inputCantidad");
 var toggleButtonIdentificador = document.querySelector(
   "#toggleButtonIdentificador"
 );
+
+var inputSearch = document.getElementById("inputSearch");
+const contentInputSearch = document.getElementById("content-input-search");
+const contentInputCodigo = document.getElementById("content-input-codigo");
+
+var loadingIcon = document.getElementById("loadingIcon");
+var successIcon = document.getElementById("successIcon");
+var resultList = document.getElementById("resultList");
+
 var buttonLector = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layout-sidebar-inset-reverse" viewBox="0 0 16 16">
   <path d="M2 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zm12-1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>
   <path d="M13 4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"/>
@@ -26,16 +37,9 @@ var buttonFiltro = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="1
             <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
         </svg><span id="iconLabel" style="margin-left: 14px;">Filtro de Busqueda</span>`;
 
-// Elementos DOM
-var inputSearch = document.getElementById("inputSearch");
-const contentInputSearch = document.getElementById("content-input-search");
-const contentInputCodigo = document.getElementById("content-input-codigo");
-
-var loadingIcon = document.getElementById("loadingIcon");
-var successIcon = document.getElementById("successIcon");
-var resultList = document.getElementById("resultList");
-
 var debounceTimer = 0;
+var timerInterval;
+var timer = 0;
 var mealServices = [];
 
 const apiService = new ApiService(baseURL);
@@ -106,7 +110,7 @@ async function cargarSistemasYServicios() {
 }
 
 async function ServicesSellDining(data) {
-  console.log("endpoint");
+  //console.log("endpoint");
   const endpointFacturacion = window.endpointFacturacion;
   try {
     return await apiService.post(endpointFacturacion, data);
@@ -243,7 +247,7 @@ function changeZonasEnSelect(opcion) {
 dropdownSistema.addEventListener(
   "change",
   async function changeServiciosSelect(event) {
-    console.log("input");
+    //console.log("input");
     // Obtener el elemento que fue clickeado (el <option>)
     const selectedOption = event.target.selectedOptions[0];
     const detalles = JSON.parse(selectedOption.dataset.detalle);
@@ -264,7 +268,7 @@ dropdownSistema.addEventListener(
       );
 
       if (horario) {
-        console.log("horario");
+        //console.log("horario");
         // Si se encuentra el horario, lo formateamos en el formato requerido
         const periodoInicio = horario.horario.periodo_inicio;
         const periodoFinal = horario.horario.periodo_final;
@@ -314,7 +318,7 @@ function transformarServicios(services) {
 
 function addSelectItemClickListZona(lista, code_zone) {
   const uniqueCodes = new Set();
-  console.log("validar seleccin");
+  //console.log("validar seleccin");
   var dropdown = document.getElementById("dropdown_sistema");
   dropdown.innerHTML = dropdown.options[0].outerHTML;
 
@@ -488,7 +492,7 @@ function createCarouselItem(service, serviceData, isActive) {
   const carouselItem = document.createElement("div");
   carouselItem.classList.add("carousel-item");
   // Si el servicio está activo con HR-005, no se mueve
-  console.log("fuera");
+  //console.log("fuera");
   if (isActive) {
     carouselItem.classList.add("active");
     // carouselItem.setAttribute("data-bs-ride", "false"); // No se mueve automáticamente
@@ -550,7 +554,7 @@ function renderMealServices() {
   carouselInner.innerHTML = "";
 
   let activeIndex = "Fuera de Servicio"; // Por defecto
-  console.log(mealServices);
+  //console.log(mealServices);
   // Verificar si hay un servicio con el código 'HR-005'
   const hr005Services = Object.keys(mealServices).filter(
     (service) => mealServices[service].cod === "HR-005"
@@ -767,9 +771,6 @@ function PopupSellDiningServices(response) {
     },
     buttonsStyling: true,
   });
-
-  var timerInterval;
-  var timer = 0;
   // Verifica si hay algún error en el objeto response
   const hasErrors = response.data.some(
     (item) =>
@@ -792,9 +793,11 @@ function PopupSellDiningServices(response) {
         timerProgressBar: true,
         didOpen: () => {
           Swal.showLoading();
-          timer = Swal.getPopup().querySelector("b");
+          timer = Swal.getPopup().querySelector("b") || 0;
           timerInterval = setInterval(() => {
-            timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+            if (timer) {
+              timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+            }
           }, 250);
         },
         willClose: () => {
@@ -825,9 +828,11 @@ function PopupSellDiningServices(response) {
         timerProgressBar: true,
         didOpen: () => {
           Swal.showLoading();
-          const timer = Swal.getPopup().querySelector("b");
+          const timer = Swal.getPopup().querySelector("b") || 0;
           timerInterval = setInterval(() => {
-            timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+            if (timer) {
+              timer.textContent = `${Swal.getTimerLeft() / 1000}`;
+            }
           }, 250);
         },
         willClose: () => {
@@ -945,7 +950,7 @@ async function buscarServicio(query) {
 
   try {
     const response = await getSearchClientByName(encodeURIComponent(query));
-    console.log(response);
+    //console.log(response);
     // Crear la lista dinámica
     resultList.innerHTML = response
       .map(

@@ -14,21 +14,25 @@ use App\Entity\ZonaUsuarios;
 use App\Repository\GenericRepository;
 use App\Repository\Publico\Interface\VentasRepositoryInterface;
 use App\Services\Publico\ClientesServices;
+use App\Services\Utils\UtilServices;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\DBAL\Exception as DBALException;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface as LogLoggerInterface;
 
 class VentasRepository extends GenericRepository implements VentasRepositoryInterface
 {
     private $logger;
     private ClientesServices $clientesServices;
+    private UtilServices $utilServices;
 
-    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface, ClientesServices $clientesServices)
+    public function __construct(EntityManagerInterface $entityManager, LogLoggerInterface $loggerInterface, ClientesServices $clientesServices, UtilServices $utilServices)
     {
         parent::__construct($entityManager, Ventas::class);
         $this->logger = $loggerInterface;
         $this->clientesServices = $clientesServices;
+        $this->utilServices = $utilServices;
     }
 
     public function getAllVentas(): array
@@ -82,211 +86,6 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
             throw new \RuntimeException($e->getMessage());
         }
     }
-
-    // public function createVenta(array $ventasDTOs): array
-    // {
-    //     $batchSize = 20;
-    //     $i = 0;
-    //     $valuesInsert = [];
-    //     $paramsInsert = [];
-    //     $paramsUpdate = [];
-    //     $updateCasesCreditoUsado = [];
-    //     $updateCasesCreditoDisponible = [];
-    //     $updateCasesModificacion = [];
-    //     $idsToUpdate = [];
-    //     $horaActual = new \DateTime();
-
-    //     $this->entityManager->beginTransaction();
-
-    //     try {
-    //         $ventas = new Ventas();
-    //         $idCatalogoBusqueda = $this->entityManager->getRepository(ListaCatalogo::class)->findOneBy(['codigo_interno' => 'LCU-004']);
-    //         $catalogoEstadoVentas = $this->entityManager->getRepository(ListaCatalogoDetalle::class)->findOneBy(['id_lista_catalogo' => $idCatalogoBusqueda->getId()]);
-    //         $idUsuario = $_SESSION['user_id'];
-
-    //         // Inicializamos un array de errores para cada venta
-    //         $filtroValidaciones = [];
-
-    //         foreach ($ventasDTOs as $ventasDTO) {
-
-    //             $filtroErrores = [
-    //                 "idDetalleZonaServicioHorario" => "",
-    //                 "cod_identificacion" => "",
-    //                 "error_punto_venta" => "",
-    //                 "error_horarios" => "",
-    //                 "error_validar_credencial" => "",
-    //                 "error_creditos_disponibles" => "",
-    //                 "error_limite_credito" => ""
-    //             ];
-
-    //             $filtroErrores['idDetalleZonaServicioHorario'] = $ventasDTO->getIdDetalleZonaServicioHorario();
-    //             $filtroErrores['cod_identificacion'] = $ventasDTO->getCodIdentificacion();
-
-    //             $DetalleZonaServicioHorario = $this->entityManager->getRepository(DetalleZonaServicioHorario::class)->findOneBy(['id' => $ventasDTO->getIdDetalleZonaServicioHorario()]);
-    //             $zonaUsuario = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(['id' => $DetalleZonaServicioHorario->getZonaUsuario()->getId()]);
-
-    //             //Filtro de Validacion de Punto de Venta
-    //             if (!(isset($zonaUsuario) && $zonaUsuario->getUsuario()->getId() == $idUsuario)) {
-    //                 $filtroErrores["error_punto_venta"] = 'El Cliente no tiene puntos de Créditos Válidos para este Evento';
-    //             }
-    //             // Fin de Este Filtro
-
-    //             //Filtro de Horarios
-    //             $horario = $this->entityManager->getRepository(Horario::class)->findOneBy([
-    //                 'id' => $DetalleZonaServicioHorario->getHorario()->getId()
-    //             ]);
-
-    //             if (!$horario) {
-    //                 $filtroErrores["error_horarios"] = 'No se encontró el horario para este evento';
-    //             } else {
-    //                 if (!$horario->getcodigo_interno() == 'HR-005') {
-    //                     $horaInicio = $horario->getPeriodoInicio();
-    //                     $horaFin = $horario->getPeriodoFin();
-
-    //                     $horaActualFormatted = $horaActual->format('H:i');
-    //                     $horaInicioFormatted = $horaInicio->format('H:i');
-    //                     $horaFinFormatted = $horaFin->format('H:i');
-
-    //                     // Verificar si la hora actual está dentro del rango de inicio y fin
-    //                     if ($horaActualFormatted < $horaInicioFormatted || $horaActualFormatted > $horaFinFormatted) {
-    //                         $filtroErrores["error_horarios"] = "Este Servicio no está dentro del rango del horario Establecido.";
-    //                     }
-    //                 }
-    //             }
-    //             // Fin de Este Filtro
-
-    //             //Filtro de Validacion de Credencial
-    //             $listaClientes = $this->entityManager->getRepository(DetalleClienteIdentificacionFacturacion::class)->findAll();
-    //             $findValueJson = $this->FindValueCodIdentificacion($listaClientes, $ventasDTO->getCodIdentificacion());
-
-    //             if (!$findValueJson->status) {
-    //                 $filtroErrores["error_validar_credencial"] = "Cliente con el número de identificación " . $ventasDTO->getCodIdentificacion() . " no fue encontrado";
-    //             }
-    //             // Fin de este Filtro
-
-    //             // Filtro de Validacion de Creditos de Clientes
-    //             $idDetalleClienteIdentifiacionFacturacion = $findValueJson->id_detalle_cliente_identificacion_facturacion;
-    //             $idCliente = $findValueJson->id_cliente;
-
-    //             $DetalleZonaServicioHorarioClienteIdentificacion = $this->entityManager->getRepository(DetalleZonaServicioHorarioClienteFacturacion::class)
-    //                 ->findOneBy([
-    //                     'idDetalleClienteIdentificacionFacturacion' => $idDetalleClienteIdentifiacionFacturacion,
-    //                     'idDetalleZonaServicioHorario' => $ventasDTO->getIdDetalleZonaServicioHorario()
-    //                 ]);
-
-    //             $idDetalleZonaServicioHorarioClienteIdentificacion = $DetalleZonaServicioHorarioClienteIdentificacion->getId();
-
-    //             $ClienteCredito = $this->entityManager->getRepository(ClientesCreditoPeriodico::class)
-    //                 ->findOneBy([
-    //                     'detalleZonaServicioHorarioClienteFacturacion' => $idDetalleZonaServicioHorarioClienteIdentificacion
-    //                 ]);
-
-    //             $cantidadFacturada = $ventasDTO->getCantidadFacturada();
-
-    //             if (!$ClienteCredito->getExisteCantidadDisponible($cantidadFacturada)) {
-    //                 $filtroErrores["error_creditos_disponibles"] = "Cliente no cuenta con crédito disponible para facturar. Cantidad Disponible: " . $ClienteCredito->getCantidadCreditoDisponible() . " Credito a Facturar: " . $cantidadFacturada;
-    //             }
-
-    //             $fechaInicio = $ClienteCredito->getPeriodoInicial();
-    //             $fechaFin = $ClienteCredito->getPeriodoFinal();
-
-    //             $fechaActualFormatted = $horaActual->format('Y-m-d');
-    //             $fechaInicioFormatted = $fechaInicio->format('Y-m-d');
-    //             $fechaFinFormatted = $fechaFin->format('Y-m-d');
-
-    //             // Verificar si la hora actual está dentro del rango de inicio y fin
-    //             if ($fechaActualFormatted < $fechaInicioFormatted || $fechaActualFormatted > $fechaFinFormatted) {
-    //                 $filtroErrores["error_limite_credito"] = "Este Servicio no está dentro del rango del fecha por evento fuera de rango.";
-    //             }
-
-    //             array_push($filtroValidaciones, $filtroErrores);
-
-    //             // Si hubo errores, no se procesa la venta y se agrega al arreglo de errores
-    //             if (
-    //                 $filtroErrores["error_punto_venta"]
-    //                 || $filtroErrores["error_horarios"]
-    //                 || $filtroErrores["error_validar_credencial"]
-    //                 || $filtroErrores["error_creditos_disponibles"]
-    //                 || $filtroErrores["error_limite_credito"]
-    //             ) {
-    //                 $errores[] = $filtroErrores;
-    //                 continue;
-    //             }
-
-    //             $uuid = $ventas->getUuid();
-    //             $valuesInsert[] = '(:uuid' . $i . ', :id_detalle_zona_servicio_horario_cliente_facturacion' . $i . ', :id_cliente' . $i . ', :cantidad_facturada' . $i . ', :cantidad_anulada' . $i . ', :id_estado_venta' . $i . ', :fecha_emision' . $i . ', :fecha_modificacion' . $i . ')';
-    //             $paramsInsert['uuid' . $i] = $uuid;
-    //             $paramsInsert['id_detalle_zona_servicio_horario_cliente_facturacion' . $i] = $idDetalleZonaServicioHorarioClienteIdentificacion;
-    //             $paramsInsert['id_cliente' . $i] = $idCliente;
-    //             $paramsInsert['cantidad_facturada' . $i] = $cantidadFacturada;
-    //             $paramsInsert['cantidad_anulada' . $i] = 0;
-    //             $paramsInsert['id_estado_venta' . $i] = $catalogoEstadoVentas->getId();
-    //             $paramsInsert['fecha_emision' . $i] = $horaActual->format('Y-m-d H:i:s');
-    //             $paramsInsert['fecha_modificacion' . $i] = null;
-
-    //             // Actualización para crédito
-    //             $updateCasesCreditoUsado[] = "WHEN id_detalle_zona_servicio_horario_cliente_facturacion = :id_credito_{$i} THEN cantidad_credito_usado + :cantidad_facturada_{$i}";
-    //             $updateCasesCreditoDisponible[] = "WHEN id_detalle_zona_servicio_horario_cliente_facturacion = :id_credito_{$i} THEN cantidad_credito_limite - (cantidad_credito_usado + :cantidad_facturada_{$i})";
-    //             $updateCasesModificacion[] = "WHEN id_detalle_zona_servicio_horario_cliente_facturacion = :id_credito_{$i} THEN :fecha_modificacion";
-    //             $paramsUpdate["id_credito_{$i}"] = $idDetalleZonaServicioHorarioClienteIdentificacion;
-    //             $paramsUpdate["cantidad_facturada_{$i}"] = $cantidadFacturada;
-
-    //             $idsToUpdate[] = $idDetalleZonaServicioHorarioClienteIdentificacion;
-
-    //             // Controlar el tamaño del batch
-    //             if (($i + 1) % $batchSize === 0) {
-    //                 if (!empty($valuesInsert)) {
-    //                     $this->insertVentasFacturacion($valuesInsert, $paramsInsert);
-    //                 }
-    //                 $valuesInsert = [];
-    //                 $paramsInsert = [];
-    //             }
-    //             ++$i;
-    //         }
-
-    //         // Insertar los registros restantes
-    //         if (!empty($valuesInsert)) {
-    //             $this->insertVentasFacturacion($valuesInsert, $paramsInsert);
-    //         }
-
-    //         // Crear y ejecutar el update masivo
-    //         if (!empty($idsToUpdate)) {
-    //             $updateQuery = "
-    //             UPDATE public.cliente_credito_periodico
-    //             SET
-    //                 cantidad_credito_usado = CASE 
-    //                     " . implode(' ', $updateCasesCreditoUsado) . " 
-    //                 END,
-    //                 cantidad_credito_disponible = CASE 
-    //                     " . implode(' ', $updateCasesCreditoDisponible) . " 
-    //                 END,
-    //                 fecha_modificacion = CASE 
-    //                     " . implode(' ', $updateCasesModificacion) . " 
-    //                 END::TIMESTAMP
-    //             WHERE id_detalle_zona_servicio_horario_cliente_facturacion IN (" . implode(', ', $idsToUpdate) . ")";
-
-    //             $this->entityManager->getConnection()->executeQuery($updateQuery, [
-    //                 // 'ids_to_update' => $idsToUpdate,
-    //                 'fecha_modificacion' => (new \DateTime())->format('Y-m-d H:i:s')
-    //             ] + $paramsUpdate);
-    //         }
-
-    //         $this->entityManager->commit();
-    //         return $filtroValidaciones;
-    //     } catch (\RuntimeException $e) {
-    //         $this->entityManager->rollback();
-    //         $this->logger->error('Error al crear clientes crédito periódico: ' . $e->getMessage(), ['exception' => $e, 'errores' => $filtroValidaciones]);
-    //         throw new \RuntimeException($e->getMessage());
-    //     } catch (ORMException | DBALException $e) {
-    //         $this->entityManager->rollback();
-    //         $this->logger->error('Error al crear clientes crédito periódico en la base de datos: ' . $e->getMessage(), ['exception' => $e, 'errores' => $filtroValidaciones]);
-    //         throw new \RuntimeException('Error al crear clientes crédito periódico.');
-    //     } catch (\Throwable $e) {
-    //         $this->entityManager->rollback();
-    //         $this->logger->error('Error inesperado al crear clientes crédito periódico: ' . $e->getMessage(), ['exception' => $e, 'errores' => $filtroValidaciones]);
-    //         throw new \RuntimeException($e->getMessage());
-    //     }
-    // }
 
     public function createVenta(array $ventasDTOs): array
     {
@@ -840,6 +639,174 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
         } catch (\Exception $e) {
             $this->logger->error('Error al insertar clientes crédito periódico: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException('Error al insertar clientes crédito periódico: ' . $e->getMessage());
+        }
+    }
+
+    public function getReportVentas(array $filtros): array
+    {
+        $tipo = $filtros['reporttype'];
+
+        $templateBase = [
+            "id_zona" => "id_zona",
+            "fecha_emision" => "fecha_emision",
+            "evento" => "evento",
+            "id_usuario" => "id_usuario",
+            "facturador" => "facturador",
+            "id" => "id",
+            "nombre_servicio" => "nombre_servicio",
+            "orden" => "orden",
+            "cantidad_total_facturada" => "cantidad_total_facturada"
+        ];
+
+        if ($tipo === 'details') {
+            $templateBase['cliente'] = 'cliente';
+            $templateBase['clie_docnum'] = 'clie_docnum';
+        }
+
+        $reportFunctions = [
+            'consolidated' => 'getConsolidatedReportByZone',
+            'details' => 'getDetailedReportByClient',
+        ];
+
+        if (!isset($reportFunctions[$tipo])) {
+            throw new InvalidArgumentException("Tipo de reporte no válido: $tipo");
+        }
+
+        $result = $this->{$reportFunctions[$tipo]}($filtros);
+        $mutatedArray = $this->utilServices->transformArray($result, $templateBase, true, ['id_zona', 'fecha_emision']);
+
+        return $mutatedArray;
+    }
+
+
+    public function getDetailedReportByClient(array $filtros): array
+    {
+        try {
+            // Extract the filters
+            $id_zona = $filtros['id_zone'];
+            $fecha_inicio = $filtros['datestart'];
+            $fecha_fin = $filtros['dateend'];
+
+            // Generate dynamic placeholders for the "IN" clause
+            $placeholders = [];
+            foreach ($id_zona as $index => $value) {
+                $placeholders[] = ":id_zone{$index}";
+            }
+
+            // Build the SQL query
+            $query = "
+                        SELECT zu.id_zona, 
+                            z.nombre as Evento, 
+                            zu.id_usuario, 
+                            CONCAT(u.nombres, ' ' ,u.apellidos) AS Facturador, 
+                            CONCAT(c.nombres, ' ', c.apellidos) AS Cliente, 
+                            c.clie_docnum, 
+                            spd.nombre AS nombre_servicio, 
+                            SUM(v.cantidad_facturada) AS cantidad_total_facturada, 
+                            DATE(v.fecha_emision) AS fecha_emision
+                        FROM seguridad.zona_usuario zu
+                        INNER JOIN catalogo.detalle_zona_servicio_horario dzsh
+                            ON zu.id = dzsh.id_zona_usuario
+                        INNER JOIN catalogo.servicios_productos_detalles spd
+                            ON spd.id = dzsh.id_servicios_productos_detalles
+                        INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion dzshcf
+                            ON dzsh.id = dzshcf.id_detalle_zona_servicio_horario
+                        INNER JOIN public.ventas v
+                            ON dzshcf.id = v.id_detalle_zona_servicio_horario_cliente_facturacion
+                        INNER JOIN catalogo.zona z
+                            ON zu.id_zona = z.id
+                        INNER JOIN seguridad.usuarios u
+                            ON zu.id_usuario = u.id
+                        INNER JOIN public.cliente c
+                            ON v.id_cliente = c.id
+                        WHERE zu.id_zona IN (" . implode(',', $placeholders) . ")
+                            AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+                        GROUP BY  zu.id_zona, zu.id_usuario, z.nombre, u.nombres, u.apellidos, c.nombres, c.apellidos, c.clie_docnum, spd.nombre, DATE(v.fecha_emision), zu.id_usuario, dzsh.id
+                        ORDER BY DATE(v.fecha_emision), zu.id_usuario, dzsh.id";
+
+            // Prepare the parameters
+            $params = [];
+            foreach ($id_zona as $index => $value) {
+                $params["id_zone{$index}"] = $value;
+            }
+
+            $params['fecha_inicio'] = $fecha_inicio;
+            $params['fecha_fin'] = $fecha_fin;
+
+            // Get the Doctrine connection and execute the query
+            $connection = $this->entityManager->getConnection();
+            $stmt = $connection->executeQuery($query, $params);
+
+            // Fetch the results as an associative array
+            return $stmt->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error while fetching detailed report by client: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error while fetching detailed report by client: ' . $e->getMessage());
+        }
+    }
+
+
+    public function getConsolidatedReportByZone(array $filtros): array
+    {
+        try {
+            // Extract the filters
+            $id_zona = $filtros['id_zone'];  // Asumiendo que esto es un array
+            $fecha_inicio = $filtros['datestart'];
+            $fecha_fin = $filtros['dateend'];
+
+            // Generate dynamic placeholders for the "IN" clause
+            $placeholders = [];
+            foreach ($id_zona as $index => $value) {
+                $placeholders[] = ":id_zone{$index}";
+            }
+
+            // Build the SQL query
+            $query = "
+                        SELECT zu.id_zona, 
+                            z.nombre as Evento, 
+                            zu.id_usuario, 
+                            CONCAT(u.nombres, ' ' ,u.apellidos) as Facturador, 
+                            dzsh.id, 
+                            spd.nombre as nombre_servicio, 
+                            SUM(v.cantidad_facturada) AS cantidad_total_facturada,
+                            DATE(v.fecha_emision) AS fecha_emision,
+                            spd.orden
+                        FROM seguridad.zona_usuario zu
+                        INNER JOIN catalogo.detalle_zona_servicio_horario dzsh
+                            ON zu.id = dzsh.id_zona_usuario
+                        INNER JOIN catalogo.servicios_productos_detalles spd
+                            ON spd.id = dzsh.id_servicios_productos_detalles
+                        INNER JOIN public.detalle_zona_servicio_horario_cliente_facturacion dzshcf
+                            ON dzsh.id = dzshcf.id_detalle_zona_servicio_horario
+                        INNER JOIN public.ventas v
+                            ON dzshcf.id = v.id_detalle_zona_servicio_horario_cliente_facturacion
+                        INNER JOIN catalogo.zona z
+                            ON zu.id_zona = z.id
+                        INNER JOIN seguridad.usuarios u
+                            ON zu.id_usuario = u.id
+                        WHERE zu.id_zona IN (" . implode(',', $placeholders) . ") 
+                        AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+                        GROUP BY zu.id_usuario, dzsh.id, zu.id_zona, z.nombre, u.nombres, u.apellidos, spd.nombre, DATE(v.fecha_emision), spd.orden
+                        ORDER BY zu.id_usuario, dzsh.id_servicios_productos_detalles, DATE(v.fecha_emision)";
+
+            // Prepare the parameters
+            $params = [];
+            foreach ($id_zona as $index => $value) {
+                $params["id_zone{$index}"] = $value;
+            }
+
+            $params['fecha_inicio'] = $fecha_inicio;
+            $params['fecha_fin'] = $fecha_fin;
+
+            // Get the Doctrine connection and execute the query
+            $connection = $this->entityManager->getConnection();
+            $stmt = $connection->executeQuery($query, $params);
+
+            // Fetch the results as an associative array
+            return $stmt->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error while fetching consolidated report: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error while fetching consolidated report: ' . $e->getMessage());
         }
     }
 }

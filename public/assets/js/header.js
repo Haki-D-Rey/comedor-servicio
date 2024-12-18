@@ -61,7 +61,7 @@ async function validateButtonLogout() {
 
   if (isValid) {
     // layout.classList.toggle("no-sidebar");
-    console.log("aqui");
+    //console.log("aqui");
   }
 
   buttonLogout.disabled = !isValid;
@@ -73,7 +73,7 @@ async function validateButtonLogout() {
 function clickActionLogout() {
   buttonLogout.addEventListener("click", async () => {
     const response = await postLogoutSesion();
-    console.log(response);
+    //console.log(response);
 
     if (response.status) {
       // Borrar todas las cookies

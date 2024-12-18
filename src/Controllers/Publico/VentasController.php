@@ -10,6 +10,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteParser;
+use Slim\Psr7\Stream;
 
 class VentasController
 {
@@ -155,6 +156,43 @@ class VentasController
             $this->ventasServices->deleteVenta($id);
             $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Crédito periódico eliminado exitosamente']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    public function getReportVentas(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $query = strtolower($queryParams['q'] ?? '');
+
+            $filtro = (array) json_decode($query);
+            $report = $this->ventasServices->getReportVentas($filtro);
+
+            if ($report === null) {
+                $response->getBody()->write(json_encode(['estado' => false, 'message' => 'Crédito periódico no encontrado']));
+                return $response->withHeader('Content-Typ   e', 'application/json')->withStatus(404);
+            }
+            $filename = $report["filename"];
+            $fileSize = filesize($filename);
+            $response = $response->withHeader('Content-Description', 'File Transfer')
+                ->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->withHeader('Content-Disposition', 'attachment;filename="' . basename($filename) . '"')
+                ->withHeader('Expires', '0')
+                ->withHeader('Cache-Control', 'must-revalidate')
+                ->withHeader('Pragma', 'public')
+                ->withHeader('Content-Length', $fileSize);
+            // Leer el archivo y enviarlo como respuesta
+            $file = fopen($filename, 'rb');
+            $stream = new Stream($file);
+            $response = $response->withBody($stream);
+            unlink($filename);
+
+            return $response;
+            // $response->getBody()->write(json_encode($report));
+            // return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
