@@ -10,10 +10,32 @@ class ApiService {
       if (!response.ok) {
         throw new Error(`Error en la solicitud: ${response.status}`);
       }
-      return await response.json();
+
+      // Verificar el tipo de contenido de la respuesta
+      const contentType = response.headers.get("Content-Type");
+
+      // Si el tipo de contenido es JSON
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+
+      // Si el tipo de contenido es un archivo (Blob)
+      if (contentType && contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+        // Aquí se manejaría un archivo de tipo Excel (.xlsx)
+        return await response.blob();
+      }
+
+      // Si el tipo de contenido es otro (por ejemplo, imagen)
+      if (contentType && contentType.includes("image/")) {
+        return await response.blob();
+      }
+
+      // En caso de que el tipo de contenido no sea reconocido
+      throw new Error(`Tipo de contenido no soportado: ${contentType}`);
+      
     } catch (error) {
       console.error("Error al obtener los datos de:", url, error);
-      return await response.json();
+      return null;  // O manejar el error de otra forma si es necesario
     }
   }
 

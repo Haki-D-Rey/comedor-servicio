@@ -5,6 +5,7 @@ namespace App\Services\Publico;
 use App\DTO\Publico\VentasDTO;
 use App\Repository\Publico\Interface\VentasRepositoryInterface;
 use App\Services\Utils\ExcelServicesReportesVentas;
+use InvalidArgumentException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -47,7 +48,7 @@ class VentasServices
 
     public function getReportVentas(array $filtros): array
     {
-
+        $tipo = $filtros['reporttype'];
         $resultado = $this->ventasRepositoryInterface->getReportVentas($filtros);
         $month = date('F');
         $year = date('Y');
@@ -76,10 +77,20 @@ class VentasServices
         $sheetSI = $spreadsheet->getActiveSheet();
         $sheetSI->setTitle("REPORTE - $current_month $year");
         $this->excelServicesReportesVentas->setHeaders($sheetSI);
-        $this->excelServicesReportesVentas->formData($resultado, $sheetSI, 2);
+
+        $reportFunctions = [
+            'consolidated' => 'formData',
+            'details' => 'formDataClientes',
+        ];
+
+        if (!isset($reportFunctions[$tipo])) {
+            throw new InvalidArgumentException("Tipo de reporte no válido: $tipo");
+        }
+
+        $this->excelServicesReportesVentas->{$reportFunctions[$tipo]}($resultado, $sheetSI, $tipo === 'consolidated' ? 2 : 3);
         // Guardar el archivo excel en el servidor
         $arrayFile = $this->excelServicesReportesVentas->saveFile($spreadsheet, "Reporte Servicios Alimentacios HMIL $year");
- 
+
         // $mailer = new EmailController();
         // // Configurar el correo electrónico
         // $this->mailServer = $mailer->sendEmail($parametrosCorreo);

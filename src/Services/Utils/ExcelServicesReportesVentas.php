@@ -3,23 +3,19 @@
 namespace App\Services\Utils;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ExcelServicesReportesVentas
 {
     public function setDocumentProperties(Spreadsheet $spreadsheet)
     {
         // Configurar propiedades del documento
-        return $spreadsheet->getProperties()->setCreator("Tu nombre")
-            ->setLastModifiedBy("Tu nombre")
-            ->setTitle("Reporte de Inscripciones XXI Congreso y Precongreso Cientifíco Médico")
-            ->setSubject("Reporte de inscripciones")
-            ->setDescription("Este archivo contiene el reporte de inscripciones.")
-            ->setKeywords("inscripciones reporte excel")
-            ->setCategory("Reporte");
+        return $spreadsheet->getProperties()->setCreator("GTI")
+            ->setLastModifiedBy("GTI")
+            ->setTitle("Reporte de Ventas SURE")
+            ->setSubject("Reporte de Ventas de Servicios por Eventos HMEADB")
+            ->setCategory("Reporte Ventas SURE");
     }
 
     public function setHeaders(Worksheet $sheet)
@@ -29,60 +25,72 @@ class ExcelServicesReportesVentas
 
     public function formData(array $data, Worksheet $sheet, int $fila): void
     {
-        $currentRow = $fila; // Empezar desde la fila inicial proporcionada
+        $currentRow = $fila;
         $totalServicios = [];
         $granTotal = 0;
 
-        // 1. Recolectar y ordenar servicios únicos según el campo "order"
+        // 1. Agrupar y ordenar los servicios por nombre
         $serviciosOrdenados = [];
         foreach ($data as $item) {
             foreach ($item['data'] as $servicio) {
-                $serviciosOrdenados[$servicio['nombre_servicio']] = $servicio['order'];
+                // Organizar los servicios por nombre y evento
+                $serviciosOrdenados[$servicio['nombre_servicio']][$servicio['evento']] = $servicio['order'];
             }
         }
-        // Ordenar los servicios por "order"
-        asort($serviciosOrdenados);
 
-        // 2. Asignar columnas dinámicas según el orden
+        // Asegurarse de que los servicios estén ordenados correctamente
+        ksort($serviciosOrdenados);
+
+        // 2. Crear un mapa de columnas dinámico para cada servicio y evento
         $columnMap = [];
-        $colIndex = ord('C'); // Empezar desde la columna C
-        foreach ($serviciosOrdenados as $servicio => $order) {
-            $columnMap[$servicio] = chr($colIndex); // Asignar columna dinámica
-            $colIndex++;
+        $colIndex = ord('C');
+        foreach ($serviciosOrdenados as $servicio => $eventos) {
+            foreach ($eventos as $evento => $order) {
+                $columnMap["$servicio - $evento"] = chr($colIndex);
+                $colIndex++;
+            }
         }
 
-        // 3. ENCABEZADO PRINCIPAL: Evento
+        // 3. Eliminar duplicados y ordenar las fechas
+        $fechas = array_column($data, 'fecha_emision');
+        $fechasUnicas = array_unique($fechas);  // Eliminar fechas duplicadas
+        sort($fechasUnicas);  // Ordenar las fechas de forma ascendente
+
+        // 4. ENCABEZADO PRINCIPAL: Evento
         $sheet->mergeCells("B$currentRow:" . chr($colIndex - 1) . "$currentRow");
-        $sheet->setCellValue("B$currentRow", "Zona asignada para el Auditoria");
         $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
         $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getAlignment()
             ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $currentRow++;
 
-        // 4. Encabezados dinámicos en base al orden
-        $sheet->setCellValue('B' . $currentRow, 'Fecha');
-        foreach ($columnMap as $servicio => $col) {
-            $sheet->setCellValue($col . $currentRow, $servicio); // Nombre del servicio en el orden correcto
+        // 5. Encabezados dinámicos en base al orden de los servicios y eventos
+        $sheet->setCellValue('B' . $currentRow, 'FECHA');
+        foreach ($columnMap as $servicioEvento => $col) {
+            $sheet->setCellValue($col . $currentRow, $servicioEvento); // Nombre del servicio + evento
         }
         $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
         $currentRow++;
 
-        // 5. Datos dinámicos
-        foreach ($data as $item) {
-            $fecha = $item['fecha_emision'];
-            $servicioTotales = array_fill_keys(array_values($columnMap), 0); // Inicializar totales por servicio
+        // 6. Datos dinámicos (consolidado por evento)
+        foreach ($fechasUnicas as $fecha) {
+            $servicioTotales = array_fill_keys(array_values($columnMap), 0); // Inicializar totales por servicio con 0
 
-            foreach ($item['data'] as $plan) {
-                if (isset($columnMap[$plan['nombre_servicio']])) {
-                    $col = $columnMap[$plan['nombre_servicio']];
-                    $servicioTotales[$col] += $plan['cantidad_total_facturada'];
+            foreach ($data as $item) {
+                if ($item['fecha_emision'] === $fecha) {
+                    foreach ($item['data'] as $plan) {
+                        if (isset($columnMap["{$plan['nombre_servicio']} - {$plan['evento']}"])) {
+                            $col = $columnMap["{$plan['nombre_servicio']} - {$plan['evento']}"];
+                            $servicioTotales[$col] += $plan['cantidad_total_facturada']; // Sumar la cantidad facturada
+                        }
+                    }
                 }
             }
 
             // Escribir fila de datos
             $sheet->setCellValue('B' . $currentRow, $fecha);
             foreach ($servicioTotales as $col => $cantidad) {
-                $sheet->setCellValue($col . $currentRow, $cantidad > 0 ? $cantidad : '');
+                // Asegurar que los valores vacíos sean 0
+                $sheet->setCellValue($col . $currentRow, $cantidad > 0 ? $cantidad : 0); // Escribir 0 si no hay cantidad
             }
 
             // Acumular totales generales
@@ -93,7 +101,7 @@ class ExcelServicesReportesVentas
             $currentRow++;
         }
 
-        // 6. Totales por servicio
+        // 7. Totales por servicio
         $sheet->setCellValue('B' . $currentRow, 'TOTAL SERVICIOS');
         foreach ($totalServicios as $col => $total) {
             $sheet->setCellValue($col . $currentRow, $total);
@@ -101,7 +109,7 @@ class ExcelServicesReportesVentas
         $sheet->getStyle("B$currentRow:" . chr($colIndex - 1) . "$currentRow")->getFont()->setBold(true);
         $currentRow++;
 
-        // 7. Total cierre
+        // 8. Total cierre
         $sheet->mergeCells("B$currentRow:" . chr($colIndex - 2) . "$currentRow");
         $sheet->setCellValue('B' . $currentRow, 'TOTAL CIERRE');
         $sheet->setCellValue(chr($colIndex - 1) . $currentRow, $granTotal);
@@ -122,112 +130,78 @@ class ExcelServicesReportesVentas
         foreach (range('B', chr($colIndex - 1)) as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
+
+        $sheet->setCellValue('B' . $fila, "REPORTE DE VENTAS CONSOLIDADO POR EVENTOS FACTURADOS");
     }
 
+    public function formDataClientes(array $data, Worksheet $sheet, int $fila): void
+    {
+        $currentRow = $fila;
 
-    // public function formData(array $data, Worksheet $sheet, int $fila): void
-    // {
+        $sheet->setCellValue('B' . $currentRow, "Fecha");
+        $sheet->setCellValue('C' . $currentRow, "Evento");
+        $sheet->setCellValue('D' . $currentRow, "Servicio");
+        $sheet->setCellValue('E' . $currentRow, "Nombre Cliente");
+        $sheet->setCellValue('F' . $currentRow, "Código de Empleado");
+        $sheet->setCellValue('G' . $currentRow, "Cantidad");
+        $currentRow++;
 
-    //     $data = [
-    //         [
-    //             "id_zona"=> 4,
-    //             "fecha_emision" => "2024-12-12",
-    //             "data" => [
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Cena Navideña",
-    //                     "cantidad_total_facturada" => 15
-    //                 ],
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Desayuno Ejecutivo",
-    //                     "cantidad_total_facturada" => 20
-    //                 ],
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Almuerzo Corporativo",
-    //                     "cantidad_total_facturada" => 25
-    //                 ]
-    //             ]
-    //         ],
-    //         [
-    //             "id_zona"=> 4,
-    //             "fecha_emision" => "2024-12-13",
-    //             "data" => [
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Cena Navideña",
-    //                     "cantidad_total_facturada" => 15
-    //                 ],
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Desayuno Ejecutivo",
-    //                     "cantidad_total_facturada" => 20
-    //                 ],
-    //                 [
-    //                     "evento" => "Zona asignada para el Auditoria del Eficio 1A - HMEADB",
-    //                     "nombre_servicio" => "Almuerzo Corporativo",
-    //                     "cantidad_total_facturada" => 25
-    //                 ]
-    //             ]
-    //         ],
-    //         [
-    //             "id_zona"=> 7,
-    //             "fecha_emision" => "2024-12-15",
-    //             "data" => [
-    //                 [
-    //                     "evento" => "Auditoria del Edificio 2B - HMEADB",
-    //                     "nombre_servicio" => "Cena de Cierre",
-    //                     "cantidad_total_facturada" => 30
-    //                 ]
-    //             ]
-    //         ]
-    //     ];
+        $granTotal = 0;
+        foreach ($data as $item) {
+            $fecha = $item['fecha_emision'];
+            $planes = $item['data'];
+            $numPlanes = count($planes);
 
+            $sheet->mergeCells("B$currentRow:B" . ($currentRow + $numPlanes - 1));
+            $sheet->setCellValue("B$currentRow", $fecha);
 
+            foreach ($planes as $index => $plan) {
+                $sheet->setCellValue('C' . ($currentRow + $index), mb_strtoupper($plan['evento'], 'UTF-8'));
+                $sheet->setCellValue('D' . ($currentRow + $index), mb_strtoupper($plan['nombre_servicio'], 'UTF-8'));
+                $sheet->setCellValue('E' . ($currentRow + $index), mb_strtoupper($plan['cliente'], 'UTF-8'));
+                $sheet->setCellValue('F' . ($currentRow + $index), $plan['clie_docnum']);
+                $sheet->setCellValue('G' . ($currentRow + $index), $plan['cantidad_total_facturada']);
+                $granTotal += $plan['cantidad_total_facturada'];
+            }
+            $currentRow += $numPlanes;
+        }
 
-    //     $currentRow = $fila;  // Aseguramos que la fila inicial es 4
-    //     // Iterar los datos
-    //     foreach ($data as $item) {
-    //         $fecha = $item['fecha_emision'];
-    //         $planes = $item['data'];
-    //         $numPlanes = count($planes);
+        $initialRow = $fila - 1;
+        $lastRow = $currentRow;
+        $sheet->getStyle("B$initialRow:G$lastRow")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
 
-    //         // Fusionar y colocar la fecha
-    //         $sheet->mergeCells("B$currentRow:B" . ($currentRow + $numPlanes - 1));
-    //         $sheet->setCellValue("B$currentRow", $fecha);
+        // Estilo de los encabezados
+        $sheet->getStyle("B$initialRow:G$initialRow")->getFont()->setBold(true);
+        $sheet->getStyle("B$fila:G$fila")->getFont()->setBold(true);
 
-    //         foreach ($planes as $index => $plan) {
-    //             $sheet->setCellValue('C' . ($currentRow + $index), $plan['evento']);
-    //             $sheet->setCellValue('D' . ($currentRow + $index), $plan['nombre_servicio']);
-    //             $sheet->setCellValue('E' . ($currentRow + $index), $plan['cantidad_total_facturada']);
-    //         }
+        // Ajustar ancho automático de las columnas
+        foreach (range('B', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
 
-    //         $currentRow += $numPlanes;
-    //     }
+        // Colocar el título de reporte
+        $sheet->mergeCells("B$initialRow:G$initialRow");
+        $sheet->setCellValue('B' . $initialRow, "REPORTE DE VENTAS DETALLADO POR CLIENTE POR EVENTOS FACTURADOS");
 
-    //     // Aplicar estilos a todo el rango de datos
-    //     $initalRow = $fila - 2;
-    //     $lastRow = $currentRow - 1;
-    //     $sheet->getStyle("B$initalRow:E$lastRow")->applyFromArray([
-    //         'borders' => [
-    //             'allBorders' => [
-    //                 'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-    //                 'color' => ['argb' => 'FF000000'],
-    //             ],
-    //         ],
-    //         'alignment' => [
-    //             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-    //             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-    //         ],
-    //     ]);
-    //     $sheet->getStyle('B2:E2')->getFont()->setBold(true);
+        // Colocar total de cierre
+        $sheet->mergeCells("B$currentRow:F$currentRow");
+        $sheet->setCellValue('B' . $currentRow, 'TOTAL CIERRE');
+        $sheet->setCellValue('G' . $currentRow, $granTotal);
+        $sheet->getStyle("B$currentRow:G$currentRow")->getFont()->setBold(true);
+        $sheet->getStyle("B$currentRow:G$currentRow")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    }
 
-    //     // Ajustar ancho automático de las columnas
-    //     foreach (range('B', 'E') as $col) {
-    //         $sheet->getColumnDimension($col)->setAutoSize(true);
-    //     }
-    // }
 
 
     public function saveFile(Spreadsheet $spreadsheet, string $reportName): array
