@@ -721,6 +721,10 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
                             ON v.id_cliente = c.id
                         WHERE zu.id_zona IN (" . implode(',', $placeholders) . ")
                             AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+                            AND v.estado = true
+                            AND v.id_estado_venta = 6
+                            AND v.ticket_anulado = false
+                            AND v.cantidad_anulada = 0
                         GROUP BY  zu.id_zona, zu.id_usuario, z.nombre, u.nombres, u.apellidos, c.nombres, c.apellidos, c.clie_docnum, spd.nombre, DATE(v.fecha_emision), zu.id_usuario, dzsh.id
                         ORDER BY DATE(v.fecha_emision), zu.id_usuario, dzsh.id";
 
@@ -786,6 +790,10 @@ class VentasRepository extends GenericRepository implements VentasRepositoryInte
                             ON zu.id_usuario = u.id
                         WHERE zu.id_zona IN (" . implode(',', $placeholders) . ") 
                         AND DATE(v.fecha_emision) BETWEEN :fecha_inicio AND :fecha_fin
+                        AND v.estado = true
+                        AND v.id_estado_venta = 6
+                        AND v.ticket_anulado = false
+                        AND v.cantidad_anulada = 0
                         GROUP BY zu.id_usuario, dzsh.id, zu.id_zona, z.nombre, u.nombres, u.apellidos, spd.nombre, DATE(v.fecha_emision), spd.orden
                         ORDER BY zu.id_usuario, dzsh.id_servicios_productos_detalles, DATE(v.fecha_emision)";
 

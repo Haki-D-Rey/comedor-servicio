@@ -142,7 +142,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
         $detalleZonaHorarioServicio = $this->entityManager
             ->getRepository(DetalleZonaServicioHorario::class)
             ->findBy($params);
-            
+
         // Obtener los IDs de los detalles de zona y servicio
         $detalleIds = array_map(function ($detalle) {
             return $detalle->getId();
@@ -178,6 +178,10 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
                         ON TBZ.id = TBV.id_detalle_zona_servicio_horario_cliente_facturacion
                     WHERE TB.id_zona_usuario = :zonaUsuarioId
                     AND TB.id IN (:idsDetalleZonaServicio)
+                    AND TBV.estado = true
+                    AND TBV.id_estado_venta = 6
+                    AND TBV.ticket_anulado = false
+                    AND TBV.cantidad_anulada = 0
                     GROUP BY TB.id";
 
         $params = [
