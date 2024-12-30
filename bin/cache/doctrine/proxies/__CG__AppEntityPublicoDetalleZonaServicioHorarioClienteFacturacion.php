@@ -23,6 +23,8 @@ class DetalleZonaServicioHorarioClienteFacturacion extends \App\Entity\Publico\D
 
     private const LAZY_OBJECT_PROPERTY_SCOPES = [
         "\0".parent::class."\0".'codigoInterno' => [parent::class, 'codigoInterno', null],
+        "\0".parent::class."\0".'detalleClienteIdentificacionFacturacion' => [parent::class, 'detalleClienteIdentificacionFacturacion', null],
+        "\0".parent::class."\0".'detalleZonaServicioHorario' => [parent::class, 'detalleZonaServicioHorario', null],
         "\0".parent::class."\0".'estado' => [parent::class, 'estado', null],
         "\0".parent::class."\0".'fechaCreacion' => [parent::class, 'fechaCreacion', null],
         "\0".parent::class."\0".'fechaModificacion' => [parent::class, 'fechaModificacion', null],
@@ -30,6 +32,8 @@ class DetalleZonaServicioHorarioClienteFacturacion extends \App\Entity\Publico\D
         "\0".parent::class."\0".'idDetalleClienteIdentificacionFacturacion' => [parent::class, 'idDetalleClienteIdentificacionFacturacion', null],
         "\0".parent::class."\0".'idDetalleZonaServicioHorario' => [parent::class, 'idDetalleZonaServicioHorario', null],
         'codigoInterno' => [parent::class, 'codigoInterno', null],
+        'detalleClienteIdentificacionFacturacion' => [parent::class, 'detalleClienteIdentificacionFacturacion', null],
+        'detalleZonaServicioHorario' => [parent::class, 'detalleZonaServicioHorario', null],
         'estado' => [parent::class, 'estado', null],
         'fechaCreacion' => [parent::class, 'fechaCreacion', null],
         'fechaModificacion' => [parent::class, 'fechaModificacion', null],

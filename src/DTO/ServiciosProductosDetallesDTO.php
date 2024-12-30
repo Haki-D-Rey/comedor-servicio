@@ -16,6 +16,9 @@ class ServiciosProductosDetallesDTO implements JsonSerializable
     private \DateTime $fecha_creacion;
     private ?\DateTime $fecha_modificacion;
     private bool $estado;
+    private \DateTime $periodo_inicial;
+    private \DateTime $periodo_final;
+    private int $orden = 1;
 
     public function __construct(
         ?int $id,
@@ -27,7 +30,11 @@ class ServiciosProductosDetallesDTO implements JsonSerializable
         string $codigo_interno,
         \DateTime $fecha_creacion,
         ?\DateTime $fecha_modificacion,
-        bool $estado
+        bool $estado,
+        \DateTime $periodo_inicial,
+        \DateTime $periodo_final,
+        int $orden
+        
     ) {
         $this->id = $id;
         $this->idSistemas = $idSistemas;
@@ -39,6 +46,9 @@ class ServiciosProductosDetallesDTO implements JsonSerializable
         $this->fecha_creacion = $fecha_creacion;
         $this->fecha_modificacion = $fecha_modificacion;
         $this->estado = $estado;
+        $this->periodo_inicial = $periodo_inicial;
+        $this->periodo_final = $periodo_final;
+        $this->orden = $orden;
     }
 
     // Getters
@@ -77,6 +87,21 @@ class ServiciosProductosDetallesDTO implements JsonSerializable
         return $this->estado;
     }
 
+    public function getPeriodoInicial(): \DateTime
+    {
+        return $this->periodo_inicial;
+    }
+
+    public function getPeriodoFinal(): \DateTime
+    {
+        return $this->periodo_final;
+    }
+
+    public function getOrden(): int
+    {
+        return $this->orden;
+    }
+
     public function jsonSerialize(): array
     {
         return [
@@ -90,6 +115,9 @@ class ServiciosProductosDetallesDTO implements JsonSerializable
             'fecha_creacion' => $this->fecha_creacion->format(\DateTime::ISO8601),
             'fecha_modificacion' => $this->fecha_modificacion ? $this->fecha_modificacion->format(\DateTime::ISO8601) : null,
             'estado' => $this->estado,
+            'periodo_incial' => $this->periodo_inicial,
+            'periodo_final' => $this->periodo_final,
+            'orden' => $this->orden
         ];
     }
 }

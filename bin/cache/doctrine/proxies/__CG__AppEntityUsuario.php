@@ -29,11 +29,9 @@ class Usuario extends \App\Entity\Usuario implements \Doctrine\ORM\Proxy\Interna
         "\0".parent::class."\0".'fecha_creacion' => [parent::class, 'fecha_creacion', null],
         "\0".parent::class."\0".'fecha_modificacion' => [parent::class, 'fecha_modificacion', null],
         "\0".parent::class."\0".'id' => [parent::class, 'id', null],
-        "\0".parent::class."\0".'idTipoUsuarioPermiso' => [parent::class, 'idTipoUsuarioPermiso', null],
         "\0".parent::class."\0".'isAdmin' => [parent::class, 'isAdmin', null],
         "\0".parent::class."\0".'nombreUsuario' => [parent::class, 'nombreUsuario', null],
         "\0".parent::class."\0".'nombres' => [parent::class, 'nombres', null],
-        "\0".parent::class."\0".'tipoUsuarioPermiso' => [parent::class, 'tipoUsuarioPermiso', null],
         'apellidos' => [parent::class, 'apellidos', null],
         'contrasenia' => [parent::class, 'contrasenia', null],
         'correo' => [parent::class, 'correo', null],
@@ -41,11 +39,9 @@ class Usuario extends \App\Entity\Usuario implements \Doctrine\ORM\Proxy\Interna
         'fecha_creacion' => [parent::class, 'fecha_creacion', null],
         'fecha_modificacion' => [parent::class, 'fecha_modificacion', null],
         'id' => [parent::class, 'id', null],
-        'idTipoUsuarioPermiso' => [parent::class, 'idTipoUsuarioPermiso', null],
         'isAdmin' => [parent::class, 'isAdmin', null],
         'nombreUsuario' => [parent::class, 'nombreUsuario', null],
         'nombres' => [parent::class, 'nombres', null],
-        'tipoUsuarioPermiso' => [parent::class, 'tipoUsuarioPermiso', null],
     ];
 
     public function __isInitialized(): bool

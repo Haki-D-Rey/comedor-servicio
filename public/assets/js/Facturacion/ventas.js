@@ -257,30 +257,32 @@ dropdownSistema.addEventListener(
     // }
     const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
     const serviciosFormateados = {};
-
+    console.log(data);
     // Filtrar y reestructurar los datos
     detalles.servicios.forEach((servicio) => {
       // Buscar el horario correspondiente para el servicio
-      const horario = data.find(
+      const servicioDetalles = data.find(
         (item) =>
           item.id_detalle_zona_servicio_horario ===
           servicio.id_detalle_zona_servicio_horario
       );
 
-      if (horario) {
+      if (servicioDetalles) {
         //console.log("horario");
         // Si se encuentra el horario, lo formateamos en el formato requerido
-        const periodoInicio = horario.horario.periodo_inicio;
-        const periodoFinal = horario.horario.periodo_final;
-        const cod = horario.horario.codigo_interno;
+        const periodoInicio = servicioDetalles.horario.periodo_inicio;
+        const periodoFinal = servicioDetalles.horario.periodo_final;
+        const cod = servicioDetalles.horario.codigo_interno;
 
         // Añadimos el servicio al objeto con su rango de horas
         serviciosFormateados[servicio.name] = {
           start: periodoInicio,
           end: periodoFinal,
+          periodo_inicial_servicio: servicioDetalles.periodo_inicial_servicio,
+          periodo_final_servicio: servicioDetalles.periodo_final_servicio,
           cod: cod,
           id_detalle_zona_servicio_horario:
-            horario.id_detalle_zona_servicio_horario,
+            servicioDetalles.id_detalle_zona_servicio_horario,
         };
       }
     });
@@ -553,6 +555,9 @@ function renderMealServices() {
   carouselIndicators.innerHTML = "";
   carouselInner.innerHTML = "";
 
+  let fechaActual = new Date();
+  let fechaString = fechaActual.toISOString().split("T")[0];
+
   let activeIndex = "Fuera de Servicio"; // Por defecto
   //console.log(mealServices);
   // Verificar si hay un servicio con el código 'HR-005'
@@ -595,10 +600,17 @@ function renderMealServices() {
     Object.keys(mealServices).forEach((service, index) => {
       const serviceData = mealServices[service];
       let isActive = false;
+      // Verificar si la fecha está dentro del rango
+      let isDateInRange =
+        fechaString >= serviceData.periodo_inicial_servicio &&
+        fechaString <= serviceData.periodo_final_servicio;
 
       if (
         service !== "Fuera de Servicio" &&
-        isCurrentMealActive("", serviceData.start, serviceData.end)
+        isCurrentMealActive("", serviceData.start, serviceData.end) &&
+        serviceData.periodo_inicial_servicio &&
+        serviceData.periodo_final_servicio &&
+        isDateInRange
       ) {
         isActive = true;
         fsIsActive = false;
@@ -715,6 +727,8 @@ function crearArrayServiciosActivos() {
         : 0;
   }
 
+  console.log(codIdentificacion);
+  debugger;
   // const codIdentificacion =
   //   inputVentas.value && toggleButtonIdentificador.value === "ITF-001"
   //     ? inputVentas.value.trim()
@@ -754,11 +768,20 @@ function crearArrayServiciosActivos() {
 
 function isServiceActive(service) {
   const serviceData = mealServices[service];
+  // Verificar si la fecha está dentro del rango
+  let fechaActual = new Date();
+  let fechaString = fechaActual.toISOString().split("T")[0];
+  let isDateInRange =
+    fechaString >= serviceData.periodo_inicial_servicio &&
+    fechaString <= serviceData.periodo_final_servicio;
+
   if (serviceData.cod === "HR-005") {
     return true;
   }
 
-  return isCurrentMealActive("", serviceData.start, serviceData.end);
+  return (
+    isCurrentMealActive("", serviceData.start, serviceData.end) && isDateInRange
+  );
 }
 
 function PopupSellDiningServices(response) {

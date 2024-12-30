@@ -32,7 +32,6 @@ class ServiciosProductosDetalles
     #[ORM\Column(name: 'estado', type: 'boolean', options: ['default' => true])]
     private bool $estado;
 
-
     /**
      * Many ServiciosProductosDetalles have One Sistema.
      * @var Sistemas
@@ -57,13 +56,22 @@ class ServiciosProductosDetalles
     #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ServiciosProductos $serviciosProductos;
 
-        /**
+    /**
      * Many ServiciosProductosDetalles have One ServicioProducto.
      * @var ServiciosProductos
      */
     #[ORM\OneToMany(targetEntity: DetalleZonaServicioHorario::class, mappedBy: 'serviciosProductosDetalles')]
     #[ORM\JoinColumn(name: 'id_servicios_productos', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private Collection $detalleZonaServicioHorario;
+
+    #[ORM\Column(name: 'fecha_inicio_periodo', type: 'date', nullable: false)]
+    private \DateTime $periodoInicial;
+
+    #[ORM\Column(name: 'fecha_fin_periodo', type: 'date', nullable: false)]
+    private \DateTime $periodoFinal;
+
+    #[ORM\Column(name: 'orden', type: 'integer')]
+    private ?int $orden = 1;
 
     public function __construct()
     {
@@ -189,5 +197,38 @@ class ServiciosProductosDetalles
     public function getIdServiciosProductos(): ?int
     {
         return $this->serviciosProductos ? $this->serviciosProductos->getId() : null;
+    }
+
+    public function getPeriodoIncial(): \DateTime
+    {
+        return $this->periodoInicial;
+    }
+
+    public function setPeriodoIncial(\DateTime $periodoInicial): self
+    {
+        $this->periodoInicial = $periodoInicial;
+        return $this;
+    }
+
+    public function getPeriodoFinal(): \DateTime
+    {
+        return $this->periodoFinal;
+    }
+
+    public function setPeriodoFinal(\DateTime $periodoFinal): self
+    {
+        $this->periodoFinal = $periodoFinal;
+        return $this;
+    }
+
+    public function getOrden(): int
+    {
+        return $this->orden;
+    }
+
+    public function setOrden(int $orden): self
+    {
+        $this->orden = $orden;
+        return $this;
     }
 }

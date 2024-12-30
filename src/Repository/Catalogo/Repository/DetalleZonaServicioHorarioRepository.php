@@ -184,7 +184,9 @@ class DetalleZonaServicioHorarioRepository extends GenericRepository implements 
                         'codigo_interno' => $servicioProductoDetalle->getcodigo_interno(),
                         'fecha_creacion' => $servicioProductoDetalle->getFecha_creacion(),
                         'fecha_modificacion' => $servicioProductoDetalle->getFecha_modificacion(),
-                        'estado' => $servicioProductoDetalle->getEstado()
+                        'estado' => $servicioProductoDetalle->getEstado(),
+                        'periodo_inicial_servicio' => $servicioProductoDetalle->getPeriodoIncial()->format('Y-m-d'),
+                        'periodo_final_servicio' => $servicioProductoDetalle->getPeriodoFinal()->format('Y-m-d'),
                     ];
                 }
             }
