@@ -134,7 +134,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
     {
         $zoneuser_code = $filtro->zonecode;
         $id_detalle_zona_servicio_horario = $filtro->id_detalle_zona_servicio_horario;
-        $zoneuser = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(["codigo_interno" => $zoneuser_code]);
+        $zoneuser = $this->entityManager->getRepository(ZonaUsuarios::class)->findOneBy(["codigo_interno" => $zoneuser_code, "estado" => true]);
         $params = $id_detalle_zona_servicio_horario
             ? ["idZonaUsuario" => $zoneuser->getId(), "id" => $id_detalle_zona_servicio_horario]
             : ["idZonaUsuario" => $zoneuser->getId()];
@@ -156,6 +156,7 @@ class ZonaUsuarioRepository extends GenericRepository implements ZonaUsuarioRepo
                 ON TBZ.id_detalle_zona_servicio_horario = TB.id
             WHERE TB.id_zona_usuario = :zonaUsuarioId
             AND TB.id IN (:idsDetalleZonaServicio)
+            AND TBZ.estado = true
             GROUP BY TB.id";
 
         // Asignar los parámetros de la consulta, incluyendo la lista de IDs
