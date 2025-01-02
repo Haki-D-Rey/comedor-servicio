@@ -1,5 +1,6 @@
 // Importa la clase ApiService
 import ApiService from "./../apiservice.js";
+import Utils from "./../utils/util.js";
 
 // Variables globales
 var ListaServiciosValidar = [];
@@ -43,6 +44,7 @@ var timer = 0;
 var mealServices = [];
 
 const apiService = new ApiService(baseURL);
+const util = new Utils();
 
 function init() {
   dropdownZonaUsuario.disabled = false;
@@ -257,7 +259,7 @@ dropdownSistema.addEventListener(
     // }
     const data = await cargarDetallesServiciosPorZona(detalles.code_zone);
     const serviciosFormateados = {};
-    console.log(data);
+    //console.log(data);
     // Filtrar y reestructurar los datos
     detalles.servicios.forEach((servicio) => {
       // Buscar el horario correspondiente para el servicio
@@ -555,9 +557,7 @@ function renderMealServices() {
   carouselIndicators.innerHTML = "";
   carouselInner.innerHTML = "";
 
-  let fechaActual = new Date();
-  let fechaString = fechaActual.toISOString().split("T")[0];
-
+  let fechaString = util.formatDate(-6, "YYYY-MM-DD HH:mm:ss").split(" ")[0];
   let activeIndex = "Fuera de Servicio"; // Por defecto
   //console.log(mealServices);
   // Verificar si hay un servicio con el código 'HR-005'
@@ -640,13 +640,23 @@ function renderMealServices() {
           inputSearch.disabled = true;
         } else {
           inputVentas.disabled = false;
-          if (!inputSearch.value && !inputSearch) {
-            inputVentas.focus();
-          }
           inputCantidad.disabled = false;
           inputSearch.disabled = false;
-          inputCantidad.textContent = 1;
-          inputCantidad.value = 1;
+          if (
+            !inputSearch.value &&
+            inputSearch &&
+            (toggleButtonIdentificador.getAttribute("value") === "ITF-001" ||
+              toggleButtonIdentificador.value === "ITF-001")
+          ) {
+            inputVentas.focus();
+          } else {
+            inputSearch.focus();
+          }
+
+          if (!inputCantidad.value) {
+            inputCantidad.textContent = 1;
+            inputCantidad.value = 1;
+          }
         }
       }
     });
@@ -727,8 +737,6 @@ function crearArrayServiciosActivos() {
         : 0;
   }
 
-  console.log(codIdentificacion);
-  debugger;
   // const codIdentificacion =
   //   inputVentas.value && toggleButtonIdentificador.value === "ITF-001"
   //     ? inputVentas.value.trim()
@@ -769,8 +777,7 @@ function crearArrayServiciosActivos() {
 function isServiceActive(service) {
   const serviceData = mealServices[service];
   // Verificar si la fecha está dentro del rango
-  let fechaActual = new Date();
-  let fechaString = fechaActual.toISOString().split("T")[0];
+  let fechaString = util.formatDate(-6, "YYYY-MM-DD HH:mm:ss").split(" ")[0];
   let isDateInRange =
     fechaString >= serviceData.periodo_inicial_servicio &&
     fechaString <= serviceData.periodo_final_servicio;
@@ -825,6 +832,14 @@ function PopupSellDiningServices(response) {
         },
         willClose: () => {
           clearInterval(timerInterval);
+          successIcon.style.display = "none";
+          loadingIcon.style.display = "none";
+          inputSearch.textContent = "";
+          inputSearch.value = "";
+          inputVentas.textContent = "";
+          inputVentas.value = "";
+          inputVentas.focus();
+          inputSearch.focus();
         },
       })
       .then((result) => {
@@ -860,6 +875,14 @@ function PopupSellDiningServices(response) {
         },
         willClose: () => {
           clearInterval(timerInterval);
+          successIcon.style.display = "none";
+          loadingIcon.style.display = "none";
+          inputSearch.textContent = "";
+          inputSearch.value = "";
+          inputVentas.textContent = "";
+          inputVentas.value = "";
+          inputVentas.focus();
+          inputSearch.focus();
         },
       })
       .then((result) => {
@@ -922,9 +945,11 @@ const toggleButton = () => {
   if (toggleButtonIdentificador.value === "ITF-002" && !isActive) {
     toggleButtonIdentificador.innerHTML = buttonLector;
     toggleButtonIdentificador.value = "ITF-001";
+    toggleButtonIdentificador.setAttribute("value", "ITF-001");
   } else {
     toggleButtonIdentificador.innerHTML = buttonFiltro;
     toggleButtonIdentificador.value = "ITF-002";
+    toggleButtonIdentificador.setAttribute("value", "ITF-002");
   }
 
   inputSearch.textContent = "";
@@ -948,9 +973,11 @@ function toggleInputs(value) {
   if (value === "ITF-001") {
     contentInputSearch.style.display = "none";
     contentInputCodigo.style.display = "block";
+    inputVentas.focus();
   } else if (value === "ITF-002") {
     contentInputSearch.style.display = "block";
     contentInputCodigo.style.display = "none";
+    inputSearch.focus();
   }
 }
 

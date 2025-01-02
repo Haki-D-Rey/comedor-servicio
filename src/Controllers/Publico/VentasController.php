@@ -35,7 +35,7 @@ class VentasController
         ];
         $user_id = $this->authServices->verifyToken($data, $this->container)['user']->sub;
         ob_start();
-        include __DIR__ . '/../../../public/views/client/inicio.php';
+        include __DIR__ . '/../../../public/views/client/facturacion/inicio.php';
         $viewContent = ob_get_clean();
         $response->getBody()->write($viewContent);
 

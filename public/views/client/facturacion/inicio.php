@@ -9,7 +9,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
     </div>
     <div>
         <?php
-        include __DIR__ . '/../components/reloj.php'; // Incluye el layout
+        include __DIR__ . '/../../components/reloj.php'; // Incluye el layout
         ?>
     </div>
     <div id="toggleButtonIdentificador" class="container-toogle" value="ITF-001">
@@ -96,7 +96,7 @@ ob_start(); // Inicia el almacenamiento en búfer de salida
 
     <?php
     $content = ob_get_clean(); // Obtiene el contenido del búfer y limpia el búfer
-    include __DIR__ . '/../layout/layout.php'; // Incluye el layout
+    include __DIR__ . '/../../layout/layout.php'; // Incluye el layout
     ?>
 
     <script>
