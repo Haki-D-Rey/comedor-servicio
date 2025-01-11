@@ -6,13 +6,11 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const response = await fetch(url, options);
+    const contentType = response.headers.get("Content-Type");
     try {
       if (!response.ok) {
         throw new Error(`Error en la solicitud: ${response.status}`);
       }
-
-      // Verificar el tipo de contenido de la respuesta
-      const contentType = response.headers.get("Content-Type");
 
       // Si el tipo de contenido es JSON
       if (contentType && contentType.includes("application/json")) {
@@ -20,7 +18,12 @@ class ApiService {
       }
 
       // Si el tipo de contenido es un archivo (Blob)
-      if (contentType && contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+      if (
+        contentType &&
+        contentType.includes(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+      ) {
         // Aquí se manejaría un archivo de tipo Excel (.xlsx)
         return await response.blob();
       }
@@ -32,10 +35,15 @@ class ApiService {
 
       // En caso de que el tipo de contenido no sea reconocido
       throw new Error(`Tipo de contenido no soportado: ${contentType}`);
-      
     } catch (error) {
       console.error("Error al obtener los datos de:", url, error);
-      return null;  // O manejar el error de otra forma si es necesario
+
+      // Si el tipo de contenido es JSON
+      if (contentType && contentType.includes("application/json")) {
+        return (await response.json()) || null;
+      }
+
+      return (await response) || null;
     }
   }
 

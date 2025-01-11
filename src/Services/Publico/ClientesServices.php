@@ -76,5 +76,13 @@ class ClientesServices
             throw new \RuntimeException('Error al eliminar el cliente: ' . $e->getMessage());
         }
     }
-    
+
+    public function getValidateFormById(array $filtro): array
+    {
+        try {
+            return $this->clientesRepository->getValidateFormById($filtro);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error al eliminar el cliente: ' . $e->getMessage());
+        }
+    }
 }

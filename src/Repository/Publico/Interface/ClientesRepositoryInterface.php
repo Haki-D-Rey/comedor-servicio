@@ -42,9 +42,15 @@ interface ClientesRepositoryInterface
      */
     public function getSearchClients(array $filtro): array;
 
-     /**
+    /**
      * @param array $filtro
      * @return array
      */
     public function getClientsRelationalIdentification(array $filtro): array;
+
+    /**
+     * @param array $filtro
+     * @return array
+     */
+    public function getValidateFormById(array $filtro): array;
 }

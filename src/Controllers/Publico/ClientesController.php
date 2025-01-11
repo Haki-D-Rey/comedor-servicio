@@ -3,20 +3,44 @@
 namespace App\Controllers\Publico;
 
 use App\DTO\Publico\ClientesDTO;
+use App\Services\AuthServices;
 use App\Services\Publico\ClientesServices;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Repository\Publico\ClientesRepositoryInterface;
-use App\Repository\Catalogo\ListaCatalogoDetalleRepositoryInterface;
+use Psr\Container\ContainerInterface;
+use Slim\Psr7\Response;
+use Slim\Psr7\Request;
+use Slim\Routing\RouteParser;
 
 class ClientesController
 {
     private ClientesServices $clientesServices;
+    private ContainerInterface $container;
+    private AuthServices $authServices;
 
     public function __construct(
-        ClientesServices $clientesServices
+        ClientesServices $clientesServices,
+        ContainerInterface $container,
+        AuthServices $authServices
     ) {
         $this->clientesServices = $clientesServices;
+        $this->container = $container;
+        $this->authServices = $authServices;
+    }
+
+    public function index(Request $request, Response $response): Response
+    {
+        session_start();
+        $routeParser = $this->container->get(RouteParser::class);
+        $data = [
+            "token" => $_SESSION['jwt_token']
+        ];
+        $user_id = $this->authServices->verifyToken($data, $this->container)['user']->sub;
+        ob_start();
+        // include __DIR__ . '/views/client/inscripcion_control.php';
+        include __DIR__ . '/../../../public/views/admin/clients/inicio.php';
+        $viewContent = ob_get_clean();
+        $response->getBody()->write($viewContent);
+
+        return $response->withHeader('Content-Type', 'text/html');
     }
 
     public function getAllClientes(Request $request, Response $response): Response
@@ -92,19 +116,21 @@ class ClientesController
         try {
             // Validaciones
             $this->validateClientesData($data);
+            foreach ($data as $cliente) {
+                $clientesDTO = new ClientesDTO(
+                    $id,
+                    $cliente['nombres'],
+                    $cliente['apellidos'],
+                    $cliente['id_departamento'],
+                    $cliente['id_cargo'],
+                    $cliente['correo'],
+                    $cliente['clie_docnum'],
+                    $cliente['fecha_creacion'] ?? new \DateTime(),
+                    $cliente['fecha_modificacion'] ?? new \DateTime(),
+                    $cliente['estado'] ?? true
+                );
+            }
 
-            $clientesDTO = new ClientesDTO(
-                $id,
-                $data['nombres'],
-                $data['apellidos'],
-                $data['id_departamento'],
-                $data['id_cargo'],
-                $data['correo'],
-                $data['clie_docnum'],
-                $data['fecha_creacion'] ?? new \DateTime(),
-                $data['fecha_modificacion'] ?? new \DateTime(),
-                $data['estado'] ?? true
-            );
 
             $this->clientesServices->updateCliente($id, $clientesDTO);
             $response->getBody()->write(json_encode(['estado' => true, 'message' => 'Cliente actualizado exitosamente']));
@@ -220,6 +246,22 @@ class ClientesController
 
             $filtro = json_decode($query);
             $clientes = $this->clientesServices->getClientsRelationalIdentification($filtro);
+            $response->getBody()->write(json_encode($clientes));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['estado' => false, 'message' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    public function getValidateFormById(Request $request, Response $response): Response
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $query = strtolower($queryParams['q'] ?? '');
+
+            $filtro = json_decode($query);
+            $clientes = $this->clientesServices->getValidateFormById($filtro);
             $response->getBody()->write(json_encode($clientes));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         } catch (\Exception $e) {

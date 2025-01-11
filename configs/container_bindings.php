@@ -37,7 +37,7 @@ use App\Controllers\Publico\ClientesController;
 use App\Controllers\Publico\DetalleClienteIdentificacionFacturacionController;
 use App\Controllers\Publico\DetalleZonaServicioHorarioClienteFacturacionController;
 use App\Controllers\Publico\VentasController;
-use App\Controllers\Test\PadreController;
+use App\Controllers\Utils\ValidateController;
 use App\Middlewares\AuthorizationMiddleware;
 use App\Repository\Catalogo\Repository\CargosRepository;
 use App\Repository\Catalogo\Repository\DepartamentosRepository;
@@ -60,6 +60,7 @@ use App\Repository\Publico\Repository\VentasRepository;
 use App\Repository\Seguridad\Repository\ZonaUsuarioRepository;
 use App\Repository\Seguridad\Repository\AuthRepository;
 use App\Repository\Seguridad\Repository\UsuarioRepository;
+use App\Repository\Utils\Repository\ValidateRepository;
 use App\Services\Seguridad\AuthorizationService;
 //Services
 use App\Services\AuthServices;
@@ -82,6 +83,7 @@ use App\Services\ServiciosProductosServices;
 use App\Services\ServiciosProductosDetallesServices;
 use App\Services\Utils\ExcelServicesReportesVentas;
 use App\Services\Utils\UtilServices;
+use App\Services\Utils\ValidateServices;
 use App\Services\ZonaServices;
 use App\Services\ZonaUsuariosServices;
 use Doctrine\DBAL\Types\Type;
@@ -360,6 +362,7 @@ return [
     AuthorizationMiddleware::class => function (ContainerInterface $container) {
         return new AuthorizationMiddleware($container->get(AuthorizationService::class), $container->get(EntityManagerInterface::class));
     },
+
     //public schema
 
     ConfiguracionServiciosEstadisticosRepository::class => function (ContainerInterface $container) {
@@ -395,8 +398,10 @@ return [
         return new ClientesServices($container->get(ClientesRepository::class));
     },
 
-    ClientesController::class => function (ContainerInterface $container) {
-        return new ClientesController($container->get(ClientesServices::class));
+    ClientesController::class => function (
+        ContainerInterface $container
+    ) {
+        return new ClientesController($container->get(ClientesServices::class), $container, $container->get(AuthServices::class));
     },
 
     UtilServices::class => function () {
@@ -413,7 +418,7 @@ return [
     },
 
     VentasServices::class => function (ContainerInterface $container) {
-        return new VentasServices($container->get(VentasRepository::class),$container->get(ExcelServicesReportesVentas::class));
+        return new VentasServices($container->get(VentasRepository::class), $container->get(ExcelServicesReportesVentas::class));
     },
 
     VentasController::class => function (ContainerInterface $container) {

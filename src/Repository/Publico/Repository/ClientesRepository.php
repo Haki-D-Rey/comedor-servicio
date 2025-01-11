@@ -6,8 +6,6 @@ use App\DTO\Publico\ClientesDTO;
 use App\Entity\ListaCatalogo;
 use App\Entity\ListaCatalogoDetalle;
 use App\Entity\Publico\Clientes;
-use App\Entity\Publico\DetalleClienteIdentificacionFacturacion;
-use App\Entity\Publico\DetalleZonaServicioHorarioClienteFacturacion;
 use App\Repository\Publico\Interface\ClientesRepositoryInterface;
 use App\Repository\GenericRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -220,12 +218,45 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
                 throw new \Exception('Departamento o Cargo no encontrado.');
             }
 
-            // Excluir la propiedad fecha_creacion al actualizar
-            $excludePropertyName = ['fecha_creacion'];
-            $this->updateEntityFromDTO($cliente, $clientesDTO, $excludePropertyName);
+            // Definir los campos a actualizar desde el DTO
+            $fieldsToUpdate = [];
 
-            // Persistir los cambios en la base de datos
-            $this->entityManager->flush();
+            // Aquí asignamos cada atributo del DTO al campo correspondiente
+            if ($clientesDTO->getNombres()) {
+                $nombresFormatted = strtoupper(trim($clientesDTO->getNombres())); // Convertir a mayúsculas y eliminar espacios
+                $fieldsToUpdate[] = ['field' => 'nombres', 'value' => $nombresFormatted];
+            }
+            if ($clientesDTO->getApellidos()) {
+                $apellidosFormatted = strtoupper(trim($clientesDTO->getApellidos())); // Convertir a mayúsculas y eliminar espacios
+                $fieldsToUpdate[] = ['field' => 'apellidos', 'value' => $apellidosFormatted];
+            }
+            if ($clientesDTO->getIdDepartamento()) {
+                $fieldsToUpdate[] = ['field' => 'id_departamento', 'value' => $clientesDTO->getIdDepartamento()];
+            }
+            if ($clientesDTO->getIdCargo()) {
+                $fieldsToUpdate[] = ['field' => 'id_cargo', 'value' => $clientesDTO->getIdCargo()];
+            }
+            if ($clientesDTO->getCorreo()) {
+                $correoFormatted = strtolower(trim($clientesDTO->getCorreo())); // Convertir a minúsculas y eliminar espacios
+                $fieldsToUpdate[] = ['field' => 'correo', 'value' => $correoFormatted];
+            }
+            if ($clientesDTO->getClieDocnum()) {
+                $clieDocnumFormatted = str_pad($clientesDTO->getClieDocnum(), 10, '0', STR_PAD_LEFT);
+                $fieldsToUpdate[] = ['field' => 'clie_docnum', 'value' => $clieDocnumFormatted];
+            }
+            if ($cliente->getFechaCreacion()) {
+                $fieldsToUpdate[] = ['field' => 'fecha_creacion', 'value' => $cliente->getFechaCreacion()->format('Y-m-d H:i:s')];
+            }
+            if ($clientesDTO->getFechaModificacion()) {
+                $fieldsToUpdate[] = ['field' => 'fecha_modificacion', 'value' => $clientesDTO->getFechaModificacion()->format('Y-m-d H:i:s')];
+            }
+            if ($clientesDTO->getEstado() !== null) {  // Asegurarse de que no sea un valor nulo
+                $fieldsToUpdate[] = ['field' => 'estado', 'value' => $clientesDTO->getEstado()];
+            }
+
+            // Llamar al método markAsUpdateMethod para actualizar los campos
+            $this->markAsUpdateMethod('public.cliente', $fieldsToUpdate, $id);
+
 
             // Confirmar la transacción
             $this->entityManager->commit();
@@ -244,7 +275,13 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
     public function deleteCliente(int $id): void
     {
         try {
-            $this->markAsDeleted($id, 0);
+            // Pasar los campos a actualizar (ejemplo)
+            $fields = [
+                ['field' => 'estado', 'value' => 0]
+            ];
+
+            // Llamar al método para marcar como eliminado
+            $this->markAsUpdateMethod('public.cliente', $fields, $id);
         } catch (ORMException | DBALException $e) {
             $this->logger->error('Error al eliminar cliente: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException($e->getMessage());
@@ -325,6 +362,19 @@ class ClientesRepository extends GenericRepository implements ClientesRepository
 
             $result = $this->entityManager->getConnection()->executeQuery($query, $params);
             return $result->fetchAllAssociative();
+        } catch (\Exception $e) {
+            $this->logger->error('Error en la búsqueda de clientes: ' . $e->getMessage(), ['exception' => $e]);
+            throw new \RuntimeException('Error al buscar clientes: ' . $e->getMessage());
+        }
+    }
+
+
+    public function getValidateFormById($row): array
+    {
+        try {
+            $data = $row[0];
+            $validationResult = $this->validateUniqueFields($data);
+            return $validationResult;
         } catch (\Exception $e) {
             $this->logger->error('Error en la búsqueda de clientes: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException('Error al buscar clientes: ' . $e->getMessage());

@@ -2,6 +2,7 @@
 
 use Slim\App;
 use App\Controllers\DashboardController;
+use App\Controllers\Publico\ClientesController;
 use App\Controllers\Publico\VentasController;
 use App\Middlewares\AuthMiddleware;
 use App\Middlewares\AuthorizationMiddleware;
@@ -22,8 +23,8 @@ return function (App $app) {
         $group->group('/formularios', function (RouteCollectorProxy $form) {
             $form->get('/control-estadisticos', DashboardController::class . ':formulario');
         });
-        
-         $group->group('/reportes', function (RouteCollectorProxy $reportes) {
+
+        $group->group('/reportes', function (RouteCollectorProxy $reportes) {
             $reportes->get('/', DashboardController::class . ':reportes_index')->setName('dashboard.reportes_index');
         });
 
@@ -36,7 +37,6 @@ return function (App $app) {
                 ->setName('facturacion.index')
                 ->setArgument('permission', 'facturacion_view') // Permission argument for authorization
                 ->add(AuthorizationMiddleware::class); // AuthorizationMiddleware for permission check
-
         });
     })->add(AuthMiddleware::class); // AuthMiddleware applies to all routes under /dashboard
 

@@ -10,14 +10,19 @@ use Slim\App;
 
 return function (App $app) {
     $app->add(SaveRefererMiddleware::class);
+
+    // Ruta donde se encuentran los archivos de rutas
     $routesPath = __DIR__ . '/../Routes';
-    
+
+    // Crear un iterador recursivo para buscar archivos PHP en la carpeta Routes
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($routesPath));
-    $phpFiles = new RegexIterator($iterator, '/\.php$/'); // Only .php files
+    $phpFiles = new RegexIterator($iterator, '/\.php$/');
 
     foreach ($phpFiles as $file) {
         $route = require $file->getPathname();
-        $route($app);
+        if (is_callable($route)) {
+            $route($app);
+        }
     }
 
     $routes = $app->getRouteCollector()->getRoutes();
